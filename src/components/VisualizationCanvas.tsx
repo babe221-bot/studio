@@ -112,14 +112,22 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     
     // Clear previous objects
     while (mainGroupRef.current.children.length > 0) {
-        const child = mainGroupRef.current.children[0] as THREE.Mesh;
-        mainGroupRef.current.remove(child);
-        child.geometry.dispose();
-        if (Array.isArray(child.material)) {
-            child.material.forEach(m => m.dispose());
-        } else {
-            child.material.dispose();
+      const object = mainGroupRef.current.children[0];
+      mainGroupRef.current.remove(object);
+
+      // Recursively dispose of objects
+      object.traverse((node) => {
+        const mesh = node as THREE.Mesh;
+        if (mesh.isMesh || mesh.isLineSegments) {
+            if (mesh.geometry) {
+                mesh.geometry.dispose();
+            }
+            if (mesh.material) {
+                const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+                materials.forEach(material => material.dispose());
+            }
         }
+      });
     }
 
     const { length, width, height } = dims;
