@@ -45,7 +45,8 @@ const generateSlabGeometry = (
   }
   
   R = Math.min(R, H / 2, L/2, W/2);
-  const segments = 8; // Segments for curves
+  if (R < 0) R = 0;
+  const segments = 16; 
 
   const geometry = new THREE.BufferGeometry();
   const vertices: number[] = [];
@@ -68,103 +69,105 @@ const generateSlabGeometry = (
 
   const halfL = L / 2;
   const halfW = W / 2;
+  
+  let currentFaceIndex = 0;
 
-  // Create bottom face
+  // Create bottom face (Material 0)
   const blb = addVertex(-halfL, 0, -halfW);
   const brb = addVertex( halfL, 0, -halfW);
   const frb = addVertex( halfL, 0,  halfW);
   const flb = addVertex(-halfL, 0,  halfW);
   addQuad(flb, frb, brb, blb);
+  geometry.addGroup(currentFaceIndex, 6, 0);
+  currentFaceIndex += 6;
 
   const topCorners: { [key: string]: { main: number, edgeX: number, edgeZ: number, arc?: number[] } } = {};
   const cornerPositions = {
-      flt: { x: -halfL, z:  halfW, procX: processedEdges.front, procZ: processedEdges.left, signX: -1, signZ:  1 },
-      frt: { x:  halfL, z:  halfW, procX: processedEdges.front, procZ: processedEdges.right, signX:  1, signZ:  1 },
-      brt: { x:  halfL, z: -halfW, procX: processedEdges.back, procZ: processedEdges.right, signX:  1, signZ: -1 },
-      blt: { x: -halfL, z: -halfW, procX: processedEdges.back, procZ: processedEdges.left, signX: -1, signZ: -1 },
+      flt: { x: -halfL, z:  halfW, procX: processedEdges.left, procZ: processedEdges.front, signX: -1, signZ:  1 },
+      frt: { x:  halfL, z:  halfW, procX: processedEdges.right, procZ: processedEdges.front, signX:  1, signZ:  1 },
+      brt: { x:  halfL, z: -halfW, procX: processedEdges.right, procZ: processedEdges.back, signX:  1, signZ: -1 },
+      blt: { x: -halfL, z: -halfW, procX: processedEdges.left, procZ: processedEdges.back, signX: -1, signZ: -1 },
   };
 
-  // Generate top corner vertices and profiles
   Object.keys(cornerPositions).forEach(key => {
       const corner = cornerPositions[key as keyof typeof cornerPositions];
       const { x, z, procX, procZ, signX, signZ } = corner;
       
-      let topX = x;
-      let topZ = z;
-      
       const cornerData: { main: number, edgeX: number, edgeZ: number, arc?: number[] } = { main: 0, edgeX: 0, edgeZ: 0 };
+      
+      const isProcessed = (profileType !== 'none' && (procX || procZ));
 
-      if (profileType === 'none' || (!procX && !procZ)) {
-          cornerData.main = cornerData.edgeX = cornerData.edgeZ = addVertex(x, H, z);
+      if (!isProcessed) {
+        cornerData.main = cornerData.edgeX = cornerData.edgeZ = addVertex(x, H, z);
       } else if (profileType === 'chamfer') {
-          topX = procZ ? x - signX * R : x;
-          topZ = procX ? z - signZ * R : z;
+          const topX = procX ? x - signX * R : x;
+          const topZ = procZ ? z - signZ * R : z;
           cornerData.main = addVertex(topX, H, topZ);
-          cornerData.edgeX = addVertex(x, procZ ? H - R : H, z);
-          cornerData.edgeZ = addVertex(x, procX ? H - R : H, z);
+          cornerData.edgeX = addVertex(x, procX ? H - R : H, z);
+          cornerData.edgeZ = addVertex(x, procZ ? H - R : H, z);
       } else { // half-round or full-round
           cornerData.arc = [];
           for (let i = 0; i <= segments; i++) {
               const angle = (Math.PI / 2) * (i / segments);
-              let vx = x, vy = H, vz = z;
+              let vx=x, vy=H, vz=z;
 
-              if (procX && procZ) { // Inner corner
-                  vx = x - signX * R * (1 - Math.cos(angle));
-                  vz = z - signZ * R * (1 - Math.sin(angle));
-                  vy = H - R + R * Math.sqrt(Math.pow(Math.cos(angle), 2) + Math.pow(Math.sin(angle), 2)); // approx
-                  vy = H - R * (1 - Math.cos(angle)) * (1-Math.sin(angle)); // better approx
-                  vy = H - (R - Math.sqrt( (R*Math.cos(angle))**2 + (R*Math.sin(angle))**2)/Math.sqrt(2));
-                  vy = H - R * (1- Math.min(Math.cos(angle), Math.sin(angle)));
-                   vy = H - (R - R * Math.cos(angle - Math.PI / 4));
-
-                   const r_cos = R * Math.cos(angle);
-                   const r_sin = R * Math.sin(angle);
-                   vx = x - signX * (R - r_cos);
-                   vz = z - signZ * (R - r_sin);
-                   vy = H - (R - Math.sqrt(r_cos*r_cos + r_sin*r_sin));
-
-              } else if (procX) { // Straight edge on Z axis
+              if (procX && procZ) { // Processed inner corner
+                  const r_cos = R * Math.cos(angle);
+                  const r_sin = R * Math.sin(angle);
+                  vx = x - signX * (R - r_cos);
+                  vz = z - signZ * (R - r_sin);
+                  vy = H - (R - Math.sqrt(r_cos*r_cos + r_sin*r_sin));
+              } else if (procZ) { // Processed along Z axis (Front/Back)
                   vx = x;
-                  vz = z - signZ * R * (1 - Math.cos(angle));
-                  vy = H - R * Math.sin(angle);
-              } else { // Straight edge on X axis
-                  vx = x - signX * R * (1 - Math.cos(angle));
+                  vy = H - R * (1 - Math.cos(angle));
+                  vz = z - signZ * R * Math.sin(angle);
+              } else if (procX) { // Processed along X axis (Left/Right)
+                  vx = x - signX * R * Math.sin(angle);
+                  vy = H - R * (1 - Math.cos(angle));
                   vz = z;
-                  vy = H - R * Math.sin(angle);
               }
               cornerData.arc.push(addVertex(vx, vy, vz));
           }
-          cornerData.main = cornerData.arc[segments];
-          cornerData.edgeX = cornerData.arc[0];
-          cornerData.edgeZ = cornerData.arc[0];
+          cornerData.main = cornerData.arc[0];
+          cornerData.edgeZ = cornerData.arc[segments]; 
+          cornerData.edgeX = cornerData.arc[segments]; 
       }
       topCorners[key] = cornerData;
   });
 
-  // Create top face
+  // Create top face (Material 0)
   addQuad(topCorners.flt.main, topCorners.frt.main, topCorners.brt.main, topCorners.blt.main);
+  geometry.addGroup(currentFaceIndex, 6, 0);
+  currentFaceIndex += 6;
   
-  // Create side and profile faces
+  // Create side and profile faces (Material 1)
   const connectEdges = (c1_key: string, c2_key: string, bottom1: number, bottom2: number, isXEdge: boolean) => {
     const c1 = topCorners[c1_key];
     const c2 = topCorners[c2_key];
-    const edge = isXEdge ? 'edgeZ' : 'edgeX';
+    const edgeKey = isXEdge ? 'edgeZ' : 'edgeX';
 
-    addQuad(bottom2, bottom1, c1[edge], c2[edge]);
+    const startIndex = indices.length;
 
+    addQuad(bottom2, bottom1, c1[edgeKey], c2[edgeKey]);
+    
     if (c1.arc && c2.arc) {
       for (let i = 0; i < segments; i++) {
         addQuad(c1.arc[i], c1.arc[i+1], c2.arc[i+1], c2.arc[i]);
       }
     } else {
-      addQuad(c1[edge], c2[edge], c2.main, c1.main);
+      addQuad(c1[edgeKey], c2[edgeKey], c2.main, c1.main);
+    }
+
+    const count = indices.length - startIndex;
+    if (count > 0) {
+      geometry.addGroup(startIndex, count, 1);
     }
   };
 
-  connectEdges('flt', 'frt', flb, frb, true); // Front
-  connectEdges('frt', 'brt', frb, brb, false); // Right
-  connectEdges('brt', 'blt', brb, blb, true); // Back
-  connectEdges('blt', 'flt', blb, flb, false); // Left
+  connectEdges('flt', 'frt', flb, frb, true);
+  connectEdges('frt', 'brt', frb, brb, false);
+  connectEdges('brt', 'blt', brb, blb, true);
+  connectEdges('blt', 'flt', blb, flb, false);
 
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
   geometry.setIndex(indices);
@@ -203,7 +206,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
-    scene.background = new THREE.Color(0xF0F0F0); // Light gray background
+    scene.background = new THREE.Color(0xF0F0F0);
 
     const camera = new THREE.PerspectiveCamera(50, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
     cameraRef.current = camera;
@@ -219,14 +222,14 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     controls.enableDamping = true;
     controlsRef.current = controls;
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 2.0); // Brighter ambient
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2.0); 
     scene.add(ambientLight);
 
-    const mainLight = new THREE.DirectionalLight(0xffffff, 1.5); // Softer main light
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1.5);
     mainLight.position.set(5, 10, 7.5);
     scene.add(mainLight);
     
-    const fillLight = new THREE.DirectionalLight(0xffffff, 1.0); // Stronger fill
+    const fillLight = new THREE.DirectionalLight(0xffffff, 1.0);
     fillLight.position.set(-5, -5, -5);
     scene.add(fillLight);
 
@@ -298,7 +301,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
       });
     }
 
-    const stoneMaterial = new THREE.MeshPhysicalMaterial({
+    const originalMaterial = new THREE.MeshPhysicalMaterial({
         color: 0xffffff,
         metalness: 0.1,
         roughness: 0.7,
@@ -306,36 +309,47 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         clearcoatRoughness: 0.4,
         side: THREE.DoubleSide,
     });
+    
+    const processedMaterial = new THREE.MeshPhysicalMaterial({
+        color: 0xcccccc,
+        metalness: 0.2,
+        roughness: 0.5,
+        side: THREE.DoubleSide,
+    });
 
     const finishName = finish.name.toLowerCase();
     if (finishName.includes('poliran')) {
-        stoneMaterial.roughness = 0.1;
-        stoneMaterial.clearcoat = 0.9;
-        stoneMaterial.clearcoatRoughness = 0.1;
+        originalMaterial.roughness = 0.1;
+        originalMaterial.clearcoat = 0.9;
+        originalMaterial.clearcoatRoughness = 0.1;
+        processedMaterial.roughness = 0.2;
+        processedMaterial.color.set(0xdddddd);
     } else if (finishName.includes('plamena') || finishName.includes('štokovan')) {
-        stoneMaterial.roughness = 0.95;
+        originalMaterial.roughness = 0.95;
+        processedMaterial.roughness = 0.8;
+        processedMaterial.color.set(0xb0b0b0);
     }
 
     const textureUrl = material.texture;
     if (textureUrl) {
       if (textureCache.current[textureUrl]) {
-        stoneMaterial.map = textureCache.current[textureUrl];
-        stoneMaterial.needsUpdate = true;
+        originalMaterial.map = textureCache.current[textureUrl];
+        originalMaterial.needsUpdate = true;
       } else {
         const textureLoader = new THREE.TextureLoader();
         textureLoader.load(textureUrl, (texture) => {
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
             const repeatFactor = 5 / (vizL > vizW ? vizL : vizW);
             texture.repeat.set(repeatFactor, repeatFactor * (vizW/vizL));
-            stoneMaterial.map = texture;
-            stoneMaterial.needsUpdate = true;
+            originalMaterial.map = texture;
+            originalMaterial.needsUpdate = true;
             textureCache.current[textureUrl] = texture;
         });
       }
     }
     
     const geometry = generateSlabGeometry(vizL, vizW, h, profile, vizProcessedEdges);
-    const mainObject = new THREE.Mesh(geometry, stoneMaterial);
+    const mainObject = new THREE.Mesh(geometry, [originalMaterial, processedMaterial]);
     
     const slabGroup = new THREE.Group();
     slabGroup.add(mainObject);
@@ -351,7 +365,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
           okapnikGrooveDepth,
           vertical ? edgeL - okapnikOffset * 2: okapnikGrooveWidth
         ),
-        stoneMaterial
+        processedMaterial
       );
       return groove;
     }
@@ -378,7 +392,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     }
 
     mainGroupRef.current.add(slabGroup);
-    slabGroup.position.y = h/2;
+    slabGroup.position.y = -h/2; // Center the slab vertically
 
     if (cameraRef.current && controlsRef.current) {
         const box = new THREE.Box3().setFromObject(slabGroup);
@@ -403,3 +417,4 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 VisualizationCanvas.displayName = 'VisualizationCanvas';
 export default VisualizationCanvas;
 
+    
