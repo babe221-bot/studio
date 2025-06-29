@@ -9,6 +9,12 @@ type ProcessedEdges2D = {
     right?: boolean,
 };
 
+type DrawRectOptions = {
+    surfaceFinish?: string,
+    processedEdges?: ProcessedEdges2D,
+    showOkapnik?: boolean,
+};
+
 const drawDimensionedRect = (
   doc: jsPDF,
   x: number,
@@ -18,10 +24,7 @@ const drawDimensionedRect = (
   w_label: string,
   h_label: string,
   title: string,
-  options?: {
-    surfaceFinish?: string,
-    processedEdges?: ProcessedEdges2D,
-  }
+  options?: DrawRectOptions
 ) => {
     const scale = 2.8;
     const rectW = w / scale;
@@ -59,6 +62,26 @@ const drawDimensionedRect = (
         if (P.left) doc.line(x, y, x, y + rectH);
         if (P.right) doc.line(x + rectW, y, x + rectW, y + rectH);
         doc.setLineWidth(0.3).setDrawColor(0);
+    }
+
+    if (options?.showOkapnik) {
+        const okapnikInset_scaled = 1.5 / scale;
+
+        const y_bottom = y + h / scale;
+        const groove_line_y = y_bottom - okapnikInset_scaled;
+        
+        doc.setLineDashPattern([2, 1], 0).setDrawColor(100).setLineWidth(0.2);
+        doc.line(x, groove_line_y, x + w / scale, groove_line_y);
+        doc.setLineDashPattern([], 0).setDrawColor(0); // Reset
+
+        const leader_x_start = x + (w / scale) / 2;
+        const leader_y_start = groove_line_y;
+        const leader_x_end = leader_x_start + 5;
+        const leader_y_end = leader_y_start + 5;
+        doc.setDrawColor(100).setLineWidth(0.2);
+        doc.line(leader_x_start, leader_y_start, leader_x_end, leader_y_end);
+        doc.setFontSize(7).setTextColor(100).setFont('helvetica', 'normal');
+        doc.text('Okapnik', leader_x_end + 1, leader_y_end);
     }
 };
 
@@ -162,11 +185,15 @@ export const generatePdfDataUri = async (orderItems: OrderItem[]): Promise<strin
     });
 
     const frontViewX = drawingStartX + (item.dims.length / drawingScale) + 30;
-    drawDimensionedRect(doc, frontViewX, drawingY, item.dims.length, item.dims.height, `${item.dims.length.toFixed(1)} cm`, `${item.dims.height.toFixed(1)} cm`, 'Nacrt');
+    drawDimensionedRect(doc, frontViewX, drawingY, item.dims.length, item.dims.height, `${item.dims.length.toFixed(1)} cm`, `${item.dims.height.toFixed(1)} cm`, 'Nacrt', {
+        showOkapnik: !!item.okapnik?.front || !!item.okapnik?.back,
+    });
     doc.setFontSize(7).setTextColor(120).setFont('helvetica', 'normal').text(`Profil: ${item.profile.name}`, frontViewX, drawingY + (item.dims.height / drawingScale) + 10);
     
     const sideViewX = frontViewX + (item.dims.length / drawingScale) + 30;
-    drawDimensionedRect(doc, sideViewX, drawingY, item.dims.width, item.dims.height, `${item.dims.width.toFixed(1)} cm`, `${item.dims.height.toFixed(1)} cm`, 'Bokocrt');
+    drawDimensionedRect(doc, sideViewX, drawingY, item.dims.width, item.dims.height, `${item.dims.width.toFixed(1)} cm`, `${item.dims.height.toFixed(1)} cm`, 'Bokocrt', {
+        showOkapnik: !!item.okapnik?.left || !!item.okapnik?.right
+    });
      doc.setFontSize(7).setTextColor(120).setFont('helvetica', 'normal').text(`Profil: ${item.profile.name}`, sideViewX, drawingY + (item.dims.height / drawingScale) + 10);
     
     yPos += itemHeight + 10;

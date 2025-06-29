@@ -175,6 +175,13 @@ export function Lab() {
     right: 'Desna'
   };
 
+  const handleEdgeProcessingChange = (edge: keyof ProcessedEdges, checked: boolean) => {
+      setProcessedEdges(prev => ({ ...prev, [edge]: checked }));
+      if (!checked) {
+          setOkapnik(prev => ({ ...prev, [edge]: false }));
+      }
+  };
+
   return (
     <main className="container mx-auto p-4 md:p-6 lg:p-8">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 xl:grid-cols-4">
@@ -251,7 +258,11 @@ export function Lab() {
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
                        {Object.keys(edgeNames).map((edge) => (
                           <div className="flex items-center space-x-2" key={edge}>
-                            <Checkbox id={`edge-${edge}`} checked={processedEdges[edge as keyof ProcessedEdges]} onCheckedChange={(checked) => setProcessedEdges(prev => ({...prev, [edge]: !!checked}))} />
+                            <Checkbox 
+                                id={`edge-${edge}`} 
+                                checked={processedEdges[edge as keyof ProcessedEdges]} 
+                                onCheckedChange={(checked) => handleEdgeProcessingChange(edge as keyof ProcessedEdges, !!checked)} 
+                            />
                             <Label htmlFor={`edge-${edge}`} className="font-normal cursor-pointer">{edgeNames[edge as keyof typeof edgeNames]}</Label>
                         </div>
                        ))}
@@ -265,8 +276,13 @@ export function Lab() {
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
                        {Object.keys(edgeNames).map((edge) => (
                           <div className="flex items-center space-x-2" key={`okapnik-${edge}`}>
-                            <Checkbox id={`okapnik-${edge}`} checked={okapnik[edge as keyof ProcessedEdges]} onCheckedChange={(checked) => setOkapnik(prev => ({...prev, [edge]: !!checked}))} />
-                            <Label htmlFor={`okapnik-${edge}`} className="font-normal cursor-pointer">{edgeNames[edge as keyof typeof edgeNames]}</Label>
+                            <Checkbox 
+                                id={`okapnik-${edge}`} 
+                                checked={okapnik[edge as keyof ProcessedEdges]} 
+                                onCheckedChange={(checked) => setOkapnik(prev => ({...prev, [edge]: !!checked}))}
+                                disabled={!processedEdges[edge as keyof ProcessedEdges]}
+                            />
+                            <Label htmlFor={`okapnik-${edge}`} className="font-normal cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{edgeNames[edge as keyof typeof edgeNames]}</Label>
                         </div>
                        ))}
                     </div>
