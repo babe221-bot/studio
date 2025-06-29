@@ -19,6 +19,195 @@ type CanvasHandle = {
   getSnapshot: () => string | null;
 };
 
+const generateSlabGeometry = (
+    L: number, W: number, H: number, 
+    profile: EdgeProfile, 
+    processedEdges: ProcessedEdges
+  ) => {
+    
+  const profileName = profile.name.toLowerCase();
+  const smusMatch = profileName.match(/smuš c(\d+\.?\d*)/);
+  const poluRMatch = profileName.match(/polu-zaobljena r(\d+\.?\d*)cm/);
+  const punoRMatch = profileName.match(/puno-zaobljena r(\d+\.?\d*)cm/);
+
+  let profileType: 'chamfer' | 'half-round' | 'full-round' | 'none' = 'none';
+  let R = 0; // Radius or chamfer size
+  const roundSegments = 5;
+
+  if (smusMatch) {
+    profileType = 'chamfer';
+    R = parseFloat(smusMatch[1]) / 1000; // cmm to cm
+  } else if (poluRMatch) {
+    profileType = 'half-round';
+    R = parseFloat(poluRMatch[1]);
+  } else if (punoRMatch) {
+    profileType = 'full-round';
+    R = parseFloat(punoRMatch[1]);
+  }
+  
+  R = Math.min(R, H, W/2, L/2);
+
+  const vertices: number[] = [];
+  const indices: number[] = [];
+  let vertexIndex = 0;
+
+  const addVertex = (x: number, y: number, z: number) => {
+    vertices.push(x, y, z);
+    return vertexIndex++;
+  };
+  
+  const addFace = (v1: number, v2: number, v3: number) => {
+    indices.push(v1, v2, v3);
+  };
+  
+  const addQuad = (v1: number, v2: number, v3: number, v4: number) => {
+    addFace(v1, v2, v3);
+    addFace(v1, v3, v4);
+  };
+
+  // Create vertices
+  const points: { [key: string]: number } = {};
+
+  const halfL = L / 2;
+  const halfW = W / 2;
+
+  // Bottom face
+  points.blb = addVertex(-halfL, 0, -halfW); // back-left-bottom
+  points.brb = addVertex( halfL, 0, -halfW); // back-right-bottom
+  points.frb = addVertex( halfL, 0,  halfW); // front-right-bottom
+  points.flb = addVertex(-halfL, 0,  halfW); // front-left-bottom
+
+  const createTopVertices = (cx: number, cz: number, pE1: boolean, pE2: boolean) => {
+    const signX = Math.sign(cx);
+    const signZ = Math.sign(cz);
+
+    if (profileType === 'none' || (!pE1 && !pE2)) {
+      return { corner: addVertex(cx, H, cz) };
+    }
+    if (profileType === 'chamfer') {
+      const v_top = addVertex(cx - signX * R, H, cz - signZ * R);
+      const v_edge1 = addVertex(cx, H - R, cz - signZ * R);
+      const v_edge2 = addVertex(cx - signX * R, H - R, cz);
+      return { corner: v_top, edge1: v_edge1, edge2: v_edge2 };
+    }
+    if (profileType === 'half-round' || profileType === 'full-round') {
+        const center_x = cx - signX * R;
+        const center_z = cz - signZ * R;
+        const pts: number[] = [];
+        const isFullRound = profileType === 'full-round';
+        const startAngle = Math.PI / 2;
+        const endAngle = isFullRound ? -Math.PI / 2 : 0;
+        
+        for (let i = 0; i <= roundSegments; i++) {
+            const angle = startAngle + (i / roundSegments) * (endAngle - startAngle);
+            const vx = center_x + R * Math.cos(angle);
+            const vy = (isFullRound ? H - R : H) + R * Math.sin(angle);
+            const vz = center_z;
+            pts.push(addVertex(vx, vy, vz));
+        }
+
+        if (pE1 && pE2) { // Corner case
+            const cornerPoints: { [key: string]: number[] } = { main: [] };
+            for (let i = 0; i <= roundSegments; i++) {
+                const angle = Math.PI/2 + (i / roundSegments) * (Math.PI/2);
+                const r_slice = R * Math.cos(angle);
+                const y_slice = H - R * Math.sin(angle);
+                
+                cornerPoints.main.push(addVertex(cx - signX*r_slice, y_slice, cz - signZ*r_slice));
+            }
+            return { corner: cornerPoints.main };
+        } else if (pE1) { // single edge
+            const pts: number[] = [];
+            for (let i = 0; i <= roundSegments; i++) {
+              const angle = Math.PI / 2;
+              const y = isFullRound ? H - R + R * Math.sin(angle * i/roundSegments) : H - R * (1-Math.cos(angle * i/roundSegments));
+              const z_offset = R * (1 - Math.cos(angle * i/roundSegments));
+              pts.push(addVertex(cx, y, cz - signZ*z_offset));
+            }
+            return { corner: pts };
+        } else { // pE2
+            const pts: number[] = [];
+             for (let i = 0; i <= roundSegments; i++) {
+              const angle = Math.PI / 2;
+              const y = isFullRound ? H - R + R * Math.sin(angle * i/roundSegments) : H - R * (1-Math.cos(angle * i/roundSegments));
+              const x_offset = R * (1 - Math.cos(angle * i/roundSegments));
+              pts.push(addVertex(cx - signX*x_offset, y, cz));
+            }
+            return { corner: pts };
+        }
+    }
+    return { corner: addVertex(cx, H, cz) };
+  };
+
+  const flt = createTopVertices(-halfL, halfW, processedEdges.front, processedEdges.left);
+  const frt = createTopVertices(halfL, halfW, processedEdges.front, processedEdges.right);
+  const blt = createTopVertices(-halfL, -halfW, processedEdges.back, processedEdges.left);
+  const brt = createTopVertices(halfL, -halfW, processedEdges.back, processedEdges.right);
+
+  // Build faces
+  addQuad(points.blb, points.brb, points.frb, points.flb); // Bottom
+  
+  const connectCorners = (c1_data: any, c2_data: any, isEdge1: boolean, isVertical: boolean) => {
+    const c1 = Array.isArray(c1_data.corner) ? c1_data.corner : [c1_data.corner];
+    const c2 = Array.isArray(c2_data.corner) ? c2_data.corner : [c2_data.corner];
+    
+    for (let i = 0; i < Math.max(c1.length, c2.length) - 1; i++) {
+        const i1 = Math.min(i, c1.length - 1);
+        const i2 = Math.min(i, c2.length - 1);
+        const i1_next = Math.min(i + 1, c1.length - 1);
+        const i2_next = Math.min(i + 1, c2.length - 1);
+        
+        if (isVertical) addQuad(c1[i1], c2[i2], c2[i2_next], c1[i1_next]);
+        else addQuad(c2[i2], c1[i1], c1[i1_next], c2[i2_next]);
+    }
+  };
+  
+  if (profileType === 'none' || profileType === 'chamfer') {
+    const c_flt = (flt as any).corner; const c_frt = (frt as any).corner;
+    const c_blt = (blt as any).corner; const c_brt = (brt as any).corner;
+    addQuad(c_blt, c_brt, c_frt, c_flt); // Top main face
+  } else {
+    connectCorners(blt, brt, true, false); // Top
+    connectCorners(brt, frt, false, true);
+    connectCorners(frt, flt, true, false);
+    connectCorners(flt, blt, false, true);
+  }
+
+  // Side faces
+  const connectSide = (c_top_data: any, c_bottom: number, pEdge: boolean) => {
+      if (Array.isArray(c_top_data.corner)) {
+          for (let i = 0; i < c_top_data.corner.length - 1; i++) {
+              addQuad(c_bottom, c_top_data.corner[i+1], c_top_data.corner[i], c_bottom);
+          }
+      } else {
+         addQuad(c_bottom, c_top_data.corner, c_top_data.corner, c_bottom);
+      }
+  }
+
+  // Back
+  addQuad(points.blb, brt.corner, brt.edge2 || brt.corner, points.brb);
+  addQuad(points.brb, blt.edge2 || blt.corner, blt.corner, points.blb);
+  
+  // Front
+  addQuad(points.flb, frt.corner, frt.edge2 || frt.corner, points.frb);
+  addQuad(points.frb, flt.edge2 || flt.corner, flt.corner, points.flb);
+
+  // Left
+  addQuad(points.blb, flt.corner, flt.edge1 || flt.corner, points.flb);
+  addQuad(points.flb, blt.edge1 || blt.corner, blt.corner, points.blb);
+  
+  // Right
+  addQuad(points.brb, frt.corner, frt.edge1 || frt.corner, points.frb);
+  addQuad(points.frb, brt.edge1 || brt.corner, brt.corner, points.brb);
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+};
+
+
 const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims, material, finish, profile, processedEdges, okapnikEdges }, ref) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -125,10 +314,10 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     };
     
     const vizOkapnikEdges: ProcessedEdges = {
-      front: shouldSwap ? okapnikEdges.left : okapnikEdges.front,
-      back: shouldSwap ? okapnikEdges.right : okapnikEdges.back,
-      left: shouldSwap ? okapnikEdges.front : okapnikEdges.left,
-      right: shouldSwap ? okapnikEdges.back : okapnikEdges.right,
+      front: shouldSwap ? (okapnikEdges.left ?? false) : (okapnikEdges.front ?? false),
+      back: shouldSwap ? (okapnikEdges.right ?? false) : (okapnikEdges.back ?? false),
+      left: shouldSwap ? (okapnikEdges.front ?? false) : (okapnikEdges.left ?? false),
+      right: shouldSwap ? (okapnikEdges.back ?? false) : (okapnikEdges.right ?? false),
     };
 
     while (mainGroupRef.current.children.length > 0) {
@@ -152,6 +341,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         roughness: 0.8,
         clearcoat: 0.0,
         clearcoatRoughness: 0.5,
+        side: THREE.DoubleSide,
     });
 
     const finishName = finish.name.toLowerCase();
@@ -180,47 +370,8 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         });
       }
     }
-
-    const profileName = profile.name.toLowerCase();
-    const smusMatch = profileName.match(/smuš c(\d+\.?\d*)/);
-    const poluRMatch = profileName.match(/polu-zaobljena r(\d+\.?\d*)cm/);
-    const punoRMatch = profileName.match(/puno-zaobljena r(\d+\.?\d*)cm/);
     
-    const shape = new THREE.Shape();
-    shape.moveTo(0, 0); 
-    shape.lineTo(0, h);
-
-    if (poluRMatch) {
-      const R = parseFloat(poluRMatch[1]) / scale;
-      shape.lineTo(vizL - R, h);
-      shape.absarc(vizL - R, h - R, R, Math.PI / 2, 0, true);
-      shape.lineTo(vizL, 0);
-    } else if (punoRMatch) {
-      const R = parseFloat(punoRMatch[1]) / scale;
-      shape.lineTo(vizL - R, h);
-      shape.absarc(vizL - R, h - R, R, Math.PI / 2, -Math.PI / 2, true);
-      shape.lineTo(vizL, 0);
-    } else if (smusMatch) {
-      const chamferSize = parseFloat(smusMatch[1]) / 1000;
-      shape.lineTo(vizL - chamferSize, h);
-      shape.lineTo(vizL, h - chamferSize);
-      shape.lineTo(vizL, 0);
-    } else { 
-      shape.lineTo(vizL, h);
-      shape.lineTo(vizL, 0);
-    }
-    
-    shape.lineTo(0, 0); 
-    
-    const extrudeSettings = {
-      steps: 1,
-      depth: vizW,
-      bevelEnabled: false,
-    };
-    
-    let geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    geometry.rotateX(-Math.PI / 2);
-    
+    const geometry = generateSlabGeometry(vizL, vizW, h, profile, vizProcessedEdges);
     const mainObject = new THREE.Mesh(geometry, stoneMaterial);
     
     const slabGroup = new THREE.Group();
@@ -229,14 +380,16 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xffd700, linewidth: 3 });
     const edgePoints: THREE.Vector3[] = [];
     
-    if (vizProcessedEdges.front) { edgePoints.push(new THREE.Vector3(0, vizW, 0), new THREE.Vector3(vizL, vizW, 0)); }
-    if (vizProcessedEdges.back) { edgePoints.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(vizL, 0, 0)); }
-    if (vizProcessedEdges.left) { edgePoints.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, vizW, 0)); }
-    if (vizProcessedEdges.right) { edgePoints.push(new THREE.Vector3(vizL, 0, 0), new THREE.Vector3(vizL, vizW, 0)); }
+    const halfL = vizL/2; const halfW = vizW/2;
+    if (vizProcessedEdges.front) { edgePoints.push(new THREE.Vector3(-halfL, 0, halfW), new THREE.Vector3(halfL, 0, halfW)); }
+    if (vizProcessedEdges.back) { edgePoints.push(new THREE.Vector3(-halfL, 0, -halfW), new THREE.Vector3(halfL, 0, -halfW)); }
+    if (vizProcessedEdges.left) { edgePoints.push(new THREE.Vector3(-halfL, 0, -halfW), new THREE.Vector3(-halfL, 0, halfW)); }
+    if (vizProcessedEdges.right) { edgePoints.push(new THREE.Vector3(halfL, 0, -halfW), new THREE.Vector3(halfL, 0, halfW)); }
     
     if (edgePoints.length > 0) {
       const edgeGeometry = new THREE.BufferGeometry().setFromPoints(edgePoints);
       const edgeLines = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+      edgeLines.position.y = h;
       slabGroup.add(edgeLines);
     }
     
@@ -244,10 +397,10 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     const okapnikPoints: THREE.Vector3[] = [];
     const okapnikOffset = 2.0 / scale;
     
-    if(vizOkapnikEdges.front) { okapnikPoints.push(new THREE.Vector3(okapnikOffset, vizW - okapnikOffset, -h), new THREE.Vector3(vizL - okapnikOffset, vizW - okapnikOffset, -h)); }
-    if(vizOkapnikEdges.back) { okapnikPoints.push(new THREE.Vector3(okapnikOffset, okapnikOffset, -h), new THREE.Vector3(vizL - okapnikOffset, okapnikOffset, -h)); }
-    if(vizOkapnikEdges.left) { okapnikPoints.push(new THREE.Vector3(okapnikOffset, okapnikOffset, -h), new THREE.Vector3(okapnikOffset, vizW - okapnikOffset, -h)); }
-    if(vizOkapnikEdges.right) { okapnikPoints.push(new THREE.Vector3(vizL - okapnikOffset, okapnikOffset, -h), new THREE.Vector3(vizL - okapnikOffset, vizW - okapnikOffset, -h)); }
+    if(vizOkapnikEdges.front) { okapnikPoints.push(new THREE.Vector3(-halfL + okapnikOffset, 0, halfW - okapnikOffset), new THREE.Vector3(halfL - okapnikOffset, 0, halfW - okapnikOffset)); }
+    if(vizOkapnikEdges.back) { okapnikPoints.push(new THREE.Vector3(-halfL + okapnikOffset, 0, -halfW + okapnikOffset), new THREE.Vector3(halfL - okapnikOffset, 0, -halfW + okapnikOffset)); }
+    if(vizOkapnikEdges.left) { okapnikPoints.push(new THREE.Vector3(-halfL + okapnikOffset, 0, -halfW + okapnikOffset), new THREE.Vector3(-halfL + okapnikOffset, 0, halfW - okapnikOffset)); }
+    if(vizOkapnikEdges.right) { okapnikPoints.push(new THREE.Vector3(halfL - okapnikOffset, 0, -halfW + okapnikOffset), new THREE.Vector3(halfL - okapnikOffset, 0, halfW - okapnikOffset)); }
 
     if (okapnikPoints.length > 0) {
       const okapnikLinesGeom = new THREE.BufferGeometry().setFromPoints(okapnikPoints);
@@ -255,7 +408,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
       slabGroup.add(okapnikLines);
     }
 
-    slabGroup.position.set(-vizL / 2, -vizW / 2, h / 2);
     mainGroupRef.current.add(slabGroup);
 
     if (cameraRef.current && controlsRef.current) {
