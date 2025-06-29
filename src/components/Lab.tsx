@@ -1,0 +1,281 @@
+"use client";
+
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { initialMaterials, initialSurfaceFinishes, initialEdgeProfiles } from '@/lib/data';
+import { generatePdf } from '@/lib/pdf';
+import VisualizationCanvas from '@/components/VisualizationCanvas';
+import MaterialModal from '@/components/modals/MaterialModal';
+import FinishModal from '@/components/modals/FinishModal';
+import ProfileModal from '@/components/modals/ProfileModal';
+import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, EditableItem } from '@/types';
+import { PlusIcon, Trash2 } from 'lucide-react';
+
+export function Lab() {
+  const { toast } = useToast();
+
+  // State
+  const [materials, setMaterials] = useLocalStorage<Material[]>('lab.materials', initialMaterials);
+  const [finishes, setFinishes] = useLocalStorage<SurfaceFinish[]>('lab.finishes', initialSurfaceFinishes);
+  const [profiles, setProfiles] = useLocalStorage<EdgeProfile[]>('lab.profiles', initialEdgeProfiles);
+  const [orderItems, setOrderItems] = useLocalStorage<OrderItem[]>('lab.orderItems', []);
+
+  const [specimenId, setSpecimenId] = useState('Kuhinjska ploča K01');
+  const [length, setLength] = useState(280);
+  const [width, setWidth] = useState(62);
+  const [height, setHeight] = useState(3);
+
+  const [selectedMaterialId, setSelectedMaterialId] = useState<string | undefined>(materials[0]?.id.toString());
+  const [selectedFinishId, setSelectedFinishId] = useState<string | undefined>(finishes[0]?.id.toString());
+  const [selectedProfileId, setSelectedProfileId] = useState<string | undefined>(profiles[0]?.id.toString());
+
+  const [modalOpen, setModalOpen] = useState<ModalType>(null);
+  const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
+
+  // Derived State & Calculations
+  const selectedMaterial = useMemo(() => materials.find(m => m.id.toString() === selectedMaterialId), [materials, selectedMaterialId]);
+  const selectedFinish = useMemo(() => finishes.find(f => f.id.toString() === selectedFinishId), [finishes, selectedFinishId]);
+  const selectedProfile = useMemo(() => profiles.find(p => p.id.toString() === selectedProfileId), [profiles, selectedProfileId]);
+
+  const calculations = useMemo(() => {
+    if (!selectedMaterial || !selectedFinish || !selectedProfile || !length || !width || !height) {
+      return { surfaceArea: 0, weight: 0, materialCost: 0, processingCost: 0, totalCost: 0 };
+    }
+    const length_m = length / 100;
+    const width_m = width / 100;
+    const surfaceArea_m2 = length_m * width_m;
+    const perimeter_m = 2 * (length_m + width_m);
+    const weight_kg = (length * width * height * selectedMaterial.density) / 1000;
+    const materialCost = surfaceArea_m2 * selectedMaterial.cost_sqm;
+    const processingCost = (surfaceArea_m2 * selectedFinish.cost_sqm) + (perimeter_m * selectedProfile.cost_m);
+    const totalCost = materialCost + processingCost;
+    return { surfaceArea: surfaceArea_m2, weight: weight_kg, materialCost, processingCost, totalCost };
+  }, [length, width, height, selectedMaterial, selectedFinish, selectedProfile]);
+
+  const visualizationState = useMemo(() => ({
+    dims: { length, width, height },
+    material: selectedMaterial,
+    finish: selectedFinish,
+    profile: selectedProfile
+  }), [length, width, height, selectedMaterial, selectedFinish, selectedProfile]);
+
+  // Handlers
+  const handleAddToOrder = () => {
+    if (!selectedMaterial || !selectedFinish || !selectedProfile || !specimenId) {
+      toast({ title: "Greška", description: "Molimo popunite sva polja.", variant: "destructive" });
+      return;
+    }
+    const newOrderItem: OrderItem = {
+      orderId: Date.now(),
+      id: specimenId,
+      dims: { length, width, height },
+      material: selectedMaterial,
+      finish: selectedFinish,
+      profile: selectedProfile,
+      totalCost: calculations.totalCost,
+    };
+    setOrderItems([...orderItems, newOrderItem]);
+    toast({ title: "Stavka dodana", description: `${specimenId} je dodan u radni nalog.` });
+  };
+
+  const handleRemoveOrderItem = (orderId: number) => {
+    setOrderItems(orderItems.filter(item => item.orderId !== orderId));
+  };
+
+  const handleOpenModal = (type: ModalType) => {
+    setEditingItem(null);
+    setModalOpen(type);
+  };
+
+  const handleSaveItem = (item: EditableItem, type: ModalType) => {
+    if (type === 'material') {
+        const newMaterials = [...materials];
+        const index = newMaterials.findIndex(m => m.id === item.id);
+        if (index > -1) newMaterials[index] = item as Material;
+        else newMaterials.push({ ...item, id: Date.now() } as Material);
+        setMaterials(newMaterials);
+    } else if (type === 'finish') {
+        const newFinishes = [...finishes];
+        const index = newFinishes.findIndex(f => f.id === item.id);
+        if (index > -1) newFinishes[index] = item as SurfaceFinish;
+        else newFinishes.push({ ...item, id: Date.now() } as SurfaceFinish);
+        setFinishes(newFinishes);
+    } else if (type === 'profile') {
+        const newProfiles = [...profiles];
+        const index = newProfiles.findIndex(p => p.id === item.id);
+        if (index > -1) newProfiles[index] = item as EdgeProfile;
+        else newProfiles.push({ ...item, id: Date.now() } as EdgeProfile);
+        setProfiles(newProfiles);
+    }
+    setModalOpen(null);
+    toast({ title: "Spremljeno", description: "Stavka je uspješno spremljena." });
+  };
+
+
+  return (
+    <main className="container mx-auto p-4 md:p-6 lg:p-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 xl:grid-cols-4">
+        
+        {/* Column 1: Inputs & Calculations */}
+        <div className="flex flex-col gap-6 lg:col-span-1 xl:col-span-1">
+          <Card>
+            <CardHeader><CardTitle>1. Unos naloga</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="specimen-id">ID / Naziv komada</Label>
+                <Input id="specimen-id" value={specimenId} onChange={e => setSpecimenId(e.target.value)} placeholder="npr. Kuhinjska ploča K01" />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="length">Dužina (cm)</Label>
+                  <Input id="length" type="number" value={length} onChange={e => setLength(parseFloat(e.target.value) || 0)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="width">Širina (cm)</Label>
+                  <Input id="width" type="number" value={width} onChange={e => setWidth(parseFloat(e.target.value) || 0)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="height">Debljina (cm)</Label>
+                  <Input id="height" type="number" value={height} onChange={e => setHeight(parseFloat(e.target.value) || 0)} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>2. Odabir materijala</CardTitle>
+                <Button variant="ghost" size="icon" onClick={() => handleOpenModal('material')}><PlusIcon className="h-4 w-4" /></Button>
+            </CardHeader>
+            <CardContent>
+                <Label htmlFor="material-select">Vrsta kamena</Label>
+                <Select value={selectedMaterialId} onValueChange={setSelectedMaterialId}>
+                    <SelectTrigger id="material-select"><SelectValue placeholder="Odaberite materijal" /></SelectTrigger>
+                    <SelectContent>
+                        {materials.map(m => <SelectItem key={m.id} value={m.id.toString()}>{m.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>3. Definiranje obrade</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="surface-finish-select">Obrada lica</Label>
+                <div className="flex items-center gap-2">
+                  <Select value={selectedFinishId} onValueChange={setSelectedFinishId}>
+                      <SelectTrigger id="surface-finish-select"><SelectValue placeholder="Odaberite obradu" /></SelectTrigger>
+                      <SelectContent>
+                          {finishes.map(f => <SelectItem key={f.id} value={f.id.toString()}>{f.name}</SelectItem>)}
+                      </SelectContent>
+                  </Select>
+                  <Button variant="ghost" size="icon" onClick={() => handleOpenModal('finish')}><PlusIcon className="h-4 w-4" /></Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edge-profile-select">Profil i obrada ivica</Label>
+                <div className="flex items-center gap-2">
+                   <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
+                        <SelectTrigger id="edge-profile-select"><SelectValue placeholder="Odaberite profil" /></SelectTrigger>
+                        <SelectContent>
+                            {profiles.map(p => <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                   <Button variant="ghost" size="icon" onClick={() => handleOpenModal('profile')}><PlusIcon className="h-4 w-4" /></Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+           <Card>
+            <CardHeader><CardTitle>4. Kalkulacija</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Površina</span><span className="font-medium font-code">{calculations.surfaceArea.toFixed(2)} m²</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Težina</span><span className="font-medium font-code">{calculations.weight.toFixed(1)} kg</span></div>
+              <Separator />
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak materijala</span><span className="font-medium font-code">€{calculations.materialCost.toFixed(2)}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak obrade</span><span className="font-medium font-code">€{calculations.processingCost.toFixed(2)}</span></div>
+              <Separator />
+              <div className="flex justify-between text-lg font-bold text-primary"><span >Ukupni trošak</span><span>€{calculations.totalCost.toFixed(2)}</span></div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Column 2: Visualization */}
+        <div className="lg:col-span-2 xl:col-span-3">
+          <Card className="h-full min-h-[400px] md:min-h-[600px] lg:min-h-full">
+            <CardHeader><CardTitle>3D Vizualizacija</CardTitle></CardHeader>
+            <CardContent className="h-full pb-0">
+               <VisualizationCanvas {...visualizationState} />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Full width row: Order */}
+        <div className="lg:col-span-3 xl:col-span-4">
+          <Card>
+            <CardHeader><CardTitle>5. Radni nalog</CardTitle></CardHeader>
+            <CardContent>
+                <div className="flex flex-col gap-4 md:flex-row">
+                    <Button onClick={handleAddToOrder} className="w-full md:w-auto md:flex-1">Dodaj stavku u nalog</Button>
+                    <Button onClick={() => generatePdf(orderItems)} variant="secondary" className="w-full md:w-auto" disabled={orderItems.length === 0}>Kreiraj PDF Nalog</Button>
+                </div>
+                <Separator className="my-4" />
+                <ScrollArea className="h-64">
+                    <div className="space-y-3 pr-4">
+                    {orderItems.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-8">Nema stavki u nalogu.</p>
+                    ) : (
+                        orderItems.map(item => (
+                            <div key={item.orderId} className="flex items-center justify-between rounded-lg border p-3">
+                                <div className="flex-1">
+                                    <p className="font-semibold">{item.id}</p>
+                                    <p className="text-xs text-muted-foreground">{item.material.name} | {item.finish.name} | {item.profile.name}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-semibold">€{item.totalCost.toFixed(2)}</p>
+                                </div>
+                                <Button variant="ghost" size="icon" className="ml-2" onClick={() => handleRemoveOrderItem(item.orderId)}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                            </div>
+                        ))
+                    )}
+                    </div>
+                </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      
+      {/* Modals */}
+      <MaterialModal 
+        isOpen={modalOpen === 'material'} 
+        onClose={() => setModalOpen(null)} 
+        onSave={(item) => handleSaveItem(item, 'material')}
+        item={editingItem as Material | null} 
+      />
+       <FinishModal 
+        isOpen={modalOpen === 'finish'} 
+        onClose={() => setModalOpen(null)} 
+        onSave={(item) => handleSaveItem(item, 'finish')}
+        item={editingItem as SurfaceFinish | null} 
+      />
+       <ProfileModal 
+        isOpen={modalOpen === 'profile'} 
+        onClose={() => setModalOpen(null)} 
+        onSave={(item) => handleSaveItem(item, 'profile')}
+        item={editingItem as EdgeProfile | null} 
+      />
+    </main>
+  );
+}
