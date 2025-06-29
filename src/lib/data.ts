@@ -57,6 +57,13 @@ export const initialMaterials: Material[] = [
     cost_sqm: 140,
     texture: 'https://placehold.co/1024x1024/FAF0E6/C3B091.png',
   },
+  {
+    id: 9,
+    name: 'Mironja',
+    density: 2.8,
+    cost_sqm: 250,
+    texture: 'https://placehold.co/1024x1024/D2B48C/8C7853.png',
+  },
 ];
 
 export const initialSurfaceFinishes: SurfaceFinish[] = [
