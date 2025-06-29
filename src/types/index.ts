@@ -37,6 +37,7 @@ export interface OrderItem {
   finish: SurfaceFinish;
   profile: EdgeProfile;
   processedEdges: ProcessedEdges;
+  okapnikEdges: ProcessedEdges;
   totalCost: number;
   snapshotDataUri?: string;
 }

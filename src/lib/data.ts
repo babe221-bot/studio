@@ -56,13 +56,13 @@ export const initialSurfaceFinishes: SurfaceFinish[] = [
 ];
 
 export const initialEdgeProfiles: EdgeProfile[] = [
-  { id: 1, name: 'C0.5 (0.5mm obaranje 45°)', cost_m: 5 },
-  { id: 2, name: 'C1 (1mm obaranje 45°)', cost_m: 7 },
-  { id: 3, name: 'C2 (2mm obaranje 45°)', cost_m: 8 },
-  { id: 4, name: 'C5 (5mm obaranje 45°)', cost_m: 10 },
-  { id: 5, name: 'R1 (Polu C profil)', cost_m: 8 },
-  { id: 6, name: 'R2 (Polu C profil)', cost_m: 10 },
-  { id: 7, name: 'R3 (Polu C profil)', cost_m: 12 },
-  { id: 8, name: 'R5 (Puno C profil)', cost_m: 15 },
-  { id: 9, name: 'R10 (Puno C profil)', cost_m: 20 },
+  { id: 1, name: 'Ravni rez (pilan)', cost_m: 2 },
+  { id: 10, name: 'Smuš C2 (2mm 45°)', cost_m: 8 },
+  { id: 11, name: 'Smuš C3 (3mm 45°)', cost_m: 9 },
+  { id: 12, name: 'Smuš C5 (5mm 45°)', cost_m: 10 },
+  { id: 13, name: 'Smuš C10 (10mm 45°)', cost_m: 12 },
+  { id: 20, name: 'Polu-zaobljena R15mm (za visinu 3cm)', cost_m: 15 },
+  { id: 21, name: 'Polu-zaobljena R20mm (za visinu 4cm)', cost_m: 18 },
+  { id: 30, name: 'Puno-zaobljena R15mm (za visinu 3cm)', cost_m: 25 },
+  { id: 31, name: 'Puno-zaobljena R20mm (za visinu 4cm)', cost_m: 30 },
 ];

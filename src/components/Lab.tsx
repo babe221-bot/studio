@@ -45,9 +45,16 @@ export function Lab() {
 
   const [processedEdges, setProcessedEdges] = useState<ProcessedEdges>({
     front: true,
-    back: true,
+    back: false,
     left: true,
     right: true,
+  });
+
+  const [okapnikEdges, setOkapnikEdges] = useState<ProcessedEdges>({
+    front: true,
+    back: false,
+    left: false,
+    right: false,
   });
   
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
@@ -55,6 +62,20 @@ export function Lab() {
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  useEffect(() => {
+    // Auto-disable okapnik if the corresponding edge is not processed
+    const newOkapnikEdges: ProcessedEdges = { ...okapnikEdges };
+    let changed = false;
+    for (const edge of Object.keys(processedEdges) as Array<keyof ProcessedEdges>) {
+      if (!processedEdges[edge] && newOkapnikEdges[edge]) {
+        newOkapnikEdges[edge] = false;
+        changed = true;
+      }
+    }
+    if (changed) {
+      setOkapnikEdges(newOkapnikEdges);
+    }
+  }, [processedEdges, okapnikEdges]);
 
   const selectedMaterial = useMemo(() => materials.find(m => m.id.toString() === selectedMaterialId), [materials, selectedMaterialId]);
   const selectedFinish = useMemo(() => finishes.find(f => f.id.toString() === selectedFinishId), [finishes, selectedFinishId]);
@@ -66,6 +87,7 @@ export function Lab() {
     }
     const length_m = length / 100;
     const width_m = width / 100;
+    const OKAPNIK_COST_PER_M = 5;
     
     let processed_perimeter_m = 0;
     if (processedEdges.front) processed_perimeter_m += length_m;
@@ -73,14 +95,21 @@ export function Lab() {
     if (processedEdges.left) processed_perimeter_m += width_m;
     if (processedEdges.right) processed_perimeter_m += width_m;
 
+    let okapnik_perimeter_m = 0;
+    if (okapnikEdges.front) okapnik_perimeter_m += length_m;
+    if (okapnikEdges.back) okapnik_perimeter_m += length_m;
+    if (okapnikEdges.left) okapnik_perimeter_m += width_m;
+    if (okapnikEdges.right) okapnik_perimeter_m += width_m;
+
     const surfaceArea_m2 = length_m * width_m;
     const weight_kg = (length * width * height * selectedMaterial.density) / 1000;
     const materialCost = surfaceArea_m2 * selectedMaterial.cost_sqm;
     const processingCost = (surfaceArea_m2 * selectedFinish.cost_sqm) + (processed_perimeter_m * selectedProfile.cost_m);
-    const totalCost = materialCost + processingCost;
+    const okapnikCost = okapnik_perimeter_m * OKAPNIK_COST_PER_M;
+    const totalCost = materialCost + processingCost + okapnikCost;
     
-    return { surfaceArea: surfaceArea_m2, weight: weight_kg, materialCost, processingCost, totalCost };
-  }, [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges]);
+    return { surfaceArea: surfaceArea_m2, weight: weight_kg, materialCost, processingCost, okapnikCost, totalCost };
+  }, [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnikEdges]);
 
   const visualizationState = useMemo(() => ({
     dims: { length, width, height },
@@ -88,7 +117,8 @@ export function Lab() {
     finish: selectedFinish,
     profile: selectedProfile,
     processedEdges: processedEdges,
-  }), [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges]);
+    okapnikEdges: okapnikEdges,
+  }), [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnikEdges]);
 
   const handleAddToOrder = () => {
     if (!selectedMaterial || !selectedFinish || !selectedProfile || !specimenId) {
@@ -105,6 +135,7 @@ export function Lab() {
       finish: selectedFinish,
       profile: selectedProfile,
       processedEdges: processedEdges,
+      okapnikEdges: okapnikEdges,
       totalCost: calculations.totalCost,
       snapshotDataUri,
     };
@@ -245,6 +276,22 @@ export function Lab() {
                        ))}
                     </div>
                 </div>
+                <div className="space-y-2 pt-2">
+                    <Label className="text-sm">Dodaj okapnik na ivicama:</Label>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
+                       {Object.keys(edgeNames).map((edge) => (
+                          <div className="flex items-center space-x-2" key={`okapnik-${edge}`}>
+                            <Checkbox 
+                                id={`okapnik-${edge}`} 
+                                checked={okapnikEdges[edge as keyof ProcessedEdges]} 
+                                onCheckedChange={(checked) => setOkapnikEdges(prev => ({...prev, [edge]: !!checked}))}
+                                disabled={!processedEdges[edge as keyof ProcessedEdges]}
+                            />
+                            <Label htmlFor={`okapnik-${edge}`} className={`font-normal cursor-pointer ${!processedEdges[edge as keyof ProcessedEdges] ? 'text-muted-foreground' : ''}`}>{edgeNames[edge as keyof typeof edgeNames]}</Label>
+                        </div>
+                       ))}
+                    </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -257,6 +304,7 @@ export function Lab() {
               <Separator />
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak materijala</span><span className="font-medium font-code">€{calculations.materialCost.toFixed(2)}</span></div>
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak obrade</span><span className="font-medium font-code">€{calculations.processingCost.toFixed(2)}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak okapnika</span><span className="font-medium font-code">€{calculations.okapnikCost.toFixed(2)}</span></div>
               <Separator />
               <div className="flex justify-between text-lg font-bold text-primary"><span >Ukupni trošak</span><span>€{calculations.totalCost.toFixed(2)}</span></div>
             </CardContent>
@@ -297,12 +345,18 @@ export function Lab() {
                                 .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
                                 .join(', ') || 'Nijedna');
                           
+                          const okapnikEdgesString = (Object.entries(item.okapnikEdges)
+                                .filter(([, selected]) => selected)
+                                .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
+                                .join(', ') || 'Nema');
+
                           return (
                             <div key={item.orderId} className="flex items-center justify-between rounded-lg border p-3">
                                 <div className="flex-1">
                                     <p className="font-semibold">{item.id}</p>
                                     <p className="text-xs text-muted-foreground">{item.material.name} | {item.finish.name} | {item.profile.name}</p>
                                     <p className="text-xs text-muted-foreground">Obrađene ivice: {processedEdgesString}</p>
+                                    <p className="text-xs text-muted-foreground">Okapnik: {okapnikEdgesString}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="font-semibold">€{item.totalCost.toFixed(2)}</p>
