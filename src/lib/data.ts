@@ -75,8 +75,12 @@ export const initialEdgeProfiles: EdgeProfile[] = [
   { id: 8, name: 'Faza 5mm', cost_m: 22 },
   { id: 9, name: 'Faza 10mm', cost_m: 25 },
   { id: 4, name: 'Četvrt-krug R10mm', cost_m: 30 },
+  { id: 12, name: 'Četvrt-krug R15mm', cost_m: 31 },
   { id: 10, name: 'Četvrt-krug R20mm', cost_m: 32 },
+  { id: 13, name: 'Četvrt-krug R25mm', cost_m: 34 },
   { id: 11, name: 'Četvrt-krug R30mm', cost_m: 35 },
+  { id: 14, name: 'Četvrt-krug R35mm', cost_m: 37 },
+  { id: 15, name: 'Četvrt-krug R40mm', cost_m: 40 },
   { id: 5, name: 'Polu-zaobljena R15mm (za visinu 3cm)', cost_m: 45 },
   { id: 6, name: 'Puno zaobljena R15mm (za visinu 3cm)', cost_m: 60 },
 ];
