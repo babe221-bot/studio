@@ -131,7 +131,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     const l_m = length / scale;
 
     let geometry;
-
     const shape = new THREE.Shape();
     
     const smusMatch = profile.name.match(/Smuš (\d+)mm/);
@@ -148,21 +147,19 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         shape.lineTo(0,0);
     } else if (poluZaobljenaMatch) {
         const R = parseFloat(poluZaobljenaMatch[1]) / 1000;
-        shape.moveTo(0,0);
-        shape.lineTo(w_m - R, 0);
-        shape.absarc(w_m-R, R, R, -Math.PI/2, Math.PI/2, false);
-        shape.lineTo(0, h_m);
-        shape.lineTo(0,0);
+        shape.moveTo(0, 0); // bottom-left
+        shape.lineTo(w_m, 0); // bottom-right
+        shape.lineTo(w_m, h_m - R); // to start of top arc
+        shape.absarc(w_m - R, h_m - R, R, 0, Math.PI / 2, false); // top-right quarter circle arc
+        shape.lineTo(0, h_m); // top-left
+        shape.lineTo(0, 0); // close path
     } else if (punoZaobljenaMatch) {
-        const R = parseFloat(punoZaobljenaMatch[1]) / 1000; // radius is half the height
-        shape.moveTo(0,R);
-        shape.absarc(R, R, R, -Math.PI, -Math.PI/2, false); // bottom-left
-        shape.lineTo(w_m - R, 0);
-        shape.absarc(w_m-R, R, R, -Math.PI/2, 0, false); // bottom-right
-        shape.lineTo(w_m, h_m-R);
-        shape.absarc(w_m-R, h_m-R, R, 0, Math.PI/2, false); // top-right
-        shape.lineTo(R, h_m);
-        shape.absarc(R, h_m-R, R, Math.PI/2, Math.PI, false); // top-left
+        const R = parseFloat(punoZaobljenaMatch[1]) / 1000;
+        shape.moveTo(0, 0); // bottom-left
+        shape.lineTo(w_m - R, 0); // line to start of arc on the right side
+        shape.absarc(w_m - R, R, R, -Math.PI / 2, Math.PI / 2, false); // semi-circle on the right side
+        shape.lineTo(0, h_m); // top-left
+        shape.lineTo(0, 0); // close path
     } else { // Ravni rez / Polirana ravna
         geometry = new THREE.BoxGeometry(l_m, h_m, w_m);
     }
