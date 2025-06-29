@@ -18,6 +18,13 @@ export interface EdgeProfile {
   cost_m: number;
 }
 
+export interface ProcessedEdges {
+  front: boolean;
+  back: boolean;
+  left: boolean;
+  right: boolean;
+}
+
 export interface OrderItem {
   orderId: number;
   id: string;
@@ -29,6 +36,7 @@ export interface OrderItem {
   material: Material;
   finish: SurfaceFinish;
   profile: EdgeProfile;
+  processedEdges?: ProcessedEdges;
   totalCost: number;
 }
 

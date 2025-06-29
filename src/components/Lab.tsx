@@ -16,8 +16,9 @@ import VisualizationCanvas from '@/components/VisualizationCanvas';
 import MaterialModal from '@/components/modals/MaterialModal';
 import FinishModal from '@/components/modals/FinishModal';
 import ProfileModal from '@/components/modals/ProfileModal';
-import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, EditableItem } from '@/types';
+import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, EditableItem, ProcessedEdges } from '@/types';
 import { PlusIcon, Trash2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export function Lab() {
   const { toast } = useToast();
@@ -37,6 +38,13 @@ export function Lab() {
   const [selectedFinishId, setSelectedFinishId] = useState<string | undefined>(finishes[0]?.id.toString());
   const [selectedProfileId, setSelectedProfileId] = useState<string | undefined>(profiles[0]?.id.toString());
 
+  const [processedEdges, setProcessedEdges] = useState<ProcessedEdges>({
+    front: true,
+    back: true,
+    left: true,
+    right: true,
+  });
+
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
 
@@ -51,14 +59,20 @@ export function Lab() {
     }
     const length_m = length / 100;
     const width_m = width / 100;
+    
+    let processed_perimeter_m = 0;
+    if (processedEdges.front) processed_perimeter_m += length_m;
+    if (processedEdges.back) processed_perimeter_m += length_m;
+    if (processedEdges.left) processed_perimeter_m += width_m;
+    if (processedEdges.right) processed_perimeter_m += width_m;
+
     const surfaceArea_m2 = length_m * width_m;
-    const perimeter_m = 2 * (length_m + width_m);
     const weight_kg = (length * width * height * selectedMaterial.density) / 1000;
     const materialCost = surfaceArea_m2 * selectedMaterial.cost_sqm;
-    const processingCost = (surfaceArea_m2 * selectedFinish.cost_sqm) + (perimeter_m * selectedProfile.cost_m);
+    const processingCost = (surfaceArea_m2 * selectedFinish.cost_sqm) + (processed_perimeter_m * selectedProfile.cost_m);
     const totalCost = materialCost + processingCost;
     return { surfaceArea: surfaceArea_m2, weight: weight_kg, materialCost, processingCost, totalCost };
-  }, [length, width, height, selectedMaterial, selectedFinish, selectedProfile]);
+  }, [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges]);
 
   const visualizationState = useMemo(() => ({
     dims: { length, width, height },
@@ -80,6 +94,7 @@ export function Lab() {
       material: selectedMaterial,
       finish: selectedFinish,
       profile: selectedProfile,
+      processedEdges: processedEdges,
       totalCost: calculations.totalCost,
     };
     setOrderItems([...orderItems, newOrderItem]);
@@ -117,6 +132,13 @@ export function Lab() {
     }
     setModalOpen(null);
     toast({ title: "Spremljeno", description: "Stavka je uspješno spremljena." });
+  };
+  
+  const edgeNames = {
+    front: 'Prednja',
+    back: 'Zadnja',
+    left: 'Lijeva',
+    right: 'Desna'
   };
 
 
@@ -192,6 +214,27 @@ export function Lab() {
                     </Select>
                    <Button variant="ghost" size="icon" onClick={() => handleOpenModal('profile')}><PlusIcon className="h-4 w-4" /></Button>
                 </div>
+                <div className="space-y-2 pt-2">
+                    <Label>Primijeni obradu na ivicama:</Label>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="edge-front" checked={processedEdges.front} onCheckedChange={(checked) => setProcessedEdges(prev => ({...prev, front: !!checked}))} />
+                            <Label htmlFor="edge-front" className="font-normal cursor-pointer">Prednja</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="edge-back" checked={processedEdges.back} onCheckedChange={(checked) => setProcessedEdges(prev => ({...prev, back: !!checked}))} />
+                            <Label htmlFor="edge-back" className="font-normal cursor-pointer">Zadnja</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="edge-left" checked={processedEdges.left} onCheckedChange={(checked) => setProcessedEdges(prev => ({...prev, left: !!checked}))} />
+                            <Label htmlFor="edge-left" className="font-normal cursor-pointer">Lijeva</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox id="edge-right" checked={processedEdges.right} onCheckedChange={(checked) => setProcessedEdges(prev => ({...prev, right: !!checked}))} />
+                            <Label htmlFor="edge-right" className="font-normal cursor-pointer">Desna</Label>
+                        </div>
+                    </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -235,11 +278,20 @@ export function Lab() {
                     {orderItems.length === 0 ? (
                         <p className="text-center text-muted-foreground py-8">Nema stavki u nalogu.</p>
                     ) : (
-                        orderItems.map(item => (
+                        orderItems.map(item => {
+                          const processedEdgesString = !item.processedEdges 
+                            ? 'Sve (stari unos)' 
+                            : (Object.entries(item.processedEdges)
+                                .filter(([, selected]) => selected)
+                                .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
+                                .join(', ') || 'Nijedna');
+
+                          return (
                             <div key={item.orderId} className="flex items-center justify-between rounded-lg border p-3">
                                 <div className="flex-1">
                                     <p className="font-semibold">{item.id}</p>
                                     <p className="text-xs text-muted-foreground">{item.material.name} | {item.finish.name} | {item.profile.name}</p>
+                                    <p className="text-xs text-muted-foreground">Obrađene ivice: {processedEdgesString}</p>
                                 </div>
                                 <div className="text-right">
                                     <p className="font-semibold">€{item.totalCost.toFixed(2)}</p>
@@ -248,7 +300,7 @@ export function Lab() {
                                     <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                             </div>
-                        ))
+                        )})
                     )}
                     </div>
                 </ScrollArea>
