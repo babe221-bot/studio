@@ -3,32 +3,60 @@ import type { Material, SurfaceFinish, EdgeProfile } from '@/types';
 export const initialMaterials: Material[] = [
   {
     id: 1,
-    name: 'Brački kamen (Veselje)',
+    name: 'Brač - Veselje Unito',
     density: 2.65,
     cost_sqm: 250,
-    texture: 'https://placehold.co/1024x1024/f5f5dc/a39e8b.png',
+    texture: 'https://placehold.co/1024x1024/F5F5DC/A39E8B.png',
   },
   {
     id: 2,
-    name: 'Seget (Svijetli)',
+    name: 'Seget - Svijetli',
     density: 2.7,
     cost_sqm: 160,
-    texture: 'https://placehold.co/1024x1024/fdf5e6/cd853f.png',
+    texture: 'https://placehold.co/1024x1024/FDF5E6/CD853F.png',
   },
-  {
+    {
     id: 3,
-    name: 'Istarski Žuti (Giallo d\'Istria)',
-    density: 2.6,
-    cost_sqm: 190,
-    texture: 'https://placehold.co/1024x1024/fffacd/ffd700.png',
+    name: 'Kanfanar - Sivo Plavi',
+    density: 2.72,
+    cost_sqm: 175,
+    texture: 'https://placehold.co/1024x1024/DCDCDC/778899.png',
   },
   {
     id: 4,
-    name: 'Kanfanar (Gris-blu)',
-    density: 2.72,
-    cost_sqm: 175,
-    texture: 'https://placehold.co/1024x1024/dcdcdc/778899.png',
+    name: 'Kirmenjak - Istarski Žuti',
+    density: 2.6,
+    cost_sqm: 190,
+    texture: 'https://placehold.co/1024x1024/FFFACD/FFD700.png',
   },
+  {
+    id: 5,
+    name: 'Planit - Vapnenac',
+    density: 2.68,
+    cost_sqm: 155,
+    texture: 'https://placehold.co/1024x1024/E8E4D9/C0B8A8.png',
+  },
+  {
+    id: 6,
+    name: 'Mironja - Crvenkasti',
+    density: 2.66,
+    cost_sqm: 210,
+    texture: 'https://placehold.co/1024x1024/E9967A/8B4513.png',
+  },
+  {
+    id: 7,
+    name: 'Marčana - Bež',
+    density: 2.62,
+    cost_sqm: 180,
+    texture: 'https://placehold.co/1024x1024/F5DEB3/D2B48C.png',
+  },
+  {
+    id: 8,
+    name: 'Hrvatski Travertin',
+    density: 2.45,
+    cost_sqm: 220,
+    texture: 'https://placehold.co/1024x1024/D8CFC5/B1A395.png',
+  }
 ];
 
 export const initialSurfaceFinishes: SurfaceFinish[] = [
