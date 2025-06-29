@@ -12,7 +12,6 @@ type ProcessedEdges2D = {
 type DrawRectOptions = {
     surfaceFinish?: string,
     processedEdges?: ProcessedEdges2D,
-    showOkapnik?: boolean,
 };
 
 const drawDimensionedRect = (
@@ -26,62 +25,44 @@ const drawDimensionedRect = (
   title: string,
   options?: DrawRectOptions
 ) => {
-    const scale = 2.8;
-    const rectW = w / scale;
-    const rectH = h / scale;
-    const textOffset = 3;
-    const dimLineOffset = 4;
-    const dimTickSize = 2;
+    const scale = 5; // Increased scale for larger drawings on A3
+    const rectW = w * scale;
+    const rectH = h * scale;
+    const textOffset = 4;
+    const dimLineOffset = 8;
+    const dimTickSize = 3;
 
-    doc.setFontSize(9).setFont('helvetica', 'bold').text(title, x, y - 10);
+    doc.setFontSize(10).setFont('helvetica', 'bold').text(title, x, y - 15);
     
     doc.setLineWidth(0.3).setDrawColor(0).rect(x, y, rectW, rectH);
 
     if (options?.surfaceFinish) {
-      doc.setFontSize(7).setTextColor(120).setFont('helvetica', 'italic');
+      doc.setFontSize(8).setTextColor(120).setFont('helvetica', 'italic');
       doc.text(options.surfaceFinish, x + rectW / 2, y + rectH / 2, { align: 'center' });
     }
     
-    doc.setFontSize(8).setTextColor(120).setFont('helvetica', 'normal');
+    doc.setFontSize(9).setTextColor(100).setFont('helvetica', 'normal');
 
+    // Horizontal dimension line
     doc.line(x, y - dimLineOffset, x + rectW, y - dimLineOffset);
     doc.line(x, y - dimLineOffset - dimTickSize, x, y - dimLineOffset + dimTickSize);
     doc.line(x + rectW, y - dimLineOffset - dimTickSize, x + rectW, y - dimLineOffset + dimTickSize);
     doc.text(`${w_label}`, x + rectW / 2, y - dimLineOffset - textOffset, { align: 'center' });
 
+    // Vertical dimension line
     doc.line(x - dimLineOffset, y, x - dimLineOffset, y + rectH);
     doc.line(x - dimLineOffset - dimTickSize, y, x - dimLineOffset + dimTickSize, y);
     doc.line(x - dimLineOffset - dimTickSize, y + rectH, x - dimLineOffset + dimTickSize, y + rectH);
     doc.text(`${h_label}`, x - dimLineOffset - textOffset, y + rectH / 2, { align: 'center', angle: -90 });
 
     if (options?.processedEdges) {
-        doc.setLineWidth(0.8).setDrawColor(255, 215, 0);
+        doc.setLineWidth(1).setDrawColor(255, 215, 0); // Thicker line for visibility
         const P = options.processedEdges;
         if (P.top) doc.line(x, y, x + rectW, y);
         if (P.bottom) doc.line(x, y + rectH, x + rectW, y + rectH);
         if (P.left) doc.line(x, y, x, y + rectH);
         if (P.right) doc.line(x + rectW, y, x + rectW, y + rectH);
         doc.setLineWidth(0.3).setDrawColor(0);
-    }
-
-    if (options?.showOkapnik) {
-        const okapnikInset_scaled = 1.5 / scale;
-
-        const y_bottom = y + h / scale;
-        const groove_line_y = y_bottom - okapnikInset_scaled;
-        
-        doc.setLineDashPattern([2, 1], 0).setDrawColor(100).setLineWidth(0.2);
-        doc.line(x, groove_line_y, x + w / scale, groove_line_y);
-        doc.setLineDashPattern([], 0).setDrawColor(0); // Reset
-
-        const leader_x_start = x + (w / scale) / 2;
-        const leader_y_start = groove_line_y;
-        const leader_x_end = leader_x_start + 5;
-        const leader_y_end = leader_y_start + 5;
-        doc.setDrawColor(100).setLineWidth(0.2);
-        doc.line(leader_x_start, leader_y_start, leader_x_end, leader_y_end);
-        doc.setFontSize(7).setTextColor(100).setFont('helvetica', 'normal');
-        doc.text('Okapnik', leader_x_end + 1, leader_y_end);
     }
 };
 
@@ -92,9 +73,8 @@ export const generatePdfDataUri = async (orderItems: OrderItem[]): Promise<strin
     return null;
   }
   
-  const doc = new jsPDF();
-  let yPos = 15;
-  const margin = 15;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3' });
+  const margin = 20;
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
@@ -105,76 +85,64 @@ export const generatePdfDataUri = async (orderItems: OrderItem[]): Promise<strin
     right: 'Desna'
   };
   
-  doc.setFont('helvetica', 'bold').setFontSize(18).text('Radni nalog', margin, yPos);
-  yPos += 7;
-  doc.setFont('helvetica', 'normal').setFontSize(10).text(`Datum: ${new Date().toLocaleDateString()}`, margin, yPos);
-  yPos += 10;
-
-  let grandTotal = 0;
   for (const [index, item] of orderItems.entries()) {
-    const itemHeight = 160;
-    if (yPos > pageHeight - itemHeight) {
+    if (index > 0) {
       doc.addPage();
-      yPos = 15;
     }
-
-    doc.setLineWidth(0.5).setDrawColor(200).rect(margin, yPos, pageWidth - 2 * margin, itemHeight);
+    let yPos = margin + 10;
     
-    let textY = yPos + 8;
-    const contentX = margin + 5;
+    doc.setFont('helvetica', 'bold').setFontSize(22).text('Radni nalog', margin, yPos);
+    yPos += 10;
+    doc.setFont('helvetica', 'normal').setFontSize(12).text(`Datum: ${new Date().toLocaleDateString()}`, margin, yPos);
+    yPos += 15;
 
-    doc.setFont('helvetica', 'bold').setFontSize(14).text(`${index + 1}. Stavka: ${item.id}`, contentX, textY);
-    textY += 8;
-
-    const detailsX = contentX;
-    const snapshotX = pageWidth / 2 + 10;
-    const snapshotW = pageWidth - snapshotX - margin;
-    const snapshotH = 60;
+    doc.setLineWidth(0.5).setDrawColor(200).rect(margin, yPos, pageWidth - 2 * margin, pageHeight - yPos - margin);
     
-    doc.setFont('helvetica', 'normal').setFontSize(9);
-    doc.text(`- Materijal: ${item.material.name}`, detailsX, textY);
-    textY += 5;
-    doc.text(`- Obrada lica: ${item.finish.name}`, detailsX, textY);
-    textY += 5;
-    doc.text(`- Profil ivica: ${item.profile.name}`, detailsX, textY);
-    textY += 5;
+    let textY = yPos + 12;
+    const contentX = margin + 8;
+    const rightColumnX = pageWidth / 2 + 30;
+
+    doc.setFont('helvetica', 'bold').setFontSize(18).text(`Stavka ${index + 1}: ${item.id}`, contentX, textY);
+    textY += 15;
+
+    doc.setFont('helvetica', 'bold').setFontSize(12).text(`Specifikacije:`, contentX, textY);
+    textY += 7;
+    
+    doc.setFont('helvetica', 'normal').setFontSize(11);
+    doc.text(`- Materijal: ${item.material.name}`, contentX, textY);
+    textY += 7;
+    doc.text(`- Obrada lica: ${item.finish.name}`, contentX, textY);
+    textY += 7;
+    doc.text(`- Profil ivica: ${item.profile.name}`, contentX, textY);
+    textY += 7;
     
     const processedEdgesString = (Object.entries(item.processedEdges)
           .filter(([, selected]) => selected)
           .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
           .join(', ') || 'Nijedna');
     
-    doc.text(`- Primjena profila: ${processedEdgesString}`, detailsX, textY);
-    textY += 5;
-
-    const okapnikString = item.okapnik && (Object.entries(item.okapnik)
-          .filter(([, selected]) => selected)
-          .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
-          .join(', '));
+    doc.text(`- Primjena profila: ${processedEdgesString}`, contentX, textY);
+    textY += 12;
     
-    if (okapnikString) {
-      doc.text(`- Okapnik: ${okapnikString}`, detailsX, textY);
-      textY += 5;
-    }
-    
-    textY += 3;
-    
-    doc.setFont('helvetica', 'bold').setFontSize(11).text(`Cijena stavke: €${item.totalCost.toFixed(2)}`, detailsX, textY);
+    doc.setFont('helvetica', 'bold').setFontSize(14).text(`Cijena stavke: €${item.totalCost.toFixed(2)}`, contentX, textY);
     
     if (item.snapshotDataUri) {
        try {
-        doc.addImage(item.snapshotDataUri, 'PNG', snapshotX, yPos + 8, snapshotW, snapshotH);
+        const snapshotW = 120;
+        const snapshotH = 90;
+        doc.setFont('helvetica', 'bold').setFontSize(12).text(`3D Prikaz:`, rightColumnX, yPos + 12);
+        doc.addImage(item.snapshotDataUri, 'PNG', rightColumnX, yPos + 20, snapshotW, snapshotH);
       } catch (e) {
         console.error("Failed to add image to PDF", e);
-        doc.text("3D Prikaz nedostupan", snapshotX, yPos + 20);
+        doc.text("3D Prikaz nedostupan", rightColumnX, yPos + 20);
       }
     }
     
-    const drawingY = yPos + 90;
-    const drawingStartX = margin + 20;
-    const drawingScale = 2.8;
+    const drawingY = textY + 40;
+    const drawingStartX = contentX + 20;
 
-    drawDimensionedRect(doc, drawingStartX, drawingY, item.dims.length, item.dims.width, `${item.dims.length.toFixed(1)} cm`, `${item.dims.width.toFixed(1)} cm`, 'Tlocrt', {
+    // Tlocrt
+    drawDimensionedRect(doc, drawingStartX, drawingY, item.dims.length, item.dims.width, `${item.dims.length.toFixed(1)} cm`, `${item.dims.width.toFixed(1)} cm`, 'Tlocrt (Top View)', {
       surfaceFinish: item.finish.name,
       processedEdges: {
         top: item.processedEdges.back,
@@ -184,30 +152,18 @@ export const generatePdfDataUri = async (orderItems: OrderItem[]): Promise<strin
       },
     });
 
-    const frontViewX = drawingStartX + (item.dims.length / drawingScale) + 30;
-    drawDimensionedRect(doc, frontViewX, drawingY, item.dims.length, item.dims.height, `${item.dims.length.toFixed(1)} cm`, `${item.dims.height.toFixed(1)} cm`, 'Nacrt', {
-        showOkapnik: !!item.okapnik?.front || !!item.okapnik?.back,
-    });
-    doc.setFontSize(7).setTextColor(120).setFont('helvetica', 'normal').text(`Profil: ${item.profile.name}`, frontViewX, drawingY + (item.dims.height / drawingScale) + 10);
+    const frontViewX = rightColumnX;
+    // Nacrt
+    drawDimensionedRect(doc, frontViewX, drawingY, item.dims.length, item.dims.height, `${item.dims.length.toFixed(1)} cm`, `${item.dims.height.toFixed(1)} cm`, 'Nacrt (Front View)');
+    doc.setFontSize(8).setTextColor(120).setFont('helvetica', 'normal').text(`Profil: ${item.profile.name}`, frontViewX, drawingY + (item.dims.height * 5) + 15);
     
-    const sideViewX = frontViewX + (item.dims.length / drawingScale) + 30;
-    drawDimensionedRect(doc, sideViewX, drawingY, item.dims.width, item.dims.height, `${item.dims.width.toFixed(1)} cm`, `${item.dims.height.toFixed(1)} cm`, 'Bokocrt', {
-        showOkapnik: !!item.okapnik?.left || !!item.okapnik?.right
-    });
-     doc.setFontSize(7).setTextColor(120).setFont('helvetica', 'normal').text(`Profil: ${item.profile.name}`, sideViewX, drawingY + (item.dims.height / drawingScale) + 10);
-    
-    yPos += itemHeight + 10;
-    grandTotal += item.totalCost;
+    // Bokocrt
+    const sideViewY = drawingY + (item.dims.height * 5) + 40;
+    drawDimensionedRect(doc, frontViewX, sideViewY, item.dims.width, item.dims.height, `${item.dims.width.toFixed(1)} cm`, `${item.dims.height.toFixed(1)} cm`, 'Bokocrt (Side View)');
+     doc.setFontSize(8).setTextColor(120).setFont('helvetica', 'normal').text(`Profil: ${item.profile.name}`, frontViewX, sideViewY + (item.dims.height * 5) + 15);
   }
 
-  if (yPos > pageHeight - 30) {
-    doc.addPage();
-    yPos = 20;
-  }
-  
-  doc.setLineWidth(0.5).line(margin, yPos, pageWidth - margin, yPos);
-  yPos += 10;
-  doc.setFont('helvetica', 'bold').setFontSize(14).text(`UKUPNO NALOG: €${grandTotal.toFixed(2)}`, margin, yPos);
+  // Grand total could be on a summary page, for now we keep it per item.
 
   return doc.output('datauristring');
 };

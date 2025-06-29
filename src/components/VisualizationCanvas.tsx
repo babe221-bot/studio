@@ -13,14 +13,13 @@ interface VisualizationProps {
   finish?: SurfaceFinish;
   profile?: EdgeProfile;
   processedEdges: ProcessedEdges;
-  okapnik: ProcessedEdges;
 }
 
 type CanvasHandle = {
   getSnapshot: () => string | null;
 };
 
-const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims, material, finish, profile, processedEdges, okapnik }, ref) => {
+const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims, material, finish, profile, processedEdges }, ref) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -29,7 +28,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
   const textureCache = useRef<{ [key: string]: THREE.Texture }>({});
   const mainMeshRef = useRef<THREE.Mesh | null>(null);
   const edgeGroupRef = useRef<THREE.Group | null>(null);
-  const okapnikGroupRef = useRef<THREE.Group | null>(null);
 
   const { resolvedTheme } = useTheme();
 
@@ -78,10 +76,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     edgeGroupRef.current = edgeGroup;
     scene.add(edgeGroup);
     
-    const okapnikGroup = new THREE.Group();
-    okapnikGroupRef.current = okapnikGroup;
-    scene.add(okapnikGroup);
-
     const animate = () => {
       requestAnimationFrame(animate);
       controls.update();
@@ -137,17 +131,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         edgeGroupRef.current.remove(child);
       }
     }
-    
-    if (okapnikGroupRef.current) {
-      while (okapnikGroupRef.current.children.length > 0) {
-        const child = okapnikGroupRef.current.children[0];
-        if (child instanceof THREE.Mesh) {
-            child.geometry.dispose();
-            (child.material as THREE.Material).dispose();
-        }
-        okapnikGroupRef.current.remove(child);
-      }
-    }
 
     const { length, width, height } = dims;
     const scale = 100;
@@ -158,47 +141,50 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     let geometry: THREE.BufferGeometry;
     
     const profileName = profile.name || '';
-    const smusMatch = profileName.match(/Smuš (\d+)mm/);
-    const poluZaobljenaMatch = profileName.match(/Polu-zaobljena R(\d+)mm/);
-    const punoZaobljenaMatch = profileName.match(/Puno zaobljena R(\d+)mm/);
-
-    if (smusMatch || poluZaobljenaMatch || punoZaobljenaMatch) {
+    const chamferMatch = profileName.match(/^C(\d+\.?\d*)/);
+    const radiusMatch = profileName.match(/^R(\d+\.?\d*)/);
+    
+    if (chamferMatch) {
       const shape = new THREE.Shape();
+      const bevelSize = parseFloat(chamferMatch[1]) / 1000; // mm to m
       
-      // We are creating the cross-section shape in the YZ plane (Y=height, Z=width)
-      // and extruding it along the X-axis (length).
-      
-      if (smusMatch) {
-          const bevelSize = parseFloat(smusMatch[1]) / 1000; // mm to m
-          shape.moveTo(0, 0); // bottom-back (z,y)
-          shape.lineTo(w_m, 0); // bottom-front
-          shape.lineTo(w_m, h_m - bevelSize); // top-front start of bevel
-          shape.lineTo(w_m - bevelSize, h_m); // top-front end of bevel
-          shape.lineTo(bevelSize, h_m);     // top-back end of bevel
-          shape.lineTo(0, h_m - bevelSize); // top-back start of bevel
-          shape.lineTo(0,0);
-      } else if (poluZaobljenaMatch) {
-          const R = parseFloat(poluZaobljenaMatch[1]) / 1000; // mm to m
-          shape.moveTo(0, 0);
-          shape.lineTo(w_m, 0);
-          shape.lineTo(w_m, h_m - R);
-          shape.absarc(w_m - R, h_m - R, R, 0, Math.PI / 2, false);
-          shape.lineTo(R, h_m);
-          shape.absarc(R, h_m - R, R, Math.PI / 2, Math.PI, false);
-          shape.lineTo(0, 0);
-      } else if (punoZaobljenaMatch) {
-          const R = parseFloat(punoZaobljenaMatch[1]) / 1000; // mm to m, should be h_m/2
-          shape.moveTo(0, h_m); // top-back
-          shape.lineTo(w_m-R, h_m); // top-front start of arc
-          shape.absarc(w_m-R, R, R, Math.PI/2, -Math.PI/2, false); // full radius on front
-          shape.lineTo(0, 0); // bottom-back
-          shape.lineTo(0, h_m); // close
-      }
+      shape.moveTo(0, 0); // bottom-back (z,y)
+      shape.lineTo(w_m, 0); // bottom-front
+      shape.lineTo(w_m, h_m - bevelSize); // top-front start of bevel
+      shape.lineTo(w_m - bevelSize, h_m); // top-front end of bevel
+      shape.lineTo(bevelSize, h_m);     // top-back end of bevel
+      shape.lineTo(0, h_m - bevelSize); // top-back start of bevel
+      shape.lineTo(0,0);
 
       const extrudeSettings = { steps: 1, depth: l_m, bevelEnabled: false };
       geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-      geometry.rotateY(-Math.PI / 2); // Align extrusion with X-axis
+      geometry.rotateY(-Math.PI / 2);
       geometry.center();
+
+    } else if (radiusMatch) {
+        const R = parseFloat(radiusMatch[1]) / 1000; // mm to m
+        const shape = new THREE.Shape();
+        
+        if (profileName.includes('Puno')) { // Full roundover
+            shape.moveTo(0, h_m); // top-back
+            shape.lineTo(w_m-R, h_m); // to start of arc
+            shape.absarc(w_m-R, R, R, Math.PI/2, -Math.PI/2, false); // front half circle
+            shape.lineTo(0, 0); // bottom-back
+            shape.lineTo(0, h_m); // close path
+        } else { // Polu C profile (quarter circle on top front and back)
+            shape.moveTo(0, 0);
+            shape.lineTo(w_m, 0);
+            shape.lineTo(w_m, h_m - R);
+            shape.absarc(w_m - R, h_m - R, R, 0, Math.PI / 2, false);
+            shape.lineTo(R, h_m);
+            shape.absarc(R, h_m - R, R, Math.PI / 2, Math.PI, false);
+            shape.lineTo(0, 0);
+        }
+        
+        const extrudeSettings = { steps: 1, depth: l_m, bevelEnabled: false };
+        geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        geometry.rotateY(-Math.PI / 2);
+        geometry.center();
 
     } else {
       geometry = new THREE.BoxGeometry(l_m, h_m, w_m);
@@ -214,11 +200,11 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         clearcoatRoughness: 0.5,
     });
 
-    if (finishName.includes('polirano')) {
+    if (finishName.includes('poliran')) {
         stoneMaterial.roughness = 0.1;
         stoneMaterial.clearcoat = 0.9;
         stoneMaterial.clearcoatRoughness = 0.1;
-    } else if (finishName.includes('paljeno') || finishName.includes('štokovano')) {
+    } else if (finishName.includes('plamena') || finishName.includes('štokovan')) {
         stoneMaterial.roughness = 0.95;
     }
 
@@ -259,38 +245,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
       edgeGroupRef.current?.add(edgeLines);
     }
     
-    const okapnikGrooveMaterial = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
-    const okapnikInset = 0.015;
-    const okapnikSize = 0.005;
-    const cornerGap = okapnikSize;
-
-    const createGroove = (width: number, height: number, depth: number) => new THREE.BoxGeometry(width, height, depth);
-
-    if (okapnik.front) { // front is +z
-        const groove = createGroove(l_m - 2 * cornerGap, okapnikSize, okapnikSize);
-        const grooveMesh = new THREE.Mesh(groove, okapnikGrooveMaterial);
-        grooveMesh.position.set(0, -hy + (okapnikSize / 2), hz - okapnikInset - (okapnikSize / 2));
-        okapnikGroupRef.current?.add(grooveMesh);
-    }
-    if (okapnik.back) { // back is -z
-        const groove = createGroove(l_m - 2 * cornerGap, okapnikSize, okapnikSize);
-        const grooveMesh = new THREE.Mesh(groove, okapnikGrooveMaterial);
-        grooveMesh.position.set(0, -hy + (okapnikSize / 2), -hz + okapnikInset + (okapnikSize / 2));
-        okapnikGroupRef.current?.add(grooveMesh);
-    }
-    if (okapnik.left) { // left is -x
-        const groove = createGroove(okapnikSize, okapnikSize, w_m - 2 * cornerGap);
-        const grooveMesh = new THREE.Mesh(groove, okapnikGrooveMaterial);
-        grooveMesh.position.set(-hx + okapnikInset + (okapnikSize / 2), -hy + (okapnikSize / 2), 0);
-        okapnikGroupRef.current?.add(grooveMesh);
-    }
-    if (okapnik.right) { // right is +x
-        const groove = createGroove(okapnikSize, okapnikSize, w_m - 2 * cornerGap);
-        const grooveMesh = new THREE.Mesh(groove, okapnikGrooveMaterial);
-        grooveMesh.position.set(hx - okapnikInset - (okapnikSize / 2), -hy + (okapnikSize / 2), 0);
-        okapnikGroupRef.current?.add(grooveMesh);
-    }
-    
     if (cameraRef.current && controlsRef.current) {
         const box = new THREE.Box3().setFromObject(mesh);
         const center = box.getCenter(new THREE.Vector3());
@@ -306,7 +260,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         controlsRef.current.update();
     }
     
-  }, [dims, material, finish, profile, processedEdges, okapnik, resolvedTheme]);
+  }, [dims, material, finish, profile, processedEdges, resolvedTheme]);
 
   return <div ref={mountRef} className="h-full w-full rounded-lg" data-ai-hint="stone slab 3d render" />;
 });

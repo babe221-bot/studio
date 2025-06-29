@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { initialMaterials, initialSurfaceFinishes, initialEdgeProfiles, OKAPNIK_COST_PER_M } from '@/lib/data';
+import { initialMaterials, initialSurfaceFinishes, initialEdgeProfiles } from '@/lib/data';
 import { generatePdfDataUri } from '@/lib/pdf';
 import VisualizationCanvas from '@/components/VisualizationCanvas';
 import MaterialModal from '@/components/modals/MaterialModal';
@@ -50,13 +50,6 @@ export function Lab() {
     right: true,
   });
   
-  const [okapnik, setOkapnik] = useState<ProcessedEdges>({
-    front: false,
-    back: false,
-    left: false,
-    right: false,
-  });
-
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
@@ -69,7 +62,7 @@ export function Lab() {
 
   const calculations = useMemo(() => {
     if (!selectedMaterial || !selectedFinish || !selectedProfile || !length || !width || !height) {
-      return { surfaceArea: 0, weight: 0, materialCost: 0, processingCost: 0, totalCost: 0, okapnikCost: 0 };
+      return { surfaceArea: 0, weight: 0, materialCost: 0, processingCost: 0, totalCost: 0 };
     }
     const length_m = length / 100;
     const width_m = width / 100;
@@ -80,21 +73,14 @@ export function Lab() {
     if (processedEdges.left) processed_perimeter_m += width_m;
     if (processedEdges.right) processed_perimeter_m += width_m;
 
-    let okapnik_perimeter_m = 0;
-    if (okapnik.front) okapnik_perimeter_m += length_m;
-    if (okapnik.back) okapnik_perimeter_m += length_m;
-    if (okapnik.left) okapnik_perimeter_m += width_m;
-    if (okapnik.right) okapnik_perimeter_m += width_m;
-
     const surfaceArea_m2 = length_m * width_m;
     const weight_kg = (length * width * height * selectedMaterial.density) / 1000;
     const materialCost = surfaceArea_m2 * selectedMaterial.cost_sqm;
-    const okapnikCost = okapnik_perimeter_m * OKAPNIK_COST_PER_M;
-    const processingCost = (surfaceArea_m2 * selectedFinish.cost_sqm) + (processed_perimeter_m * selectedProfile.cost_m) + okapnikCost;
+    const processingCost = (surfaceArea_m2 * selectedFinish.cost_sqm) + (processed_perimeter_m * selectedProfile.cost_m);
     const totalCost = materialCost + processingCost;
     
-    return { surfaceArea: surfaceArea_m2, weight: weight_kg, materialCost, processingCost, totalCost, okapnikCost };
-  }, [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnik]);
+    return { surfaceArea: surfaceArea_m2, weight: weight_kg, materialCost, processingCost, totalCost };
+  }, [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges]);
 
   const visualizationState = useMemo(() => ({
     dims: { length, width, height },
@@ -102,8 +88,7 @@ export function Lab() {
     finish: selectedFinish,
     profile: selectedProfile,
     processedEdges: processedEdges,
-    okapnik: okapnik,
-  }), [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnik]);
+  }), [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges]);
 
   const handleAddToOrder = () => {
     if (!selectedMaterial || !selectedFinish || !selectedProfile || !specimenId) {
@@ -120,7 +105,6 @@ export function Lab() {
       finish: selectedFinish,
       profile: selectedProfile,
       processedEdges: processedEdges,
-      okapnik: okapnik,
       totalCost: calculations.totalCost,
       snapshotDataUri,
     };
@@ -173,13 +157,6 @@ export function Lab() {
     back: 'Zadnja',
     left: 'Lijeva',
     right: 'Desna'
-  };
-
-  const handleEdgeProcessingChange = (edge: keyof ProcessedEdges, checked: boolean) => {
-      setProcessedEdges(prev => ({ ...prev, [edge]: checked }));
-      if (!checked) {
-          setOkapnik(prev => ({ ...prev, [edge]: false }));
-      }
   };
 
   return (
@@ -261,28 +238,9 @@ export function Lab() {
                             <Checkbox 
                                 id={`edge-${edge}`} 
                                 checked={processedEdges[edge as keyof ProcessedEdges]} 
-                                onCheckedChange={(checked) => handleEdgeProcessingChange(edge as keyof ProcessedEdges, !!checked)} 
+                                onCheckedChange={(checked) => setProcessedEdges(prev => ({...prev, [edge]: !!checked}))}
                             />
                             <Label htmlFor={`edge-${edge}`} className="font-normal cursor-pointer">{edgeNames[edge as keyof typeof edgeNames]}</Label>
-                        </div>
-                       ))}
-                    </div>
-                </div>
-              </div>
-               <div className="space-y-2 border-t pt-4">
-                <Label>Okapnik (utor)</Label>
-                 <div className="space-y-2 pt-2">
-                    <Label className="text-sm">Dodaj okapnik na ivicama:</Label>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
-                       {Object.keys(edgeNames).map((edge) => (
-                          <div className="flex items-center space-x-2" key={`okapnik-${edge}`}>
-                            <Checkbox 
-                                id={`okapnik-${edge}`} 
-                                checked={okapnik[edge as keyof ProcessedEdges]} 
-                                onCheckedChange={(checked) => setOkapnik(prev => ({...prev, [edge]: !!checked}))}
-                                disabled={!processedEdges[edge as keyof ProcessedEdges]}
-                            />
-                            <Label htmlFor={`okapnik-${edge}`} className="font-normal cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{edgeNames[edge as keyof typeof edgeNames]}</Label>
                         </div>
                        ))}
                     </div>
@@ -299,7 +257,6 @@ export function Lab() {
               <Separator />
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak materijala</span><span className="font-medium font-code">€{calculations.materialCost.toFixed(2)}</span></div>
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak obrade</span><span className="font-medium font-code">€{calculations.processingCost.toFixed(2)}</span></div>
-              {calculations.okapnikCost > 0 && <div className="flex justify-between text-xs pl-2"><span className="text-muted-foreground"> (uklj. Okapnik)</span><span className="font-medium font-code">€{calculations.okapnikCost.toFixed(2)}</span></div>}
               <Separator />
               <div className="flex justify-between text-lg font-bold text-primary"><span >Ukupni trošak</span><span>€{calculations.totalCost.toFixed(2)}</span></div>
             </CardContent>
@@ -340,18 +297,12 @@ export function Lab() {
                                 .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
                                 .join(', ') || 'Nijedna');
                           
-                          const okapnikString = item.okapnik && (Object.entries(item.okapnik)
-                                .filter(([, selected]) => selected)
-                                .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
-                                .join(', '));
-
                           return (
                             <div key={item.orderId} className="flex items-center justify-between rounded-lg border p-3">
                                 <div className="flex-1">
                                     <p className="font-semibold">{item.id}</p>
                                     <p className="text-xs text-muted-foreground">{item.material.name} | {item.finish.name} | {item.profile.name}</p>
                                     <p className="text-xs text-muted-foreground">Obrađene ivice: {processedEdgesString}</p>
-                                    {okapnikString && <p className="text-xs text-muted-foreground">Okapnik: {okapnikString}</p>}
                                 </div>
                                 <div className="text-right">
                                     <p className="font-semibold">€{item.totalCost.toFixed(2)}</p>
