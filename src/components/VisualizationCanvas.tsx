@@ -31,7 +31,6 @@ const generateSlabGeometry = (
 
   let profileType: 'chamfer' | 'half-round' | 'full-round' | 'none' = 'none';
   let R = 0;
-  const roundSegments = 8;
 
   if (smusMatch) {
     profileType = 'chamfer';
@@ -44,7 +43,7 @@ const generateSlabGeometry = (
     R = parseFloat(punoRMatch[1]) / 100; // cm to meters
   }
   
-  R = Math.min(R, H / 2, L / 2, W / 2);
+  R = Math.min(R, H / 2, L/2, W/2);
 
   const vertices: number[] = [];
   const indices: number[] = [];
@@ -64,135 +63,77 @@ const generateSlabGeometry = (
     addFace(v1, v3, v4);
   };
 
-  const points: { [key: string]: number } = {};
-
   const halfL = L / 2;
   const halfW = W / 2;
 
-  points.blb = addVertex(-halfL, 0, -halfW);
-  points.brb = addVertex( halfL, 0, -halfW);
-  points.frb = addVertex( halfL, 0,  halfW);
-  points.flb = addVertex(-halfL, 0,  halfW);
-
-  const createTopVertices = (cx: number, cz: number, pE1: boolean, pE2: boolean) => {
-    const signX = Math.sign(cx);
-    const signZ = Math.sign(cz);
-
-    if (profileType === 'none' || (!pE1 && !pE2)) {
-      return { corner: addVertex(cx, H, cz) };
-    }
-    
-    if (profileType === 'chamfer') {
-        const cornerPoints: { [key:string]: any } = {};
-        if (pE1 && pE2) { // Corner with two processed edges
-          cornerPoints.main = addVertex(cx - signX * R, H, cz - signZ * R);
-          cornerPoints.e1 = addVertex(cx, H - R, cz - signZ * R);
-          cornerPoints.e2 = addVertex(cx - signX * R, H - R, cz);
-        } else if (pE1) { // Edge along Z-axis (front/back)
-          cornerPoints.main = addVertex(cx, H, cz - signZ * R);
-          cornerPoints.e1 = addVertex(cx, H - R, cz - signZ * R);
-        } else { // pE2, Edge along X-axis (left/right)
-          cornerPoints.main = addVertex(cx - signX * R, H, cz);
-          cornerPoints.e2 = addVertex(cx - signX * R, H - R, cz);
-        }
-        return cornerPoints;
-    }
-    
-    if (profileType === 'half-round' || profileType === 'full-round') {
-        const cornerPoints: { [key:string]: any } = { main: [] };
-        // This simplified version generates the profile as if it's on an edge
-        if (pE1 && pE2) { // Corner - quarter torus
-             for (let i = 0; i <= roundSegments; i++) {
-                const angle = (i / roundSegments) * (Math.PI / 2);
-                const x = cx - signX * R * (1 - Math.cos(angle));
-                const z = cz - signZ * R * (1 - Math.cos(angle));
-                cornerPoints.main.push(addVertex(x, H, z)); // Top point
-                // side points would need more logic
-             }
-        } else if (pE1) { // Profile primarily on Z-axis for front/back edge
-             for (let i = 0; i <= roundSegments; i++) {
-                const angle = (i / roundSegments) * (Math.PI / 2);
-                const y = H - R * (1 - Math.sin(angle));
-                const z = cz - signZ * R * (1 - Math.cos(angle));
-                cornerPoints.main.push(addVertex(cx, y, z));
-             }
-        } else if (pE2){ // Profile primarily on X-axis for left/right edge
-            for (let i = 0; i <= roundSegments; i++) {
-                const angle = (i / roundSegments) * (Math.PI / 2);
-                const y = H - R * (1 - Math.sin(angle));
-                const x = cx - signX * R * (1 - Math.cos(angle));
-                cornerPoints.main.push(addVertex(x, y, cz));
-            }
-        } else {
-             cornerPoints.main.push(addVertex(cx,H,cz));
-        }
-        return cornerPoints;
-    }
-    
-    return { corner: addVertex(cx, H, cz) };
-  };
-
-  const fltData = createTopVertices(-halfL,  halfW, processedEdges.front, processedEdges.left);
-  const frtData = createTopVertices( halfL,  halfW, processedEdges.front, processedEdges.right);
-  const bltData = createTopVertices(-halfL, -halfW, processedEdges.back,  processedEdges.left);
-  const brtData = createTopVertices( halfL, -halfW, processedEdges.back,  processedEdges.right);
+  // Bottom vertices
+  const blb = addVertex(-halfL, 0, -halfW);
+  const brb = addVertex( halfL, 0, -halfW);
+  const frb = addVertex( halfL, 0,  halfW);
+  const flb = addVertex(-halfL, 0,  halfW);
 
   // Bottom face
-  addQuad(points.blb, points.brb, points.frb, points.flb);
+  addQuad(blb, brb, frb, flb);
 
-  const getTopVertex = (data: any) => {
-    if (Array.isArray(data.main) && data.main.length > 0) return data.main[data.main.length - 1];
-    return data.main || data.e1 || data.corner;
+  // Top vertices generation
+  const createCorner = (cx: number, cz: number, procX: boolean, procZ: boolean) => {
+      const signX = Math.sign(cx);
+      const signZ = Math.sign(cz);
+
+      if (profileType === 'none') {
+          return {
+              top: addVertex(cx, H, cz),
+              side_z: addVertex(cx, H, cz),
+              side_x: addVertex(cx, H, cz)
+          };
+      }
+      
+      let top_x = cx;
+      let top_z = cz;
+      let side_y_for_face_Z = H;
+      let side_y_for_face_X = H;
+
+      if (profileType === 'chamfer' || profileType === 'half-round' || profileType === 'full-round') {
+          if (procX) { // front/back
+              top_z = cz - signZ * R;
+              side_y_for_face_Z = H - R;
+          }
+          if (procZ) { // left/right
+              top_x = cx - signX * R;
+              side_y_for_face_X = H - R;
+          }
+      }
+
+      return {
+          top: addVertex(top_x, H, top_z),
+          side_z: addVertex(cx, side_y_for_face_Z, cz), // Point for front/back faces
+          side_x: addVertex(cx, side_y_for_face_X, cz)  // Point for left/right faces
+      };
   };
+
+  const blt = createCorner(-halfL, -halfW, processedEdges.back, processedEdges.left);
+  const brt = createCorner( halfL, -halfW, processedEdges.back, processedEdges.right);
+  const frt = createCorner( halfL,  halfW, processedEdges.front, processedEdges.right);
+  const flt = createCorner(-halfL,  halfW, processedEdges.front, processedEdges.left);
   
-  const getSideVertex = (data: any, axis: 'x' | 'z') => {
-     if (Array.isArray(data.main) && data.main.length > 0) return data.main[0];
-     if (axis === 'x') return data.e1 || data.main || data.corner; // front/back edges are along x
-     return data.e2 || data.main || data.corner; // left/right edges are along z
-  };
+  // Top Face
+  addQuad(blt.top, brt.top, frt.top, flt.top);
 
-  // Top Surface - connects the highest points of each corner profile
-  addQuad(
-      getTopVertex(bltData),
-      getTopVertex(brtData),
-      getTopVertex(frtData),
-      getTopVertex(fltData)
-  );
+  // Side Faces & Chamfer/Round Faces
 
-  // Side Faces
-  const connectEdge = (c1_data: any, c2_data: any, isProcessed: boolean, bottomP1: number, bottomP2: number, axis: 'x' | 'z') => {
-    const side1 = getSideVertex(c1_data, axis);
-    const side2 = getSideVertex(c2_data, axis);
-    
-    addQuad(bottomP1, bottomP2, side2, side1);
-    
-    if (isProcessed) {
-        if (profileType === 'chamfer') {
-            const top1 = getTopVertex(c1_data);
-            const top2 = getTopVertex(c2_data);
-            addQuad(side1, side2, top2, top1);
-        } else if (profileType === 'half-round' || profileType === 'full-round') {
-            if (Array.isArray(c1_data.main) && c1_data.main.length > 1 && Array.isArray(c2_data.main) && c2_data.main.length > 1) {
-                const v1 = c1_data.main;
-                const v2 = c2_data.main;
-                for (let i = 0; i < roundSegments; i++) {
-                    addQuad(v1[i], v2[i], v2[i+1], v1[i+1]);
-                }
-            } else {
-                 const top1 = getTopVertex(c1_data);
-                 const top2 = getTopVertex(c2_data);
-                 addQuad(side1, side2, top2, top1);
-            }
-        }
-    }
-  };
-
-  // Simplified connection logic
-  connectEdge(fltData, frtData, processedEdges.front, points.flb, points.frb, 'x');
-  connectEdge(frtData, brtData, processedEdges.right, points.frb, points.brb, 'z');
-  connectEdge(brtData, bltData, processedEdges.back, points.brb, points.blb, 'x');
-  connectEdge(bltData, fltData, processedEdges.left, points.blb, points.flb, 'z');
-
+  // Back Face (runs along X axis)
+  addQuad(brb, blb, blt.side_z, brt.side_z);
+  if (processedEdges.back) addQuad(blt.side_z, brt.side_z, brt.top, blt.top);
+  // Front Face
+  addQuad(flb, frb, frt.side_z, flt.side_z);
+  if (processedEdges.front) addQuad(flt.side_z, frt.side_z, frt.top, flt.top);
+  // Left Face (runs along Z axis)
+  addQuad(blb, flb, flt.side_x, blt.side_x);
+  if (processedEdges.left) addQuad(flt.side_x, blt.side_x, blt.top, flt.top);
+  // Right Face
+  addQuad(frb, brb, brt.side_x, frt.side_x);
+  if (processedEdges.right) addQuad(brt.side_x, frt.side_x, frt.top, brt.top);
+  
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
   geometry.setIndex(indices);
@@ -231,7 +172,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
-    // Use a consistent, neutral studio background
     scene.background = new THREE.Color(0xEAEAEA);
 
     const camera = new THREE.PerspectiveCamera(50, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
@@ -248,7 +188,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     controls.enableDamping = true;
     controlsRef.current = controls;
 
-    // New lighting setup for a more neutral, studio look
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
     scene.add(ambientLight);
 
