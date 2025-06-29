@@ -71,9 +71,14 @@ export const initialSurfaceFinishes: SurfaceFinish[] = [
 export const initialEdgeProfiles: EdgeProfile[] = [
   { id: 1, name: 'Ravni rez (pilan)', cost_m: 5 },
   { id: 2, name: 'Polirana ravna ivica', cost_m: 15 },
-  { id: 3, name: 'Oborena ivica 2mm (faza)', cost_m: 20 },
-  { id: 7, name: 'Okapnik (utor ispod ploče)', cost_m: 25 },
-  { id: 4, name: 'Zaobljena R5 (četvrt-krug)', cost_m: 30 },
-  { id: 5, name: 'Polu-zaobljena (polu-C)', cost_m: 45 },
-  { id: 6, name: 'Puno zaobljena (C-profil)', cost_m: 60 },
+  { id: 3, name: 'Faza 2mm', cost_m: 20 },
+  { id: 8, name: 'Faza 5mm', cost_m: 22 },
+  { id: 9, name: 'Faza 10mm', cost_m: 25 },
+  { id: 4, name: 'Četvrt-krug R10mm', cost_m: 30 },
+  { id: 10, name: 'Četvrt-krug R20mm', cost_m: 32 },
+  { id: 11, name: 'Četvrt-krug R30mm', cost_m: 35 },
+  { id: 5, name: 'Polu-zaobljena R15mm (za visinu 3cm)', cost_m: 45 },
+  { id: 6, name: 'Puno zaobljena R15mm (za visinu 3cm)', cost_m: 60 },
 ];
+
+export const OKAPNIK_COST_PER_M = 25;

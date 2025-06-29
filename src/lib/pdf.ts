@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable'; // Ensure this is installed for more complex tables if needed.
+import 'jspdf-autotable';
 import type { OrderItem } from '@/types';
 
 const drawDimensionedRect = (
@@ -15,11 +15,11 @@ const drawDimensionedRect = (
     const scale = 3.5;
     const rectW = w / scale;
     const rectH = h / scale;
-    const textOffset = 5;
+    const textOffset = 3;
     const dimLineOffset = 4;
     const dimTickSize = 2;
 
-    doc.setFontSize(9).setFont('helvetica', 'bold').text(title, x, y - 15);
+    doc.setFontSize(9).setFont('helvetica', 'bold').text(title, x, y - 10);
     
     doc.setLineWidth(0.3).setDrawColor(0).rect(x, y, rectW, rectH);
     doc.setFontSize(8).setTextColor(120).setFont('helvetica', 'normal');
@@ -88,18 +88,28 @@ export const generatePdfDataUri = async (orderItems: OrderItem[]): Promise<strin
     textY += 5;
     doc.text(`- Obrada lica: ${item.finish.name}`, detailsX, textY);
     textY += 5;
-    doc.text(`- Obrada ivica: ${item.profile.name}`, detailsX, textY);
+    doc.text(`- Profil ivica: ${item.profile.name}`, detailsX, textY);
     textY += 5;
     
-    const processedEdgesString = !item.processedEdges
-      ? 'Sve (stari unos)'
-      : (Object.entries(item.processedEdges)
+    const processedEdgesString = (Object.entries(item.processedEdges)
           .filter(([, selected]) => selected)
           .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
           .join(', ') || 'Nijedna');
     
-    doc.text(`- Primjena na ivicama: ${processedEdgesString}`, detailsX, textY);
-    textY += 8;
+    doc.text(`- Primjena profila: ${processedEdgesString}`, detailsX, textY);
+    textY += 5;
+
+    const okapnikString = item.okapnik && (Object.entries(item.okapnik)
+          .filter(([, selected]) => selected)
+          .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
+          .join(', '));
+    
+    if (okapnikString) {
+      doc.text(`- Okapnik: ${okapnikString}`, detailsX, textY);
+      textY += 5;
+    }
+    
+    textY += 3;
     
     doc.setFont('helvetica', 'bold').setFontSize(11).text(`Cijena stavke: €${item.totalCost.toFixed(2)}`, detailsX, textY);
     
@@ -112,17 +122,14 @@ export const generatePdfDataUri = async (orderItems: OrderItem[]): Promise<strin
       }
     }
     
-    const drawingY = yPos + 70;
+    const drawingY = yPos + 75;
     const drawingStartX = margin + 20;
 
-    // Tlocrt (Top View)
     drawDimensionedRect(doc, drawingStartX, drawingY, item.dims.length, item.dims.width, `${item.dims.length.toFixed(1)} cm`, `${item.dims.width.toFixed(1)} cm`, 'Tlocrt');
     
-    // Nacrt (Front View)
     const frontViewX = drawingStartX + (item.dims.length / 3.5) + 30;
     drawDimensionedRect(doc, frontViewX, drawingY, item.dims.length, item.dims.height, `${item.dims.length.toFixed(1)} cm`, `${item.dims.height.toFixed(1)} cm`, 'Nacrt');
     
-    // Bokocrt (Side View)
     const sideViewX = frontViewX + (item.dims.length / 3.5) + 30;
     drawDimensionedRect(doc, sideViewX, drawingY, item.dims.width, item.dims.height, `${item.dims.width.toFixed(1)} cm`, `${item.dims.height.toFixed(1)} cm`, 'Bokocrt');
     
