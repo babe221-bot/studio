@@ -125,7 +125,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 
     const { length, width, height } = dims;
     const scale = 100;
-    const profileName = profile.name.toLowerCase();
     
     const w_m = width / scale;
     const h_m = height / scale;
@@ -135,30 +134,20 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 
     const shape = new THREE.Shape();
     
-    const fazaMatch = profile.name.match(/Faza (\d+)mm/);
-    const cetvrtKrugMatch = profile.name.match(/Četvrt-krug R(\d+)mm/);
+    const smusMatch = profile.name.match(/Smuš (\d+)mm/);
     const poluZaobljenaMatch = profile.name.match(/Polu-zaobljena R(\d+)mm/);
     const punoZaobljenaMatch = profile.name.match(/Puno zaobljena R(\d+)mm/);
 
-    if (fazaMatch) {
-        const bevelSize = parseFloat(fazaMatch[1]) / 1000; // to meters
+    if (smusMatch) {
+        const bevelSize = parseFloat(smusMatch[1]) / 1000; // to meters
         shape.moveTo(0,0);
-        shape.lineTo(w_m - bevelSize, 0);
-        shape.lineTo(w_m, bevelSize);
+        shape.lineTo(w_m, 0);
         shape.lineTo(w_m, h_m - bevelSize);
         shape.lineTo(w_m - bevelSize, h_m);
         shape.lineTo(0, h_m);
         shape.lineTo(0,0);
-    } else if (cetvrtKrugMatch) {
-        const R = parseFloat(cetvrtKrugMatch[1]) / 1000;
-        shape.moveTo(0, 0);
-        shape.lineTo(w_m - R, 0);
-        shape.absarc(w_m - R, R, R, -Math.PI/2, 0, false);
-        shape.lineTo(w_m, h_m);
-        shape.lineTo(0, h_m);
-        shape.lineTo(0, 0);
     } else if (poluZaobljenaMatch) {
-        const R = parseFloat(poluZaobljenaMatch[1]) / 1000; // radius is half the height
+        const R = parseFloat(poluZaobljenaMatch[1]) / 1000;
         shape.moveTo(0,0);
         shape.lineTo(w_m - R, 0);
         shape.absarc(w_m-R, R, R, -Math.PI/2, Math.PI/2, false);
