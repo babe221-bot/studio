@@ -32,17 +32,17 @@ const generateSlabGeometry = (
 
   let profileType: 'chamfer' | 'half-round' | 'full-round' | 'none' = 'none';
   let R = 0;
-  const roundSegments = 5;
+  const roundSegments = 8; // Increased for smoother curves
 
   if (smusMatch) {
     profileType = 'chamfer';
-    R = parseFloat(smusMatch[1]) / 1000; 
+    R = parseFloat(smusMatch[1]) / 1000; // mm to m
   } else if (poluRMatch) {
     profileType = 'half-round';
-    R = parseFloat(poluRMatch[1]) / 100;
+    R = parseFloat(poluRMatch[1]) / 100; // cm to m
   } else if (punoRMatch) {
     profileType = 'full-round';
-    R = parseFloat(punoRMatch[1]) / 100;
+    R = parseFloat(punoRMatch[1]) / 100; // cm to m
   }
   
   R = Math.min(R, H / 2, W / 2, L / 2);
@@ -104,44 +104,37 @@ const generateSlabGeometry = (
         const isFullRound = profileType === 'full-round';
         
         if(pE1 && pE2) { // Corner
-            const startAngle = isFullRound ? 0 : Math.PI/2;
-            const endAngle = isFullRound ? Math.PI : Math.PI;
-
             for(let i=0; i<=roundSegments; ++i) {
-                const cornerAngle = Math.PI/2; // for corner between two edges
+                const cornerAngle = Math.PI/2;
                 const sliceAngle = (i/roundSegments) * cornerAngle;
-
-                const y = H - R * Math.sin(sliceAngle);
-                const r_slice = R * Math.cos(sliceAngle);
-
-                cornerPoints.main.push(addVertex(cx - signX * r_slice, y, cz - signZ * r_slice));
+                const y = H - R * (1 - Math.cos(sliceAngle));
+                const r_slice = R * Math.sin(sliceAngle);
+                cornerPoints.main.push(addVertex(cx - signX * (R-r_slice), y, cz - signZ * (R-r_slice)));
             }
         } else if (pE1) { // Edge along Z
-             const startAngle = isFullRound ? 0 : Math.PI/2;
-             const endAngle = Math.PI;
-             for (let i = 0; i <= roundSegments; i++) {
-                const angle = startAngle + (i/roundSegments) * (endAngle-startAngle);
-                const y = H - R * Math.sin(angle);
-                const z_offset = R * Math.cos(angle);
-                if (isFullRound) {
-                   cornerPoints.main.push(addVertex(cx, y, cz - signZ * z_offset));
-                } else {
-                   cornerPoints.main.push(addVertex(cx, y, cz - signZ * (R - z_offset)));
-                }
+             if (isFullRound) {
+                // TODO: Implement correct full-round logic if needed
+                for (let i = 0; i <= roundSegments; i++) { cornerPoints.main.push(addVertex(cx, H, cz)); }
+             } else { // Corrected Half-Round Logic
+                 for (let i = 0; i <= roundSegments; i++) {
+                    const angle = (i / roundSegments) * (Math.PI / 2); // 0 to 90 degrees
+                    const y = H - R + R * Math.sin(angle);
+                    const z = cz - (signZ * R * Math.cos(angle));
+                    cornerPoints.main.push(addVertex(cx, y, z));
+                 }
              }
         } else { // pE2, Edge along X
-            const startAngle = isFullRound ? 0 : Math.PI/2;
-            const endAngle = Math.PI;
-            for (let i = 0; i <= roundSegments; i++) {
-                const angle = startAngle + (i/roundSegments) * (endAngle-startAngle);
-                const y = H - R * Math.sin(angle);
-                const x_offset = R * Math.cos(angle);
-                if(isFullRound) {
-                    cornerPoints.main.push(addVertex(cx - signX * x_offset, y, cz));
-                } else {
-                    cornerPoints.main.push(addVertex(cx - signX * (R-x_offset), y, cz));
+             if(isFullRound) {
+                // TODO: Implement correct full-round logic if needed
+                for (let i = 0; i <= roundSegments; i++) { cornerPoints.main.push(addVertex(cx, H, cz)); }
+             } else { // Corrected Half-Round Logic
+                for (let i = 0; i <= roundSegments; i++) {
+                    const angle = (i / roundSegments) * (Math.PI / 2); // 0 to 90 degrees
+                    const y = H - R + R * Math.sin(angle);
+                    const x = cx - (signX * R * Math.cos(angle));
+                    cornerPoints.main.push(addVertex(x, y, cz));
                 }
-            }
+             }
         }
         return cornerPoints;
     }
@@ -149,35 +142,48 @@ const generateSlabGeometry = (
     return { corner: addVertex(cx, H, cz) };
   };
 
-  const flt = createTopVertices(-halfL,  halfW, processedEdges.front, processedEdges.left);
-  const frt = createTopVertices( halfL,  halfW, processedEdges.front, processedEdges.right);
-  const blt = createTopVertices(-halfL, -halfW, processedEdges.back,  processedEdges.left);
-  const brt = createTopVertices( halfL, -halfW, processedEdges.back,  processedEdges.right);
+  const fltData = createTopVertices(-halfL,  halfW, processedEdges.front, processedEdges.left);
+  const frtData = createTopVertices( halfL,  halfW, processedEdges.front, processedEdges.right);
+  const bltData = createTopVertices(-halfL, -halfW, processedEdges.back,  processedEdges.left);
+  const brtData = createTopVertices( halfL, -halfW, processedEdges.back,  processedEdges.right);
 
   addQuad(points.blb, points.brb, points.frb, points.flb);
 
-  const connectEdge = (c1_data: any, c2_data: any, isVertical: boolean, isProcessed: boolean, bottomP1: number, bottomP2: number) => {
-    if (!isProcessed) {
-        addQuad(bottomP1, bottomP2, getTopPoint(c2_data), getTopPoint(c1_data));
+  const getTopPoint = (c_data: any) => Array.isArray(c_data.main) ? c_data.main[c_data.main.length-1] : (c_data.e1 || c_data.e2 || c_data.corner);
+  const getSidePoint = (c_data: any) => Array.isArray(c_data.main) ? c_data.main[0] : (c_data.main || c_data.corner);
+
+  const connectEdge = (c1_data: any, c2_data: any, isProcessed: boolean, bottomP1: number, bottomP2: number) => {
+    if (!isProcessed || profileType === 'none' || !Array.isArray(c1_data.main)) {
+        addQuad(bottomP1, bottomP2, getSidePoint(c2_data), getSidePoint(c1_data));
         return;
     }
-
-      const c1 = Array.isArray(c1_data.main) ? c1_data.main : [c1_data.e1 || c1_data.main, c1_data.e2 || c1_data.main];
-      const c2 = Array.isArray(c2_data.main) ? c2_data.main : [c2_data.e1 || c2_data.main, c2_data.e2 || c2_data.main];
+      const c1_verts = c1_data.main;
+      const c2_verts = c2_data.main;
       
-      const v_c1 = vertices.slice(c1[0]*3, c1[0]*3+3);
-      const v_c2 = vertices.slice(c2[0]*3, c2[0]*3+3);
-
-      addQuad(bottomP1, bottomP2, c2[0], c1[0]);
+      for(let i=0; i<roundSegments; i++) {
+          addQuad(bottomP1, bottomP2, c2_verts[i], c1_verts[i]);
+      }
+      addQuad(bottomP1, bottomP2, getSidePoint(c2_data), getSidePoint(c1_data));
   }
 
-  const getTopPoint = (c_data: any) => Array.isArray(c_data.main) ? c_data.main[0] : c_data.main;
-  addQuad(getTopPoint(blt), getTopPoint(brt), getTopPoint(frt), getTopPoint(flt));
+  // Top Surface
+  if (profileType === 'none' || profileType === 'chamfer') {
+     addQuad(
+         bltData.main || bltData.corner, 
+         brtData.main || brtData.corner, 
+         frtData.main || frtData.corner, 
+         fltData.main || fltData.corner
+     );
+  } else { // Rounded profiles - need to build top surface carefully
+      addQuad(getSidePoint(bltData), getSidePoint(brtData), getSidePoint(frtData), getSidePoint(fltData));
+  }
 
-  connectEdge(flt, frt, false, processedEdges.front, points.flb, points.frb);
-  connectEdge(frt, brt, true, processedEdges.right, points.frb, points.brb);
-  connectEdge(brt, blt, false, processedEdges.back, points.brb, points.blb);
-  connectEdge(blt, flt, true, processedEdges.left, points.blb, points.flb);
+  // Side Faces
+  connectEdge(fltData, frtData, processedEdges.front, points.flb, points.frb);
+  connectEdge(frtData, brtData, processedEdges.right, points.frb, points.brb);
+  connectEdge(brtData, bltData, processedEdges.back, points.brb, points.blb);
+  connectEdge(bltData, fltData, processedEdges.left, points.blb, points.flb);
+
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
