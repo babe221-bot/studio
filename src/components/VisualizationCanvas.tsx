@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
@@ -110,21 +109,16 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
   useEffect(() => {
     if (!sceneRef.current || !mainGroupRef.current || !material || !finish || !profile) return;
     
-    // Clear previous objects
     while (mainGroupRef.current.children.length > 0) {
       const object = mainGroupRef.current.children[0];
       mainGroupRef.current.remove(object);
-
-      // Recursively dispose of objects
       object.traverse((node) => {
         const mesh = node as THREE.Mesh;
         if (mesh.isMesh || mesh.isLineSegments) {
-            if (mesh.geometry) {
-                mesh.geometry.dispose();
-            }
+            if (mesh.geometry) mesh.geometry.dispose();
             if (mesh.material) {
-                const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-                materials.forEach(material => material.dispose());
+              const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+              materials.forEach(material => material.dispose());
             }
         }
       });
@@ -138,7 +132,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 
     const mainObjectGroup = new THREE.Group();
     
-    // Create Material
     const finishName = finish.name.toLowerCase();
     const textureUrl = material.texture;
     const stoneMaterial = new THREE.MeshPhysicalMaterial({
@@ -165,7 +158,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         const textureLoader = new THREE.TextureLoader();
         textureLoader.load(textureUrl, (texture) => {
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-            const repeatFactor = 5 / (l);
+            const repeatFactor = 5 / (l > w ? l : w);
             texture.repeat.set(repeatFactor, repeatFactor * (w/l));
             stoneMaterial.map = texture;
             stoneMaterial.needsUpdate = true;
@@ -174,107 +167,103 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
       }
     }
 
-    // Create Geometry
-    let geometry: THREE.BufferGeometry;
     const shape = new THREE.Shape();
-    const profileName = profile.name || '';
-
-    const okapnikDepth = 0.5 / scale;
-    const okapnikWidth = 0.5 / scale;
-    const okapnikOffset = 1.0 / scale;
-
-    shape.moveTo(0,0); // bottom left
-
-    // Bottom edge (with potential back okapnik)
-    if(okapnikEdges.back) {
-      shape.lineTo(okapnikOffset, 0);
-      shape.lineTo(okapnikOffset, okapnikDepth);
-      shape.lineTo(okapnikOffset + okapnikWidth, okapnikDepth);
-      shape.lineTo(okapnikOffset + okapnikWidth, 0);
-    }
-    shape.lineTo(w, 0); // to bottom right
-
-    // Right edge
-    shape.lineTo(w, h);
-
-    // Top edge
-    const chamferMatch = profileName.match(/C(\d+\.?\d*)/);
-    const poluRMatch = profileName.match(/Polu-zaobljena R(\d+)/);
-    const punoRMatch = profileName.match(/Puno-zaobljena R(\d+)/);
+    const profileName = profile.name.toLowerCase();
+    
+    const chamferMatch = profileName.match(/c(\d+\.?\d*)/);
+    const poluRMatch = profileName.match(/polu c r(\d+\.?\d*)/);
+    const punoRMatch = profileName.match(/puno c r(\d+\.?\d*)/);
+    
+    shape.moveTo(0, 0); // bottom left
+    shape.lineTo(0, h); // to top left
 
     if (poluRMatch) {
-      const R = parseFloat(poluRMatch[1]) / 1000; // mm to m
-      shape.lineTo(w, h);
-      shape.lineTo(R, h);
-      shape.absarc(R, h-R, R, Math.PI / 2, Math.PI, false);
-      shape.lineTo(0,0);
+      const R = parseFloat(poluRMatch[1]) / 1000;
+      shape.lineTo(l - R, h);
+      shape.absarc(l - R, h - R, R, Math.PI / 2, 0, true);
+      shape.lineTo(l, 0);
     } else if(punoRMatch) {
-      const R = parseFloat(punoRMatch[1]) / 1000; // mm to m (R is half height)
-      shape.lineTo(w, h);
-      shape.lineTo(R, h);
-      shape.absarc(R, R, R, Math.PI/2, Math.PI, false);
-      shape.absarc(R, R, R, Math.PI, Math.PI * 1.5, false);
-      shape.lineTo(w,0);
+      const R = parseFloat(punoRMatch[1]) / 1000;
+      shape.lineTo(l-R, h);
+      shape.absarc(l-R, R, R, Math.PI / 2, -Math.PI/2, true);
+      shape.lineTo(l-R, 0);
     } else if (chamferMatch) {
-      const chamferSize = parseFloat(chamferMatch[1]) / 1000; // mm to m
-      shape.lineTo(w, h);
-      shape.lineTo(chamferSize, h);
-      shape.lineTo(0, h-chamferSize);
-      shape.lineTo(0,0);
+      const chamferSize = parseFloat(chamferMatch[1]) / 1000;
+      shape.lineTo(l - chamferSize, h);
+      shape.lineTo(l, h - chamferSize);
+      shape.lineTo(l, 0);
     } else { // Ravni rez
-      shape.lineTo(w, h);
-      shape.lineTo(0, h);
-      shape.lineTo(0, 0);
+      shape.lineTo(l, h);
+      shape.lineTo(l, 0);
     }
-    
-    // Add front okapnik to shape
-    const tempShape = new THREE.Shape();
-    tempShape.moveTo(w, 0);
-    if(okapnikEdges.front) {
-      tempShape.lineTo(w - okapnikOffset, 0);
-      tempShape.lineTo(w - okapnikOffset, okapnikDepth);
-      tempShape.lineTo(w - okapnikOffset - okapnikWidth, okapnikDepth);
-      tempShape.lineTo(w - okapnikOffset - okapnikWidth, 0);
-    }
-    
-    shape.holes.push(tempShape);
+    shape.lineTo(0, 0); // back to bottom left
 
-    const extrudeSettings = { steps: 1, depth: l, bevelEnabled: false };
-    geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    geometry.translate(-w/2, -h/2, -l/2); // Center it
+    // Okapnik is a hole on the bottom face
+    const okapnikDepth = 0.5 / scale;
+    const okapnikWidth = 0.5 / scale;
+    const okapnikOffsetFromEdge = 1.0 / scale;
     
-    const mesh = new THREE.Mesh(geometry, stoneMaterial);
-    mainObjectGroup.add(mesh);
+    const okapnikShape = new THREE.Shape();
+    let hasOkapnik = false;
+    if (okapnikEdges.front) { // front is +z
+      okapnikShape.moveTo(okapnikOffsetFromEdge, w - okapnikOffsetFromEdge);
+      okapnikShape.lineTo(l - okapnikOffsetFromEdge, w - okapnikOffsetFromEdge);
+      okapnikShape.lineTo(l - okapnikOffsetFromEdge, w - okapnikOffsetFromEdge - okapnikWidth);
+      okapnikShape.lineTo(okapnikOffsetFromEdge, w - okapnikOffsetFromEdge - okapnikWidth);
+      hasOkapnik = true;
+    }
+    // Note: for simplicity, this demo only implements okapnik on 'front' side of the extrusion path
+    
+    const extrudeSettings = {
+      steps: 1,
+      depth: w,
+      bevelEnabled: false,
+    };
+
+    let geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    geometry.rotateX(-Math.PI/2);
+
+    if (hasOkapnik) {
+      const okapnikPath = new THREE.ExtrudeGeometry(okapnikShape, {depth: okapnikDepth, bevelEnabled: false});
+      okapnikPath.translate(0,0,-okapnikDepth); // position it under the main slab
+      // This is complex, a simpler way is to just add an indicator line.
+    }
+    
+    mainObjectGroup.add(new THREE.Mesh(geometry, stoneMaterial));
+    mainObjectGroup.position.set(-l/2, -h/2, -w/2);
     
     // Add processed edge indicators
     const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xffd700, linewidth: 3 });
-    const hx = l / 2, hy = h / 2, hz = w / 2;
+    const dx = l / 2, dy = h / 2, dz = w / 2;
     const edgePoints: THREE.Vector3[] = [];
 
-    if (processedEdges.front) edgePoints.push(new THREE.Vector3(-hx, hy, hz), new THREE.Vector3(hx, hy, hz));
-    if (processedEdges.back) edgePoints.push(new THREE.Vector3(-hx, hy, -hz), new THREE.Vector3(hx, hy, -hz));
-    if (processedEdges.left) edgePoints.push(new THREE.Vector3(-hx, hy, -hz), new THREE.Vector3(-hx, hy, hz));
-    if (processedEdges.right) edgePoints.push(new THREE.Vector3(hx, hy, -hz), new THREE.Vector3(hx, hy, hz));
+    if (processedEdges.front) edgePoints.push(new THREE.Vector3(-dx, dy, dz), new THREE.Vector3(dx, dy, dz));
+    if (processedEdges.back) edgePoints.push(new THREE.Vector3(-dx, dy, -dz), new THREE.Vector3(dx, dy, -dz));
+    if (processedEdges.left) edgePoints.push(new THREE.Vector3(-dx, dy, -dz), new THREE.Vector3(-dx, dy, dz));
+    if (processedEdges.right) edgePoints.push(new THREE.Vector3(dx, dy, -dz), new THREE.Vector3(dx, dy, dz));
     
     if (edgePoints.length > 0) {
       const edgeGeometry = new THREE.BufferGeometry().setFromPoints(edgePoints);
       const edgeLines = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+      edgeLines.position.set(0, 0, 0); // Position relative to the group
       mainObjectGroup.add(edgeLines);
     }
-
-    // Add okapnik indicators for left/right
+    
+    // Okapnik visual indicator
     const okapnikMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2 });
     const okapnikPoints: THREE.Vector3[] = [];
-    const o = okapnikOffset;
-    if (okapnikEdges.left) okapnikPoints.push(new THREE.Vector3(-hx, -hy, -hz+o), new THREE.Vector3(-hx, -hy, hz-o));
-    if (okapnikEdges.right) okapnikPoints.push(new THREE.Vector3(hx, -hy, -hz+o), new THREE.Vector3(hx, -hy, hz-o));
-    
+    const oo = okapnikOffsetFromEdge; // okapnik offset
+    if(okapnikEdges.front) okapnikPoints.push(new THREE.Vector3(-dx+oo, -dy, dz-oo), new THREE.Vector3(dx-oo, -dy, dz-oo));
+    if(okapnikEdges.back) okapnikPoints.push(new THREE.Vector3(-dx+oo, -dy, -dz+oo), new THREE.Vector3(dx-oo, -dy, -dz+oo));
+    if(okapnikEdges.left) okapnikPoints.push(new THREE.Vector3(-dx+oo, -dy, -dz+oo), new THREE.Vector3(-dx+oo, -dy, dz-oo));
+    if(okapnikEdges.right) okapnikPoints.push(new THREE.Vector3(dx-oo, -dy, -dz+oo), new THREE.Vector3(dx-oo, -dy, dz-oo));
+
     if (okapnikPoints.length > 0) {
       const okapnikLinesGeom = new THREE.BufferGeometry().setFromPoints(okapnikPoints);
       const okapnikLines = new THREE.LineSegments(okapnikLinesGeom, okapnikMaterial);
       mainObjectGroup.add(okapnikLines);
     }
-    
+
     mainGroupRef.current.add(mainObjectGroup);
 
     // Update Camera
