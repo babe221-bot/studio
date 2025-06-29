@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
@@ -44,14 +45,16 @@ const generateSlabGeometry = (
   }
   
   R = Math.min(R, H / 2, L/2, W/2);
+  const segments = 8; // Segments for curves
 
+  const geometry = new THREE.BufferGeometry();
   const vertices: number[] = [];
   const indices: number[] = [];
-  let vertexIndex = 0;
+  let vIdx = 0;
 
   const addVertex = (x: number, y: number, z: number) => {
     vertices.push(x, y, z);
-    return vertexIndex++;
+    return vIdx++;
   };
   
   const addFace = (v1: number, v2: number, v3: number) => {
@@ -66,75 +69,103 @@ const generateSlabGeometry = (
   const halfL = L / 2;
   const halfW = W / 2;
 
-  // Bottom vertices
+  // Create bottom face
   const blb = addVertex(-halfL, 0, -halfW);
   const brb = addVertex( halfL, 0, -halfW);
   const frb = addVertex( halfL, 0,  halfW);
   const flb = addVertex(-halfL, 0,  halfW);
+  addQuad(flb, frb, brb, blb);
 
-  // Bottom face
-  addQuad(blb, brb, frb, flb);
-
-  // Top vertices generation
-  const createCorner = (cx: number, cz: number, procX: boolean, procZ: boolean) => {
-      const signX = Math.sign(cx);
-      const signZ = Math.sign(cz);
-
-      if (profileType === 'none') {
-          return {
-              top: addVertex(cx, H, cz),
-              side_z: addVertex(cx, H, cz),
-              side_x: addVertex(cx, H, cz)
-          };
-      }
-      
-      let top_x = cx;
-      let top_z = cz;
-      let side_y_for_face_Z = H;
-      let side_y_for_face_X = H;
-
-      if (profileType === 'chamfer' || profileType === 'half-round' || profileType === 'full-round') {
-          if (procX) { // front/back
-              top_z = cz - signZ * R;
-              side_y_for_face_Z = H - R;
-          }
-          if (procZ) { // left/right
-              top_x = cx - signX * R;
-              side_y_for_face_X = H - R;
-          }
-      }
-
-      return {
-          top: addVertex(top_x, H, top_z),
-          side_z: addVertex(cx, side_y_for_face_Z, cz), // Point for front/back faces
-          side_x: addVertex(cx, side_y_for_face_X, cz)  // Point for left/right faces
-      };
+  const topCorners: { [key: string]: { main: number, edgeX: number, edgeZ: number, arc?: number[] } } = {};
+  const cornerPositions = {
+      flt: { x: -halfL, z:  halfW, procX: processedEdges.front, procZ: processedEdges.left, signX: -1, signZ:  1 },
+      frt: { x:  halfL, z:  halfW, procX: processedEdges.front, procZ: processedEdges.right, signX:  1, signZ:  1 },
+      brt: { x:  halfL, z: -halfW, procX: processedEdges.back, procZ: processedEdges.right, signX:  1, signZ: -1 },
+      blt: { x: -halfL, z: -halfW, procX: processedEdges.back, procZ: processedEdges.left, signX: -1, signZ: -1 },
   };
 
-  const blt = createCorner(-halfL, -halfW, processedEdges.back, processedEdges.left);
-  const brt = createCorner( halfL, -halfW, processedEdges.back, processedEdges.right);
-  const frt = createCorner( halfL,  halfW, processedEdges.front, processedEdges.right);
-  const flt = createCorner(-halfL,  halfW, processedEdges.front, processedEdges.left);
-  
-  // Top Face
-  addQuad(blt.top, brt.top, frt.top, flt.top);
+  // Generate top corner vertices and profiles
+  Object.keys(cornerPositions).forEach(key => {
+      const corner = cornerPositions[key as keyof typeof cornerPositions];
+      const { x, z, procX, procZ, signX, signZ } = corner;
+      
+      let topX = x;
+      let topZ = z;
+      
+      const cornerData: { main: number, edgeX: number, edgeZ: number, arc?: number[] } = { main: 0, edgeX: 0, edgeZ: 0 };
 
-  // Side Faces & Chamfer/Round Faces
+      if (profileType === 'none' || (!procX && !procZ)) {
+          cornerData.main = cornerData.edgeX = cornerData.edgeZ = addVertex(x, H, z);
+      } else if (profileType === 'chamfer') {
+          topX = procZ ? x - signX * R : x;
+          topZ = procX ? z - signZ * R : z;
+          cornerData.main = addVertex(topX, H, topZ);
+          cornerData.edgeX = addVertex(x, procZ ? H - R : H, z);
+          cornerData.edgeZ = addVertex(x, procX ? H - R : H, z);
+      } else { // half-round or full-round
+          cornerData.arc = [];
+          for (let i = 0; i <= segments; i++) {
+              const angle = (Math.PI / 2) * (i / segments);
+              let vx = x, vy = H, vz = z;
 
-  // Back Face (runs along X axis)
-  addQuad(brb, blb, blt.side_z, brt.side_z);
-  if (processedEdges.back) addQuad(blt.side_z, brt.side_z, brt.top, blt.top);
-  // Front Face
-  addQuad(flb, frb, frt.side_z, flt.side_z);
-  if (processedEdges.front) addQuad(flt.side_z, frt.side_z, frt.top, flt.top);
-  // Left Face (runs along Z axis)
-  addQuad(blb, flb, flt.side_x, blt.side_x);
-  if (processedEdges.left) addQuad(flt.side_x, blt.side_x, blt.top, flt.top);
-  // Right Face
-  addQuad(frb, brb, brt.side_x, frt.side_x);
-  if (processedEdges.right) addQuad(brt.side_x, frt.side_x, frt.top, brt.top);
+              if (procX && procZ) { // Inner corner
+                  vx = x - signX * R * (1 - Math.cos(angle));
+                  vz = z - signZ * R * (1 - Math.sin(angle));
+                  vy = H - R + R * Math.sqrt(Math.pow(Math.cos(angle), 2) + Math.pow(Math.sin(angle), 2)); // approx
+                  vy = H - R * (1 - Math.cos(angle)) * (1-Math.sin(angle)); // better approx
+                  vy = H - (R - Math.sqrt( (R*Math.cos(angle))**2 + (R*Math.sin(angle))**2)/Math.sqrt(2));
+                  vy = H - R * (1- Math.min(Math.cos(angle), Math.sin(angle)));
+                   vy = H - (R - R * Math.cos(angle - Math.PI / 4));
+
+                   const r_cos = R * Math.cos(angle);
+                   const r_sin = R * Math.sin(angle);
+                   vx = x - signX * (R - r_cos);
+                   vz = z - signZ * (R - r_sin);
+                   vy = H - (R - Math.sqrt(r_cos*r_cos + r_sin*r_sin));
+
+              } else if (procX) { // Straight edge on Z axis
+                  vx = x;
+                  vz = z - signZ * R * (1 - Math.cos(angle));
+                  vy = H - R * Math.sin(angle);
+              } else { // Straight edge on X axis
+                  vx = x - signX * R * (1 - Math.cos(angle));
+                  vz = z;
+                  vy = H - R * Math.sin(angle);
+              }
+              cornerData.arc.push(addVertex(vx, vy, vz));
+          }
+          cornerData.main = cornerData.arc[segments];
+          cornerData.edgeX = cornerData.arc[0];
+          cornerData.edgeZ = cornerData.arc[0];
+      }
+      topCorners[key] = cornerData;
+  });
+
+  // Create top face
+  addQuad(topCorners.flt.main, topCorners.frt.main, topCorners.brt.main, topCorners.blt.main);
   
-  const geometry = new THREE.BufferGeometry();
+  // Create side and profile faces
+  const connectEdges = (c1_key: string, c2_key: string, bottom1: number, bottom2: number, isXEdge: boolean) => {
+    const c1 = topCorners[c1_key];
+    const c2 = topCorners[c2_key];
+    const edge = isXEdge ? 'edgeZ' : 'edgeX';
+
+    addQuad(bottom2, bottom1, c1[edge], c2[edge]);
+
+    if (c1.arc && c2.arc) {
+      for (let i = 0; i < segments; i++) {
+        addQuad(c1.arc[i], c1.arc[i+1], c2.arc[i+1], c2.arc[i]);
+      }
+    } else {
+      addQuad(c1[edge], c2[edge], c2.main, c1.main);
+    }
+  };
+
+  connectEdges('flt', 'frt', flb, frb, true); // Front
+  connectEdges('frt', 'brt', frb, brb, false); // Right
+  connectEdges('brt', 'blt', brb, blb, true); // Back
+  connectEdges('blt', 'flt', blb, flb, false); // Left
+
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
@@ -172,7 +203,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
-    scene.background = new THREE.Color(0xEAEAEA);
+    scene.background = new THREE.Color(0xF0F0F0); // Light gray background
 
     const camera = new THREE.PerspectiveCamera(50, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
     cameraRef.current = camera;
@@ -188,14 +219,14 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     controls.enableDamping = true;
     controlsRef.current = controls;
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2.0); // Brighter ambient
     scene.add(ambientLight);
 
-    const mainLight = new THREE.DirectionalLight(0xffffff, 2.0);
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1.5); // Softer main light
     mainLight.position.set(5, 10, 7.5);
     scene.add(mainLight);
     
-    const fillLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const fillLight = new THREE.DirectionalLight(0xffffff, 1.0); // Stronger fill
     fillLight.position.set(-5, -5, -5);
     scene.add(fillLight);
 
@@ -371,3 +402,4 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 
 VisualizationCanvas.displayName = 'VisualizationCanvas';
 export default VisualizationCanvas;
+
