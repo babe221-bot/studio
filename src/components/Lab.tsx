@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { initialMaterials, initialSurfaceFinishes, initialEdgeProfiles } from '@/lib/data';
 import VisualizationCanvas from '@/components/VisualizationCanvas';
 import MaterialModal from '@/components/modals/MaterialModal';
@@ -27,19 +26,19 @@ export function Lab() {
   const { toast } = useToast();
   const canvasRef = useRef<CanvasHandle>(null);
 
-  const [materials, setMaterials] = useLocalStorage<Material[]>('lab.materials', initialMaterials);
-  const [finishes, setFinishes] = useLocalStorage<SurfaceFinish[]>('lab.finishes', initialSurfaceFinishes);
-  const [profiles, setProfiles] = useLocalStorage<EdgeProfile[]>('lab.profiles', initialEdgeProfiles);
-  const [orderItems, setOrderItems] = useLocalStorage<OrderItem[]>('lab.orderItems', []);
+  const [materials, setMaterials] = useState<Material[]>(initialMaterials);
+  const [finishes, setFinishes] = useState<SurfaceFinish[]>(initialSurfaceFinishes);
+  const [profiles, setProfiles] = useState<EdgeProfile[]>(initialEdgeProfiles);
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
 
   const [specimenId, setSpecimenId] = useState('Kuhinjska ploča K01');
   const [length, setLength] = useState(280);
   const [width, setWidth] = useState(62);
   const [height, setHeight] = useState(3);
 
-  const [selectedMaterialId, setSelectedMaterialId] = useState<string | undefined>(materials[0]?.id.toString());
-  const [selectedFinishId, setSelectedFinishId] = useState<string | undefined>(finishes[0]?.id.toString());
-  const [selectedProfileId, setSelectedProfileId] = useState<string | undefined>(profiles[0]?.id.toString());
+  const [selectedMaterialId, setSelectedMaterialId] = useState<string | undefined>(initialMaterials[0]?.id.toString());
+  const [selectedFinishId, setSelectedFinishId] = useState<string | undefined>(initialSurfaceFinishes[0]?.id.toString());
+  const [selectedProfileId, setSelectedProfileId] = useState<string | undefined>(initialEdgeProfiles[0]?.id.toString());
 
   const [processedEdges, setProcessedEdges] = useState<ProcessedEdges>({
     front: true,
