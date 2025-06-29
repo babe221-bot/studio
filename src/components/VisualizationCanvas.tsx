@@ -109,7 +109,28 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
   useEffect(() => {
     if (!sceneRef.current || !mainGroupRef.current || !material || !finish || !profile) return;
     
-    // Clear previous objects
+    // START: Debugging logs
+    console.log('%c--- 3D VISUALIZATION DEBUG ---', 'color: yellow; font-weight: bold;');
+    console.log(`Timestamp: ${new Date().toISOString()}`);
+    const { length, width, height } = dims;
+    console.log('Input dimensions (cm):', { length, width, height });
+    
+    const scale = 100;
+    const l = length / scale;
+    const w = width / scale;
+    const h = height / scale;
+    console.log('Scene dimensions (scaled):', { l, w, h });
+    
+    console.log('Selections:', { 
+      material: material?.name, 
+      finish: finish?.name, 
+      profile: profile?.name 
+    });
+    console.log('Processed Edges:', processedEdges);
+    console.log('Okapnik Edges:', okapnikEdges);
+    // END: Debugging logs
+
+    // Clear previous objects robustly
     while (mainGroupRef.current.children.length > 0) {
       const object = mainGroupRef.current.children[0];
       mainGroupRef.current.remove(object);
@@ -124,12 +145,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         }
       });
     }
-
-    const { length, width, height } = dims;
-    const scale = 100;
-    const l = length / scale;
-    const w = width / scale;
-    const h = height / scale;
 
     const stoneMaterial = new THREE.MeshPhysicalMaterial({
         color: 0xffffff,
@@ -168,77 +183,141 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 
     const profileName = profile.name.toLowerCase();
     
-    const smusMatch = profileName.match(/smuš c(\d+\.?\d*)mm/);
+    const smusMatch = profileName.match(/c(\d+\.?\d*)/);
     const poluRMatch = profileName.match(/polu-zaobljena r(\d+\.?\d*)cm/);
     const punoRMatch = profileName.match(/puno-zaobljena r(\d+\.?\d*)cm/);
     
+    // The shape is created on the XY plane (length x height)
     const shape = new THREE.Shape();
-    
-    shape.moveTo(0, 0);
-    shape.lineTo(0, h);
+    shape.moveTo(0, 0); // Bottom-left
+    shape.lineTo(0, h); // Top-left
 
     if (poluRMatch) {
       const R = parseFloat(poluRMatch[1]) / 100; // cm to scene units
       shape.lineTo(l - R, h);
       shape.absarc(l - R, h - R, R, Math.PI / 2, 0, true);
+      shape.lineTo(l, 0);
     } else if(punoRMatch) {
       const R = parseFloat(punoRMatch[1]) / 100; // cm to scene units
       shape.lineTo(l-R, h);
-      shape.absarc(l-R, R, R, Math.PI / 2, -Math.PI/2, true);
+      shape.absarc(l-R, h-R, R, Math.PI / 2, -Math.PI/2, true);
+      shape.lineTo(l,0)
     } else if (smusMatch) {
       const chamferSize = parseFloat(smusMatch[1]) / 1000; // mm to scene units
       shape.lineTo(l - chamferSize, h);
       shape.lineTo(l, h - chamferSize);
-    } else { // Ravni rez
+      shape.lineTo(l, 0);
+    } else { // Ravni rez (default)
       shape.lineTo(l, h);
+      shape.lineTo(l, 0);
     }
     
-    shape.lineTo(l, 0);
-    shape.lineTo(0, 0);
+    shape.lineTo(0, 0); // Close shape
     
     const extrudeSettings = {
       steps: 1,
-      depth: w,
+      depth: w, // Extrude by width
       bevelEnabled: false,
     };
     
     let geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    // Rotate to align with a standard coordinate system (Y-up)
+    // The extrusion happens along Z, so we rotate to make extrusion depth become the Y-axis (width)
+    // and the shape's height become the Z-axis (height).
     geometry.rotateX(-Math.PI / 2);
-    
+
     const mainObject = new THREE.Mesh(geometry, stoneMaterial);
     
     const mainObjectGroup = new THREE.Group();
     mainObjectGroup.add(mainObject);
-    mainObjectGroup.position.set(-l/2, -h/2, -w/2);
+    
+    // Center the final geometry at the origin
+    // After rotation, the geometry spans: x=[0,l], y=[0,w], z=[-h,0]
+    // To center, we translate by `(-l/2, -w/2, h/2)`
+    mainObjectGroup.position.set(-l / 2, -w / 2, h / 2);
     
     const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xffd700, linewidth: 3 });
-    const dx = l / 2, dy = h / 2, dz = w / 2;
-
     const edgePoints: THREE.Vector3[] = [];
+    
+    // Coordinates for the centered box: x is length, y is width, z is height.
+    const dx = l / 2;
+    const dy = w / 2;
+    const dz = h / 2;
 
-    if (processedEdges.front) edgePoints.push(new THREE.Vector3(-dx, dy, dz), new THREE.Vector3(dx, dy, dz));
-    if (processedEdges.back) edgePoints.push(new THREE.Vector3(-dx, dy, -dz), new THREE.Vector3(dx, dy, -dz));
-    if (processedEdges.left) edgePoints.push(new THREE.Vector3(-dx, dy, -dz), new THREE.Vector3(-dx, dy, dz));
-    if (processedEdges.right) edgePoints.push(new THREE.Vector3(dx, dy, -dz), new THREE.Vector3(dx, dy, dz));
+    console.log('Calculating processed edge lines for the top face (z=' + dz.toFixed(2) + ')...');
+    
+    if (processedEdges.front) { // Along length, at positive Y
+      const p1 = new THREE.Vector3(-dx, dy, dz);
+      const p2 = new THREE.Vector3(dx, dy, dz);
+      edgePoints.push(p1, p2);
+      console.log('  -> Adding FRONT edge line.', { from: p1, to: p2 });
+    }
+    if (processedEdges.back) { // Along length, at negative Y
+      const p1 = new THREE.Vector3(-dx, -dy, dz);
+      const p2 = new THREE.Vector3(dx, -dy, dz);
+      edgePoints.push(p1, p2);
+      console.log('  -> Adding BACK edge line.', { from: p1, to: p2 });
+    }
+    if (processedEdges.left) { // Along width, at negative X
+      const p1 = new THREE.Vector3(-dx, -dy, dz);
+      const p2 = new THREE.Vector3(-dx, dy, dz);
+      edgePoints.push(p1, p2);
+      console.log('  -> Adding LEFT edge line.', { from: p1, to: p2 });
+    }
+    if (processedEdges.right) { // Along width, at positive X
+      const p1 = new THREE.Vector3(dx, -dy, dz);
+      const p2 = new THREE.Vector3(dx, dy, dz);
+      edgePoints.push(p1, p2);
+      console.log('  -> Adding RIGHT edge line.', { from: p1, to: p2 });
+    }
     
     if (edgePoints.length > 0) {
       const edgeGeometry = new THREE.BufferGeometry().setFromPoints(edgePoints);
       const edgeLines = new THREE.LineSegments(edgeGeometry, edgeMaterial);
       mainObjectGroup.add(edgeLines);
+      console.log(`Added ${edgePoints.length / 2} processed edge line segments.`);
+    } else {
+      console.log('No processed edges to draw.');
     }
     
     const okapnikMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2 });
     const okapnikPoints: THREE.Vector3[] = [];
-    const oo = 1.0 / scale; // okapnik offset in scene units
-    if(okapnikEdges.front) okapnikPoints.push(new THREE.Vector3(-dx+oo, -dy, dz-oo), new THREE.Vector3(dx-oo, -dy, dz-oo));
-    if(okapnikEdges.back) okapnikPoints.push(new THREE.Vector3(-dx+oo, -dy, -dz+oo), new THREE.Vector3(dx-oo, -dy, -dz+oo));
-    if(okapnikEdges.left) okapnikPoints.push(new THREE.Vector3(-dx+oo, -dy, -dz+oo), new THREE.Vector3(-dx+oo, -dy, dz-oo));
-    if(okapnikEdges.right) okapnikPoints.push(new THREE.Vector3(dx-oo, -dy, -dz+oo), new THREE.Vector3(dx-oo, -dy, dz-oo));
+    const okapnikOffset = 2.0 / scale; // okapnik offset in scene units
+    
+    console.log('Calculating okapnik lines for the bottom face (z=' + (-dz).toFixed(2) + ')...');
+    
+    if(okapnikEdges.front) {
+        const p1 = new THREE.Vector3(-dx + okapnikOffset, dy - okapnikOffset, -dz);
+        const p2 = new THREE.Vector3(dx - okapnikOffset, dy - okapnikOffset, -dz);
+        okapnikPoints.push(p1, p2);
+        console.log('  -> Adding FRONT okapnik line.', { from: p1, to: p2 });
+    }
+    if(okapnikEdges.back) {
+        const p1 = new THREE.Vector3(-dx + okapnikOffset, -dy + okapnikOffset, -dz);
+        const p2 = new THREE.Vector3(dx - okapnikOffset, -dy + okapnikOffset, -dz);
+        okapnikPoints.push(p1, p2);
+        console.log('  -> Adding BACK okapnik line.', { from: p1, to: p2 });
+    }
+    if(okapnikEdges.left) {
+        const p1 = new THREE.Vector3(-dx + okapnikOffset, -dy + okapnikOffset, -dz);
+        const p2 = new THREE.Vector3(-dx + okapnikOffset, dy - okapnikOffset, -dz);
+        okapnikPoints.push(p1, p2);
+        console.log('  -> Adding LEFT okapnik line.', { from: p1, to: p2 });
+    }
+    if(okapnikEdges.right) {
+        const p1 = new THREE.Vector3(dx - okapnikOffset, -dy + okapnikOffset, -dz);
+        const p2 = new THREE.Vector3(dx - okapnikOffset, dy - okapnikOffset, -dz);
+        okapnikPoints.push(p1, p2);
+        console.log('  -> Adding RIGHT okapnik line.', { from: p1, to: p2 });
+    }
 
     if (okapnikPoints.length > 0) {
       const okapnikLinesGeom = new THREE.BufferGeometry().setFromPoints(okapnikPoints);
       const okapnikLines = new THREE.LineSegments(okapnikLinesGeom, okapnikMaterial);
       mainObjectGroup.add(okapnikLines);
+      console.log(`Added ${okapnikPoints.length / 2} okapnik line segments.`);
+    } else {
+        console.log('No okapnik edges to draw.');
     }
 
     mainGroupRef.current.add(mainObjectGroup);
