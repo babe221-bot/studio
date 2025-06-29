@@ -45,7 +45,7 @@ const generateSlabGeometry = (
   }
   
   if (profileType === 'half-round') R = Math.min(R, H);
-  R = Math.min(R, L/2, W/2);
+  if (profileType !== 'none') R = Math.min(R, L/2, W/2);
   if (R < 0) R = 0;
 
   const segments = 16; 
@@ -147,13 +147,13 @@ const generateSlabGeometry = (
                 const row: number[] = [];
                 const theta = startAngle + (i / segments) * (endAngle - startAngle);
                 const d_v = radius * Math.sin(theta);
-                const d_h = radius * (1-Math.cos(theta));
+                const d_h = radius * (1 - Math.cos(theta));
 
                 for (let j = 0; j <= segments; j++) {
                     const phi = (j / segments) * (Math.PI / 2);
-                    const vx = x - signX * d_h * (1-Math.cos(phi));
+                    const vx = x - signX * d_h * Math.cos(phi);
                     const vy = yCenter + d_v;
-                    const vz = z - signZ * d_h * (1-Math.sin(phi));
+                    const vz = z - signZ * d_h * Math.sin(phi);
                     row.push(addVertex(vx, vy, vz));
                 }
                 cornerGrid.push(row);
@@ -167,8 +167,12 @@ const generateSlabGeometry = (
             
             const sideArc: number[] = [], frontArc: number[] = [];
             for(let i=0; i<=segments; i++){
-                sideArc.push(cornerGrid[i][segments]);
-                frontArc.push(cornerGrid[i][0]);
+                // sideArc is for Z-parallel edges (left/right sides)
+                // frontArc is for X-parallel edges (front/back sides)
+                // j=0 -> phi=0 -> cos(phi)=1, sin(phi)=0 -> arc in XY plane -> side edge
+                sideArc.push(cornerGrid[i][0]);
+                // j=segments -> phi=pi/2 -> cos(phi)=0, sin(phi)=1 -> arc in YZ plane -> front edge
+                frontArc.push(cornerGrid[i][segments]);
             }
             cornerData.sideArc = sideArc;
             cornerData.frontArc = frontArc;
@@ -187,39 +191,37 @@ const generateSlabGeometry = (
 
   const flt_main_v_idx = topCorners.flt.frontArc[0];
   const frt_main_v_idx = topCorners.frt.frontArc[0];
-  const brt_main_v_idx = topCorners.brt.sideArc[0];
-  const blt_main_v_idx = topCorners.blt.sideArc[0];
+  const brt_main_v_idx = topCorners.brt.frontArc[0]; 
+  const blt_main_v_idx = topCorners.blt.frontArc[0]; 
+  
+  const flt_v = topCorners.flt;
+  const frt_v = topCorners.frt;
+  const brt_v = topCorners.brt;
+  const blt_v = topCorners.blt;
 
-  const flt_main = vertices.slice(flt_main_v_idx*3, flt_main_v_idx*3 + 3);
-  const frt_main = vertices.slice(frt_main_v_idx*3, frt_main_v_idx*3 + 3);
-  const brt_main = vertices.slice(brt_main_v_idx*3, brt_main_v_idx*3 + 3);
-  const blt_main = vertices.slice(blt_main_v_idx*3, blt_main_v_idx*3 + 3);
-  
-  const topPlane = new THREE.Shape();
-  topPlane.moveTo(flt_main[0], flt_main[2]);
-  topPlane.lineTo(frt_main[0], frt_main[2]);
-  topPlane.lineTo(brt_main[0], brt_main[2]);
-  topPlane.lineTo(blt_main[0], blt_main[2]);
-  topPlane.closePath();
-  
-  const topGeom = new THREE.ShapeGeometry(topPlane);
-  const topVertices = topGeom.attributes.position.array;
-  for(let i=0; i < topVertices.length/3; i++){
-      topVertices[i*3+1] = H; 
+  const topFaceIndices: number[] = [];
+
+  const mainTopPoints = [
+    flt_v.frontArc[0],
+    frt_v.frontArc[0],
+    brt_v.sideArc[0],
+    blt_v.sideArc[0]
+  ];
+
+  if(profileType === 'none') {
+    addQuad(mainTopPoints[0], mainTopPoints[3], mainTopPoints[2], mainTopPoints[1]);
+    topFaceIndices.push(...indices.slice(indices.length-6));
+  } else {
+      const topCenterV = addVertex(0, H, 0);
+      addFace(topCenterV, mainTopPoints[0], mainTopPoints[1]);
+      addFace(topCenterV, mainTopPoints[1], mainTopPoints[2]);
+      addFace(topCenterV, mainTopPoints[2], mainTopPoints[3]);
+      addFace(topCenterV, mainTopPoints[3], mainTopPoints[0]);
+      topFaceIndices.push(...indices.slice(indices.length-12));
   }
   
-  const tempGeom = new THREE.BufferGeometry();
-  tempGeom.setAttribute('position', new THREE.BufferAttribute(topVertices, 3));
-  tempGeom.setIndex(Array.from(topGeom.index.array));
-  tempGeom.computeVertexNormals();
-
-  const existingVertices = vIdx;
-  vertices.push(...Array.from(tempGeom.attributes.position.array));
-  const newIndices = Array.from(tempGeom.index.array).map(i => i + existingVertices);
-  indices.push(...newIndices);
-
-  geometry.addGroup(currentFaceIndex, newIndices.length, 0);
-  currentFaceIndex += newIndices.length;
+  geometry.addGroup(currentFaceIndex, topFaceIndices.length, 0);
+  currentFaceIndex += topFaceIndices.length;
 
   const connectEdges = (c1_key: string, c2_key: string, isXEdge: boolean) => {
     const c1 = topCorners[c1_key];
@@ -233,7 +235,6 @@ const generateSlabGeometry = (
     const startIndex = indices.length;
     
     if (arc1.length != arc2.length) {
-      console.warn("Mismatched arc lengths for edge connection, using simple connection", c1_key, c2_key);
       addQuad(arc1[0], arc1[arc1.length-1], arc2[arc2.length-1], arc2[0]);
     } else {
       for (let i = 0; i < arc1.length - 1; i++) {
@@ -308,7 +309,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     texture.repeat.set(50, 50);
     scene.background = texture;
 
-
     const camera = new THREE.PerspectiveCamera(50, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
     cameraRef.current = camera;
 
@@ -382,9 +382,10 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         const mesh = node as THREE.Mesh;
         if (mesh.isMesh || mesh.isLineSegments) {
             if (mesh.geometry) mesh.geometry.dispose();
-            if (mesh.material) {
-              const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-              materials.forEach(material => material.dispose());
+            if (Array.isArray(mesh.material)) {
+                mesh.material.forEach(m => m.dispose());
+            } else if (mesh.material) {
+                (mesh.material as THREE.Material).dispose();
             }
         }
       });
@@ -400,7 +401,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     });
     
     const processedMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0xcccccc,
+        color: new THREE.Color(material.color).lerp(new THREE.Color(0xffffff), 0.3),
         metalness: 0.2,
         roughness: 0.5,
         side: THREE.DoubleSide,
@@ -412,11 +413,9 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         originalMaterial.clearcoat = 0.9;
         originalMaterial.clearcoatRoughness = 0.1;
         processedMaterial.roughness = 0.2;
-        processedMaterial.color.set(0xdddddd);
     } else if (finishName.includes('plamena') || finishName.includes('štokovan')) {
         originalMaterial.roughness = 0.95;
         processedMaterial.roughness = 0.8;
-        processedMaterial.color.set(0xb0b0b0);
     }
 
     const textureUrl = material.texture;
@@ -428,8 +427,8 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         const textureLoader = new THREE.TextureLoader();
         textureLoader.load(textureUrl, (texture) => {
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-            const repeatFactor = 5 / (vizL > vizW ? vizL : vizW);
-            texture.repeat.set(repeatFactor, repeatFactor * (vizW/vizL));
+            const repeatFactor = 5 / Math.max(vizL, vizW);
+            texture.repeat.set(repeatFactor, repeatFactor * (vizL/vizW)); // Adjust aspect ratio
             originalMaterial.map = texture;
             originalMaterial.needsUpdate = true;
             textureCache.current[textureUrl] = texture;
@@ -450,9 +449,9 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     const createOkapnik = (edgeL: number, vertical: boolean) => {
       const groove = new THREE.Mesh(
         new THREE.BoxGeometry(
-          vertical ? okapnikGrooveWidth : edgeL - okapnikOffset * 2,
+          vertical ? okapnikGrooveWidth : edgeL,
           okapnikGrooveDepth,
-          vertical ? edgeL - okapnikOffset * 2: okapnikGrooveWidth
+          vertical ? edgeL: okapnikGrooveWidth
         ),
         processedMaterial
       );
@@ -481,7 +480,8 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     }
 
     mainGroupRef.current.add(slabGroup);
-    slabGroup.position.y = 0;
+    slabGroup.position.y = h / 2;
+    slabGroup.rotation.x = 0; // Ensure no default rotation
 
     if (cameraRef.current && controlsRef.current) {
         const box = new THREE.Box3().setFromObject(slabGroup);
@@ -493,7 +493,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         
         cameraZ *= 1.8;
 
-        cameraRef.current.position.set(center.x + cameraZ, center.y + cameraZ * 0.5, center.z + cameraZ);
+        cameraRef.current.position.set(center.x, center.y + cameraZ * 0.75, center.z + cameraZ);
         controlsRef.current.target.copy(center);
         controlsRef.current.update();
     }
