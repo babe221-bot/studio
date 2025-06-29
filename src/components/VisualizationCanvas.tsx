@@ -27,13 +27,21 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
   const controlsRef = useRef<OrbitControls | null>(null);
   const textureCache = useRef<{ [key: string]: THREE.Texture }>({});
   const edgeGroupRef = useRef<THREE.Group | null>(null);
+  const okapnikGroupRef = useRef<THREE.Group | null>(null);
 
   const { resolvedTheme } = useTheme();
 
   useImperativeHandle(ref, () => ({
     getSnapshot: () => {
       if (rendererRef.current) {
-        return rendererRef.current.domElement.toDataURL('image/png');
+        // Temporarily set background to white for snapshot
+        const originalBackground = sceneRef.current?.background;
+        if(sceneRef.current) sceneRef.current.background = new THREE.Color(0xffffff);
+        rendererRef.current.render(sceneRef.current as THREE.Scene, cameraRef.current as THREE.Camera);
+        const dataUrl = rendererRef.current.domElement.toDataURL('image/png');
+        if(sceneRef.current) sceneRef.current.background = originalBackground;
+        rendererRef.current.render(sceneRef.current as THREE.Scene, cameraRef.current as THREE.Camera);
+        return dataUrl;
       }
       return null;
     }
@@ -69,6 +77,10 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     const edgeGroup = new THREE.Group();
     edgeGroupRef.current = edgeGroup;
     scene.add(edgeGroup);
+    
+    const okapnikGroup = new THREE.Group();
+    okapnikGroupRef.current = okapnikGroup;
+    scene.add(okapnikGroup);
 
     const animate = () => {
       requestAnimationFrame(animate);
@@ -99,7 +111,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
   useEffect(() => {
     if (!sceneRef.current || !material || !finish || !profile) return;
     
-    // Clear previous geometry
     const previousMesh = sceneRef.current.getObjectByName('specimen');
     if (previousMesh) {
       sceneRef.current.remove(previousMesh);
@@ -112,13 +123,22 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         }
       }
     }
-    // Clear previous edge lines
+    
     if (edgeGroupRef.current) {
       while (edgeGroupRef.current.children.length > 0) {
         const child = edgeGroupRef.current.children[0] as THREE.LineSegments;
         child.geometry.dispose();
         (child.material as THREE.Material).dispose();
         edgeGroupRef.current.remove(child);
+      }
+    }
+    
+    if (okapnikGroupRef.current) {
+      while (okapnikGroupRef.current.children.length > 0) {
+        const child = okapnikGroupRef.current.children[0] as THREE.Mesh;
+        child.geometry.dispose();
+        (child.material as THREE.Material).dispose();
+        okapnikGroupRef.current.remove(child);
       }
     }
 
@@ -138,7 +158,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     const punoZaobljenaMatch = profile.name.match(/Puno zaobljena R(\d+)mm/);
 
     if (smusMatch) {
-        const bevelSize = parseFloat(smusMatch[1]) / 1000; // to meters
+        const bevelSize = parseFloat(smusMatch[1]) / (1000 * scale);
         shape.moveTo(0,0);
         shape.lineTo(w_m, 0);
         shape.lineTo(w_m, h_m - bevelSize);
@@ -146,21 +166,22 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         shape.lineTo(0, h_m);
         shape.lineTo(0,0);
     } else if (poluZaobljenaMatch) {
-        const R = parseFloat(poluZaobljenaMatch[1]) / 1000;
-        shape.moveTo(0, 0); // bottom-left
-        shape.lineTo(w_m, 0); // bottom-right
-        shape.lineTo(w_m, h_m - R); // to start of top arc
-        shape.absarc(w_m - R, h_m - R, R, 0, Math.PI / 2, false); // top-right quarter circle arc
-        shape.lineTo(0, h_m); // top-left
-        shape.lineTo(0, 0); // close path
+        const R = parseFloat(poluZaobljenaMatch[1]) / (1000 * scale);
+        shape.moveTo(0, 0); 
+        shape.lineTo(w_m, 0); 
+        shape.lineTo(w_m, h_m - R); 
+        shape.absarc(w_m - R, h_m - R, R, 0, Math.PI / 2, false);
+        shape.lineTo(0, h_m);
+        shape.lineTo(0, 0);
     } else if (punoZaobljenaMatch) {
-        const R = parseFloat(punoZaobljenaMatch[1]) / 1000;
-        shape.moveTo(0, 0); // bottom-left
-        shape.lineTo(w_m - R, 0); // line to start of arc on the right side
-        shape.absarc(w_m - R, R, R, -Math.PI / 2, Math.PI / 2, false); // semi-circle on the right side
-        shape.lineTo(0, h_m); // top-left
-        shape.lineTo(0, 0); // close path
-    } else { // Ravni rez / Polirana ravna
+        const R = parseFloat(punoZaobljenaMatch[1]) / (1000 * scale);
+        shape.moveTo(0, 0);
+        shape.lineTo(w_m - R, 0);
+        shape.absarc(w_m - R, R, R, -Math.PI / 2, 0, false);
+        shape.absarc(w_m - R, h_m-R, R, 0, Math.PI / 2, false);
+        shape.lineTo(0, h_m);
+        shape.lineTo(0, 0);
+    } else {
         geometry = new THREE.BoxGeometry(l_m, h_m, w_m);
     }
 
@@ -168,7 +189,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
       const extrudeSettings = { steps: 2, depth: l_m, bevelEnabled: false };
       geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
       geometry.rotateX(-Math.PI/2);
-      geometry.translate(-w_m/2, 0, -l_m/2);
+      geometry.translate(0, 0, -l_m);
     }
     
     geometry.center();
@@ -212,11 +233,8 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     mesh.name = 'specimen';
     sceneRef.current.add(mesh);
 
-    // Edge highlighting logic
-    const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00, linewidth: 2 });
-    const okapnikMaterial = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 2 });
+    const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xffd700, linewidth: 3 });
     const hx = l_m / 2, hy = h_m / 2, hz = w_m / 2;
-    const okapnikInset = 0.015; // 1.5cm
 
     const edgePoints: THREE.Vector3[] = [];
     if (processedEdges.front) edgePoints.push(new THREE.Vector3(-hx, hy, -hz), new THREE.Vector3(hx, hy, -hz));
@@ -230,16 +248,36 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
       edgeGroupRef.current?.add(edgeLines);
     }
     
-    const okapnikPoints: THREE.Vector3[] = [];
-    if (okapnik.front) okapnikPoints.push(new THREE.Vector3(-hx, -hy, -hz + okapnikInset), new THREE.Vector3(hx, -hy, -hz + okapnikInset));
-    if (okapnik.back) okapnikPoints.push(new THREE.Vector3(-hx, -hy, hz - okapnikInset), new THREE.Vector3(hx, -hy, hz - okapnikInset));
-    if (okapnik.left) okapnikPoints.push(new THREE.Vector3(-hx + okapnikInset, -hy, -hz), new THREE.Vector3(-hx + okapnikInset, -hy, hz));
-    if (okapnik.right) okapnikPoints.push(new THREE.Vector3(hx - okapnikInset, -hy, -hz), new THREE.Vector3(hx - okapnikInset, -hy, hz));
+    const okapnikGrooveMaterial = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+    const okapnikInset = 0.015;
+    const okapnikSize = 0.005;
+    const cornerGap = okapnikSize;
 
-    if (okapnikPoints.length > 0) {
-      const okapnikGeometry = new THREE.BufferGeometry().setFromPoints(okapnikPoints);
-      const okapnikLines = new THREE.LineSegments(okapnikGeometry, okapnikMaterial);
-      edgeGroupRef.current?.add(okapnikLines);
+    const createGroove = (width: number, height: number, depth: number) => new THREE.BoxGeometry(width, height, depth);
+
+    if (okapnik.front) {
+        const groove = createGroove(l_m - 2 * cornerGap, okapnikSize, okapnikSize);
+        const grooveMesh = new THREE.Mesh(groove, okapnikGrooveMaterial);
+        grooveMesh.position.set(0, -hy + (okapnikSize / 2), -hz + okapnikInset + (okapnikSize / 2));
+        okapnikGroupRef.current?.add(grooveMesh);
+    }
+    if (okapnik.back) {
+        const groove = createGroove(l_m - 2 * cornerGap, okapnikSize, okapnikSize);
+        const grooveMesh = new THREE.Mesh(groove, okapnikGrooveMaterial);
+        grooveMesh.position.set(0, -hy + (okapnikSize / 2), hz - okapnikInset - (okapnikSize / 2));
+        okapnikGroupRef.current?.add(grooveMesh);
+    }
+    if (okapnik.left) {
+        const groove = createGroove(okapnikSize, okapnikSize, w_m - 2 * cornerGap);
+        const grooveMesh = new THREE.Mesh(groove, okapnikGrooveMaterial);
+        grooveMesh.position.set(-hx + okapnikInset + (okapnikSize / 2), -hy + (okapnikSize / 2), 0);
+        okapnikGroupRef.current?.add(grooveMesh);
+    }
+    if (okapnik.right) {
+        const groove = createGroove(okapnikSize, okapnikSize, w_m - 2 * cornerGap);
+        const grooveMesh = new THREE.Mesh(groove, okapnikGrooveMaterial);
+        grooveMesh.position.set(hx - okapnikInset - (okapnikSize / 2), -hy + (okapnikSize / 2), 0);
+        okapnikGroupRef.current?.add(grooveMesh);
     }
     
     if (cameraRef.current && controlsRef.current) {
@@ -252,12 +290,17 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         
         cameraZ *= 1.2; 
 
-        cameraRef.current.position.set(center.x + cameraZ, center.y + cameraZ * 0.75, center.z + cameraZ);
+        cameraRef.current.position.set(center.x, center.y + cameraZ * 0.5, center.z + cameraZ);
         controlsRef.current.target.copy(center);
+        
+        const distance = cameraRef.current.position.distanceTo(center);
+        const zoomFactor = Math.max(l_m, w_m, h_m) * 2.5; 
+        cameraRef.current.position.normalize().multiplyScalar(distance * zoomFactor);
+
         controlsRef.current.update();
     }
     
-  }, [dims, material, finish, profile, processedEdges, okapnik]);
+  }, [dims, material, finish, profile, processedEdges, okapnik, resolvedTheme]);
 
   useEffect(() => {
     if (sceneRef.current) {

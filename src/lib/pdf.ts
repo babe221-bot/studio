@@ -2,6 +2,13 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import type { OrderItem } from '@/types';
 
+type ProcessedEdges2D = {
+    top?: boolean,
+    bottom?: boolean,
+    left?: boolean,
+    right?: boolean,
+};
+
 const drawDimensionedRect = (
   doc: jsPDF,
   x: number,
@@ -10,9 +17,13 @@ const drawDimensionedRect = (
   h: number,
   w_label: string,
   h_label: string,
-  title: string
+  title: string,
+  options?: {
+    surfaceFinish?: string,
+    processedEdges?: ProcessedEdges2D,
+  }
 ) => {
-    const scale = 3.5;
+    const scale = 2.8;
     const rectW = w / scale;
     const rectH = h / scale;
     const textOffset = 3;
@@ -22,19 +33,33 @@ const drawDimensionedRect = (
     doc.setFontSize(9).setFont('helvetica', 'bold').text(title, x, y - 10);
     
     doc.setLineWidth(0.3).setDrawColor(0).rect(x, y, rectW, rectH);
+
+    if (options?.surfaceFinish) {
+      doc.setFontSize(7).setTextColor(120).setFont('helvetica', 'italic');
+      doc.text(options.surfaceFinish, x + rectW / 2, y + rectH / 2, { align: 'center' });
+    }
+    
     doc.setFontSize(8).setTextColor(120).setFont('helvetica', 'normal');
 
-    // Horizontal dimension
     doc.line(x, y - dimLineOffset, x + rectW, y - dimLineOffset);
     doc.line(x, y - dimLineOffset - dimTickSize, x, y - dimLineOffset + dimTickSize);
     doc.line(x + rectW, y - dimLineOffset - dimTickSize, x + rectW, y - dimLineOffset + dimTickSize);
     doc.text(`${w_label}`, x + rectW / 2, y - dimLineOffset - textOffset, { align: 'center' });
 
-    // Vertical dimension
     doc.line(x - dimLineOffset, y, x - dimLineOffset, y + rectH);
     doc.line(x - dimLineOffset - dimTickSize, y, x - dimLineOffset + dimTickSize, y);
     doc.line(x - dimLineOffset - dimTickSize, y + rectH, x - dimLineOffset + dimTickSize, y + rectH);
     doc.text(`${h_label}`, x - dimLineOffset - textOffset, y + rectH / 2, { align: 'center', angle: -90 });
+
+    if (options?.processedEdges) {
+        doc.setLineWidth(0.8).setDrawColor(255, 215, 0);
+        const P = options.processedEdges;
+        if (P.top) doc.line(x, y, x + rectW, y);
+        if (P.bottom) doc.line(x, y + rectH, x + rectW, y + rectH);
+        if (P.left) doc.line(x, y, x, y + rectH);
+        if (P.right) doc.line(x + rectW, y, x + rectW, y + rectH);
+        doc.setLineWidth(0.3).setDrawColor(0);
+    }
 };
 
 
@@ -64,7 +89,7 @@ export const generatePdfDataUri = async (orderItems: OrderItem[]): Promise<strin
 
   let grandTotal = 0;
   for (const [index, item] of orderItems.entries()) {
-    const itemHeight = 135;
+    const itemHeight = 160;
     if (yPos > pageHeight - itemHeight) {
       doc.addPage();
       yPos = 15;
@@ -81,7 +106,7 @@ export const generatePdfDataUri = async (orderItems: OrderItem[]): Promise<strin
     const detailsX = contentX;
     const snapshotX = pageWidth / 2 + 10;
     const snapshotW = pageWidth - snapshotX - margin;
-    const snapshotH = 50;
+    const snapshotH = 60;
     
     doc.setFont('helvetica', 'normal').setFontSize(9);
     doc.text(`- Materijal: ${item.material.name}`, detailsX, textY);
@@ -122,16 +147,27 @@ export const generatePdfDataUri = async (orderItems: OrderItem[]): Promise<strin
       }
     }
     
-    const drawingY = yPos + 75;
+    const drawingY = yPos + 90;
     const drawingStartX = margin + 20;
+    const drawingScale = 2.8;
 
-    drawDimensionedRect(doc, drawingStartX, drawingY, item.dims.length, item.dims.width, `${item.dims.length.toFixed(1)} cm`, `${item.dims.width.toFixed(1)} cm`, 'Tlocrt');
-    
-    const frontViewX = drawingStartX + (item.dims.length / 3.5) + 30;
+    drawDimensionedRect(doc, drawingStartX, drawingY, item.dims.length, item.dims.width, `${item.dims.length.toFixed(1)} cm`, `${item.dims.width.toFixed(1)} cm`, 'Tlocrt', {
+      surfaceFinish: item.finish.name,
+      processedEdges: {
+        top: item.processedEdges.back,
+        bottom: item.processedEdges.front,
+        left: item.processedEdges.left,
+        right: item.processedEdges.right,
+      },
+    });
+
+    const frontViewX = drawingStartX + (item.dims.length / drawingScale) + 30;
     drawDimensionedRect(doc, frontViewX, drawingY, item.dims.length, item.dims.height, `${item.dims.length.toFixed(1)} cm`, `${item.dims.height.toFixed(1)} cm`, 'Nacrt');
+    doc.setFontSize(7).setTextColor(120).setFont('helvetica', 'normal').text(`Profil: ${item.profile.name}`, frontViewX, drawingY + (item.dims.height / drawingScale) + 10);
     
-    const sideViewX = frontViewX + (item.dims.length / 3.5) + 30;
+    const sideViewX = frontViewX + (item.dims.length / drawingScale) + 30;
     drawDimensionedRect(doc, sideViewX, drawingY, item.dims.width, item.dims.height, `${item.dims.width.toFixed(1)} cm`, `${item.dims.height.toFixed(1)} cm`, 'Bokocrt');
+     doc.setFontSize(7).setTextColor(120).setFont('helvetica', 'normal').text(`Profil: ${item.profile.name}`, sideViewX, drawingY + (item.dims.height / drawingScale) + 10);
     
     yPos += itemHeight + 10;
     grandTotal += item.totalCost;
