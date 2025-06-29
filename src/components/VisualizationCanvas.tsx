@@ -25,197 +25,193 @@ const generateSlabGeometry = (
     profile: EdgeProfile, 
     processedEdges: ProcessedEdges
 ) => {
-  const geometry = new THREE.BufferGeometry();
-  const vertices: number[] = [];
-  const indices: number[] = [];
-  const groups: { start: number; count: number; materialIndex: number }[] = [];
-  let vIdx = 0;
+    const geometry = new THREE.BufferGeometry();
+    const vertices: number[] = [];
+    const indices: number[] = [];
+    const groups: { start: number; count: number; materialIndex: number }[] = [];
+    let vIdx = 0;
 
-  // --- Helper functions ---
-  const addVertex = (x: number, y: number, z: number) => {
-    vertices.push(x, y, z);
-    return vIdx++;
-  };
-  const addFace = (v1: number, v2: number, v3: number) => indices.push(v1, v2, v3);
-  const addQuad = (v1: number, v2: number, v3: number, v4: number) => {
-    if (v1 === v2 || v1 === v3 || v1 === v4 || v2 === v3 || v2 === v4 || v3 === v4) return;
-    addFace(v1, v2, v3);
-    addFace(v1, v3, v4);
-  };
-  const addGroup = (start: number, count: number, materialIndex: number) => {
-    if (count > 0) {
-      groups.push({ start, count, materialIndex });
-    }
-  };
-  
-  // --- Profile Parameter Calculation ---
-  const profileName = profile.name.toLowerCase();
-  const smusMatch = profileName.match(/smuš c(\d+\.?\d*)/);
-  const poluRMatch = profileName.match(/polu-zaobljena r(\d+\.?\d*)cm/);
-  const punoRMatch = profileName.match(/puno-zaobljena r(\d+\.?\d*)cm/);
-
-  let profileType: 'chamfer' | 'half-round' | 'full-round' | 'none' = 'none';
-  let R = 0;
-  const segments = 16;
-  const halfL = L / 2;
-  const halfW = W / 2;
-
-  if (smusMatch) {
-    profileType = 'chamfer';
-    R = Math.min(parseFloat(smusMatch[1]) / 100, H, L/2, W/2); // mm to m, but input is cm, so /100
-  } else if (poluRMatch) {
-    profileType = 'half-round';
-    R = Math.min(parseFloat(poluRMatch[1]) / 100, H); // cm to m, capped by thickness
-  } else if (punoRMatch) {
-    profileType = 'full-round';
-    R = H / 2; // Full round radius is always half the height
-  }
-  if (R <= 0) profileType = 'none';
-  
-  // --- Corner Data Generation ---
-  const cornerPositions = {
-      flt: { x: -halfL, z:  halfW, procX: processedEdges.left, procZ: processedEdges.front, signX: -1, signZ:  1 },
-      frt: { x:  halfL, z:  halfW, procX: processedEdges.right, procZ: processedEdges.front, signX:  1, signZ:  1 },
-      brt: { x:  halfL, z: -halfW, procX: processedEdges.right, procZ: processedEdges.back, signX:  1, signZ: -1 },
-      blt: { x: -halfL, z: -halfW, procX: processedEdges.left, procZ: processedEdges.back, signX: -1, signZ: -1 },
-  };
-
-  const cornerData: { [key: string]: any } = {};
-
-  Object.keys(cornerPositions).forEach(key => {
-    const cPos = cornerPositions[key as keyof typeof cornerPositions];
-    const { x, z, procX, procZ, signX, signZ } = cPos;
-    
-    const data: any = {
-      base_bl: addVertex(x, 0, z),
-      base_tl: addVertex(x, H, z),
-      sideArc: [], // Arc along X edge (left/right)
-      frontArc: [], // Arc along Z edge (front/back)
+    const addVertex = (x: number, y: number, z: number) => {
+        vertices.push(x, y, z);
+        return vIdx++;
+    };
+    const addFace = (v1: number, v2: number, v3: number) => indices.push(v1, v2, v3);
+    const addQuad = (v1: number, v2: number, v3: number, v4: number) => {
+        addFace(v1, v2, v3);
+        addFace(v1, v3, v4);
+    };
+    const addGroup = (start: number, count: number, materialIndex: number) => {
+        if (count > 0) groups.push({ start, count, materialIndex });
     };
 
-    const hasProfile = profileType !== 'none';
-    const hasProfileX = hasProfile && procX;
-    const hasProfileZ = hasProfile && procZ;
+    const profileName = profile.name.toLowerCase();
+    const smusMatch = profileName.match(/smuš c([\d.]+)/);
+    const poluRMatch = profileName.match(/polu-zaobljena r([\d.]+)cm/);
+    const punoRMatch = profileName.match(/puno-zaobljena r([\d.]+)cm/);
 
-    // --- Generate Arcs ---
-    const genArc = (isX: boolean) => {
-      const arc: number[] = [];
-      const isFullRound = profileType === 'full-round';
-      const yCenter = isFullRound ? H / 2 : H - R;
-      const startAngle = isFullRound ? -Math.PI / 2 : 0;
-      const endAngle = Math.PI / 2;
+    let profileType: 'chamfer' | 'half-round' | 'full-round' | 'none' = 'none';
+    let R = 0;
+    const segments = 16;
+    const halfL = L / 2;
+    const halfW = W / 2;
 
-      for (let i = 0; i <= segments; i++) {
-        const angle = startAngle + (i / segments) * (endAngle - startAngle);
-        const vx = x - (isX ? signX : 0) * R * (1 - Math.cos(angle));
-        const vy = yCenter + R * Math.sin(angle);
-        const vz = z - (isX ? 0 : signZ) * R * (1 - Math.cos(angle));
-        arc.push(addVertex(vx, vy, vz));
-      }
-      return arc;
-    };
-    
-    if (profileType === 'chamfer') {
-        if (hasProfileX) data.sideArc = [addVertex(x, H - R, z), addVertex(x - signX * R, H, z)];
-        if (hasProfileZ) data.frontArc = [addVertex(x, H - R, z), addVertex(x, H, z - signZ * R)];
-    } else if (profileType === 'half-round' || profileType === 'full-round') {
-        if (hasProfileX) data.sideArc = genArc(true);
-        if (hasProfileZ) data.frontArc = genArc(false);
+    if (smusMatch) {
+        profileType = 'chamfer';
+        R = Math.min(parseFloat(smusMatch[1]) / 100, H, L / 2, W / 2);
+    } else if (poluRMatch) {
+        profileType = 'half-round';
+        R = Math.min(parseFloat(poluRMatch[1]), H * 100) / 100;
+    } else if (punoRMatch) {
+        profileType = 'full-round';
+        R = H / 2;
     }
-    
-    // Fill in missing arcs with flat top vertex
-    if (!hasProfileX) data.sideArc = Array(data.frontArc.length || 1).fill(data.base_tl);
-    if (!hasProfileZ) data.frontArc = Array(data.sideArc.length || 1).fill(data.base_tl);
-    
-    // --- Generate Corner Surface ---
-    if (hasProfileX && hasProfileZ) {
-      const cornerFaceStart = indices.length;
-      if (profileType === 'chamfer') {
-        addFace(
-          data.base_tl,
-          data.sideArc[1],
-          data.frontArc[1],
-        );
-      } else {
-        const cornerGrid: number[][] = [];
-        const isFullRound = profileType === 'full-round';
-        const yCenter = isFullRound ? H / 2 : H - R;
-        const startAngle = isFullRound ? -Math.PI / 2 : 0;
-        const endAngle = Math.PI / 2;
-        
-        for (let i = 0; i <= segments; i++) {
-            const row: number[] = [];
-            const theta = startAngle + (i / segments) * (endAngle - startAngle);
-            const d_v = R * Math.sin(theta);
-            const d_h = R * (1 - Math.cos(theta));
-            for (let j = 0; j <= segments; j++) {
-                const phi = (j / segments) * (Math.PI / 2);
-                const vx = x - signX * d_h * Math.cos(phi);
-                const vy = yCenter + d_v;
-                const vz = z - signZ * d_h * Math.sin(phi);
-                row.push(addVertex(vx, vy, vz));
+    if (R <= 1e-6) profileType = 'none';
+
+    const corners = {
+        flt: { x: -halfL, z: halfW, procX: processedEdges.left, procZ: processedEdges.front, signX: -1, signZ: 1 },
+        frt: { x: halfL, z: halfW, procX: processedEdges.right, procZ: processedEdges.front, signX: 1, signZ: 1 },
+        brt: { x: halfL, z: -halfW, procX: processedEdges.right, procZ: processedEdges.back, signX: 1, signZ: -1 },
+        blt: { x: -halfL, z: -halfW, procX: processedEdges.left, procZ: processedEdges.back, signX: -1, signZ: -1 },
+    };
+
+    const cornerData: any = {};
+    const topFacePoints: any = {};
+
+    // 1. Generate all vertices for corners and profiles
+    for (const key in corners) {
+        const c = corners[key as keyof typeof corners];
+        const { x, z, procX, procZ, signX, signZ } = c;
+        const data: any = { base_bl: addVertex(x, 0, z) };
+
+        const hasProfile = profileType !== 'none';
+        const hasProfileX = hasProfile && procX;
+        const hasProfileZ = hasProfile && procZ;
+
+        if (profileType === 'chamfer') {
+            data.top_corner = addVertex(x, H, z);
+            data.side_profile = hasProfileX ? [data.top_corner, addVertex(x - signX * R, H, z)] : [data.top_corner, data.top_corner];
+            data.front_profile = hasProfileZ ? [data.top_corner, addVertex(x, H, z - signZ * R)] : [data.top_corner, data.top_corner];
+            topFacePoints[key] = addVertex(x - (hasProfileX ? signX * R : 0), H, z - (hasProfileZ ? signZ * R : 0));
+
+        } else if (profileType.includes('round')) {
+            const isFull = profileType === 'full-round';
+            const r = isFull ? H / 2 : R;
+            const yCenter = isFull ? H / 2 : H - r;
+            const startAngle = isFull ? Math.PI : Math.PI / 2;
+            const endAngle = Math.PI / 2;
+
+            const genArc = (angleOffset: number) => {
+                const arc = [];
+                for (let i = 0; i <= segments; i++) {
+                    const angle = startAngle - (i / segments) * (startAngle - endAngle);
+                    const vx = x - signX * r * Math.cos(angle) * Math.cos(angleOffset);
+                    const vy = yCenter + r * Math.sin(angle);
+                    const vz = z - signZ * r * Math.cos(angle) * Math.sin(angleOffset);
+                    arc.push(addVertex(vx, vy, vz));
+                }
+                return arc;
+            };
+
+            data.side_profile = hasProfileX ? genArc(Math.PI / 2) : Array(segments + 1).fill(addVertex(x, H, z));
+            data.front_profile = hasProfileZ ? genArc(0) : Array(segments + 1).fill(addVertex(x, H, z));
+            topFacePoints[key] = data.side_profile[segments];
+
+            if (hasProfileX && hasProfileZ) {
+                const cornerGrid = [];
+                for (let i = 0; i <= segments; i++) { // vertical
+                    const row = [];
+                    const angle_v = startAngle - (i / segments) * (startAngle - endAngle);
+                    const r_h = r * Math.cos(angle_v);
+                    const y = yCenter + r * Math.sin(angle_v);
+                    for (let j = 0; j <= segments; j++) { // horizontal
+                        const angle_h = (j / segments) * (Math.PI / 2);
+                        const vx = x - signX * r_h * Math.cos(angle_h);
+                        const vz = z - signZ * r_h * Math.sin(angle_h);
+                        row.push(addVertex(vx, y, vz));
+                    }
+                    cornerGrid.push(row);
+                }
+                data.corner_grid = cornerGrid;
+                data.side_profile = cornerGrid.map(row => row[segments]);
+                data.front_profile = cornerGrid.map(row => row[0]);
+                topFacePoints[key] = data.side_profile[segments];
             }
-            cornerGrid.push(row);
+        } else { // No profile
+            data.top_corner = addVertex(x, H, z);
+            data.side_profile = [data.top_corner];
+            data.front_profile = [data.top_corner];
+            topFacePoints[key] = data.top_corner;
         }
-        
-        for (let i = 0; i < segments; i++) {
-          for (let j = 0; j < segments; j++) {
-             addQuad(cornerGrid[i][j], cornerGrid[i+1][j], cornerGrid[i+1][j+1], cornerGrid[i][j+1]);
-          }
+        cornerData[key] = data;
+    }
+
+    // 2. Build Faces
+    // Bottom face
+    let groupStart = indices.length;
+    addQuad(cornerData.blt.base_bl, cornerData.brt.base_bl, cornerData.frt.base_bl, cornerData.flt.base_bl);
+    addGroup(groupStart, indices.length - groupStart, 0);
+
+    // Top face
+    groupStart = indices.length;
+    addQuad(topFacePoints.blt, topFacePoints.brt, topFacePoints.frt, topFacePoints.flt);
+    addGroup(groupStart, indices.length - groupStart, 0);
+
+    // Side faces and profiles
+    const buildSide = (c1_key: string, c2_key: string, isFront: boolean) => {
+        const c1 = cornerData[c1_key];
+        const c2 = cornerData[c2_key];
+        const profile1 = (isFront ? c1.front_profile : c1.side_profile).slice().reverse();
+        const profile2 = (isFront ? c2.front_profile : c2.side_profile);
+
+        // Flat part of the side
+        groupStart = indices.length;
+        addQuad(c1.base_bl, c2.base_bl, profile2[0], profile1[profile1.length - 1]);
+        addGroup(groupStart, indices.length - groupStart, 1);
+
+        // Profiled part
+        groupStart = indices.length;
+        if (profile1.length > 1) {
+            for (let i = 0; i < profile1.length - 1; i++) {
+                addQuad(profile1[i + 1], profile2[i + 1], profile2[i], profile1[i]);
+            }
         }
-        data.sideArc = cornerGrid.map(row => row[0]).reverse();
-        data.frontArc = cornerGrid[0];
-      }
-      addGroup(cornerFaceStart, indices.length - cornerFaceStart, 2); // Material 2 for profile corners
+        addGroup(groupStart, indices.length - groupStart, 2);
+    };
+
+    buildSide('flt', 'frt', true); // Front
+    buildSide('frt', 'brt', false); // Right
+    buildSide('brt', 'blt', true); // Back
+    buildSide('blt', 'flt', false); // Left
+
+    // Corner faces
+    groupStart = indices.length;
+    for (const key in corners) {
+        const c = corners[key as keyof typeof corners];
+        const data = cornerData[key];
+        if (c.procX && c.procZ && data.corner_grid) {
+            for (let i = 0; i < segments; i++) {
+                for (let j = 0; j < segments; j++) {
+                    addQuad(
+                        data.corner_grid[i][j],
+                        data.corner_grid[i][j + 1],
+                        data.corner_grid[i + 1][j + 1],
+                        data.corner_grid[i + 1][j]
+                    );
+                }
+            }
+        } else if (c.procX && c.procZ && profileType === 'chamfer') {
+            const top_inner_side = data.side_profile[1];
+            const top_inner_front = data.front_profile[1];
+            addFace(data.top_corner, top_inner_side, top_inner_front);
+        }
     }
-    
-    cornerData[key] = data;
-  });
+    addGroup(groupStart, indices.length - groupStart, 2);
 
-  // --- Main Faces (Top/Bottom) ---
-  const bottomFaceStart = indices.length;
-  addQuad(cornerData.blt.base_bl, cornerData.brt.base_bl, cornerData.frt.base_bl, cornerData.flt.base_bl);
-  addGroup(bottomFaceStart, indices.length - bottomFaceStart, 0);
-
-  const topFaceStart = indices.length;
-  const flt_main = cornerData.flt.sideArc.slice(-1)[0];
-  const frt_main = cornerData.frt.frontArc.slice(-1)[0];
-  const brt_main = cornerData.brt.sideArc.slice(-1)[0];
-  const blt_main = cornerData.blt.frontArc.slice(-1)[0];
-  addQuad(blt_main, brt_main, frt_main, flt_main);
-  addGroup(topFaceStart, indices.length - topFaceStart, 0);
-
-  // --- Connect Edges (Sides) ---
-  const connectAndBuildSides = (c1_key: string, c2_key: string, isFrontBack: boolean) => {
-    const c1 = cornerData[c1_key];
-    const c2 = cornerData[c2_key];
-    const arc1 = isFrontBack ? c1.frontArc : c1.sideArc;
-    const arc2 = (isFrontBack ? c2.frontArc : c2.sideArc).slice().reverse();
-
-    // Profiled Surface (Material 2)
-    const profileFaceStart = indices.length;
-    for (let i = 0; i < arc1.length - 1; i++) {
-        addQuad(arc1[i], arc1[i+1], arc2[i+1], arc2[i]);
-    }
-    addGroup(profileFaceStart, indices.length - profileFaceStart, 2);
-
-    // Flat Side Surface (Material 1)
-    const flatSideStart = indices.length;
-    addQuad(c1.base_bl, c2.base_bl, arc2[0], arc1[0]);
-    addGroup(flatSideStart, indices.length - flatSideStart, 1);
-  };
-
-  connectAndBuildSides('flt', 'frt', true);  // front
-  connectAndBuildSides('frt', 'brt', false); // right
-  connectAndBuildSides('brt', 'blt', true);  // back
-  connectAndBuildSides('blt', 'flt', false); // left
-
-  // --- Finalize Geometry ---
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-  geometry.setIndex(indices);
-  groups.forEach(group => geometry.addGroup(group.start, group.count, group.materialIndex));
-  geometry.computeVertexNormals();
-  return geometry;
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.setIndex(indices);
+    groups.forEach(g => geometry.addGroup(g.start, g.count, g.materialIndex));
+    geometry.computeVertexNormals();
+    return geometry;
 };
 
 
@@ -230,9 +226,9 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
   const textureCache = useRef<{ [key: string]: THREE.Texture }>({});
 
   const materials = useMemo(() => [
-    new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.1, roughness: 0.8, clearcoat: 0, clearcoatRoughness: 0 }), // 0: Main (textured)
+    new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.1, roughness: 0.8 }), // 0: Main (textured)
     new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.1, roughness: 0.8 }), // 1: Flat Sides
-    new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.1, roughness: 0.7, clearcoat: 0, clearcoatRoughness: 0 }), // 2: Profile
+    new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.1, roughness: 0.7 }), // 2: Profile
   ], []);
 
   useImperativeHandle(ref, () => ({
@@ -264,9 +260,9 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     checkerboardCanvas.height = size * 2;
     const context = checkerboardCanvas.getContext('2d');
     if (context) {
-        context.fillStyle = 'hsl(220 13% 18%)';
+        context.fillStyle = 'hsl(240 3.7% 15.9%)';
         context.fillRect(0, 0, checkerboardCanvas.width, checkerboardCanvas.height);
-        context.fillStyle = 'hsl(220 13% 22%)';
+        context.fillStyle = 'hsl(240 3.7% 20%)';
         context.fillRect(0, 0, size, size);
         context.fillRect(size, size, size, size);
     }
@@ -339,41 +335,42 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     const h = height / 100;
     
     // --- Update Materials ---
-    const [originalMaterial, processedMaterial, profileMaterial] = materials;
+    const [mainMaterial, sideMaterial, profileMaterial] = materials;
     const baseColor = new THREE.Color(material.color || '#FFFFFF');
     
-    originalMaterial.color = baseColor;
-    processedMaterial.color = baseColor.clone().lerp(new THREE.Color(0x000000), 0.1);
+    mainMaterial.color = baseColor;
+    sideMaterial.color = baseColor.clone().lerp(new THREE.Color(0x000000), 0.1);
     profileMaterial.color = baseColor.clone().lerp(new THREE.Color(0xffffff), 0.5);
 
     const finishName = finish.name.toLowerCase();
-    if (finishName.includes('poliran')) {
-        originalMaterial.roughness = 0.8;
-        originalMaterial.clearcoat = 0;
-    } else {
-        originalMaterial.roughness = 0.9;
-        originalMaterial.clearcoat = 0;
-    }
+    const isPolished = finishName.includes('poliran');
+    mainMaterial.roughness = isPolished ? 0.85 : 0.95;
+    sideMaterial.roughness = 0.9;
+    profileMaterial.roughness = 0.8;
+    mainMaterial.clearcoat = 0;
+    sideMaterial.clearcoat = 0;
+    profileMaterial.clearcoat = 0;
+
 
     const textureUrl = material.texture;
-    if (textureUrl && textureUrl !== originalMaterial.userData.url) {
+    if (textureUrl && textureUrl !== mainMaterial.userData.url) {
       if (textureCache.current[textureUrl]) {
-        originalMaterial.map = textureCache.current[textureUrl];
-        originalMaterial.needsUpdate = true;
+        mainMaterial.map = textureCache.current[textureUrl];
+        mainMaterial.needsUpdate = true;
       } else {
         new THREE.TextureLoader().load(textureUrl, (texture) => {
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
             texture.repeat.set(5 / Math.max(vizL, vizW), 5 / Math.max(vizL, vizW) * (vizW/vizL));
-            originalMaterial.map = texture;
-            originalMaterial.needsUpdate = true;
+            mainMaterial.map = texture;
+            mainMaterial.needsUpdate = true;
             textureCache.current[textureUrl] = texture;
         });
       }
     } else if(!textureUrl) {
-      originalMaterial.map = null;
-      originalMaterial.needsUpdate = true;
+      mainMaterial.map = null;
+      mainMaterial.needsUpdate = true;
     }
-    originalMaterial.userData.url = textureUrl;
+    mainMaterial.userData.url = textureUrl;
     
     // --- Rebuild Scene ---
     while (mainGroupRef.current.children.length > 0) {
@@ -398,7 +395,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     const okapnikOffset = 2.0 / 100;
     const createOkapnik = (edgeL: number, vertical: boolean) => new THREE.Mesh(
       new THREE.BoxGeometry( vertical ? okapnikGrooveWidth : edgeL, okapnikGrooveDepth, vertical ? edgeL: okapnikGrooveWidth ),
-      processedMaterial
+      sideMaterial
     );
     
     if(okapnikEdges.front) slabGroup.add(createOkapnik(vizL, false)).position.set(0, -okapnikGrooveDepth/2, (vizW/2) - okapnikOffset);
@@ -407,7 +404,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     if(okapnikEdges.right) slabGroup.add(createOkapnik(vizW, true)).position.set((vizL/2) - okapnikOffset, -okapnikGrooveDepth/2, 0);
 
     mainGroupRef.current.add(slabGroup);
-    // No rotation
     slabGroup.position.y = -h / 2;
 
     if (cameraRef.current && controlsRef.current) {
@@ -430,5 +426,3 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 
 VisualizationCanvas.displayName = 'VisualizationCanvas';
 export default VisualizationCanvas;
-
-    
