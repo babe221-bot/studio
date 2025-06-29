@@ -21,8 +21,13 @@ import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, Editab
 import { PlusIcon, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 
+type CanvasHandle = {
+  getSnapshot: () => string | null;
+};
+
 export function Lab() {
   const { toast } = useToast();
+  const canvasRef = useRef<CanvasHandle>(null);
 
   // State
   const [materials, setMaterials] = useLocalStorage<Material[]>('lab.materials', initialMaterials);
@@ -89,6 +94,8 @@ export function Lab() {
       toast({ title: "Greška", description: "Molimo popunite sva polja.", variant: "destructive" });
       return;
     }
+    const snapshotDataUri = canvasRef.current?.getSnapshot() || undefined;
+
     const newOrderItem: OrderItem = {
       orderId: Date.now(),
       id: specimenId,
@@ -98,13 +105,14 @@ export function Lab() {
       profile: selectedProfile,
       processedEdges: processedEdges,
       totalCost: calculations.totalCost,
+      snapshotDataUri,
     };
     setOrderItems([...orderItems, newOrderItem]);
     toast({ title: "Stavka dodana", description: `${specimenId} je dodan u radni nalog.` });
   };
   
-  const handlePreviewPdf = () => {
-    const url = generatePdfDataUri(orderItems);
+  const handlePreviewPdf = async () => {
+    const url = await generatePdfDataUri(orderItems);
     if (url) {
       setPdfPreviewUrl(url);
     }
@@ -114,8 +122,8 @@ export function Lab() {
     setOrderItems(orderItems.filter(item => item.orderId !== orderId));
   };
 
-  const handleOpenModal = (type: ModalType) => {
-    setEditingItem(null);
+  const handleOpenModal = (type: ModalType, item?: EditableItem) => {
+    setEditingItem(item || null);
     setModalOpen(type);
   };
 
@@ -267,7 +275,7 @@ export function Lab() {
           <Card className="h-full min-h-[400px] md:min-h-[600px] lg:min-h-full">
             <CardHeader><CardTitle>3D Vizualizacija</CardTitle></CardHeader>
             <CardContent className="h-full pb-0">
-               <VisualizationCanvas {...visualizationState} />
+               <VisualizationCanvas ref={canvasRef} {...visualizationState} />
             </CardContent>
           </Card>
         </div>

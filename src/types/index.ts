@@ -38,6 +38,7 @@ export interface OrderItem {
   profile: EdgeProfile;
   processedEdges?: ProcessedEdges;
   totalCost: number;
+  snapshotDataUri?: string;
 }
 
 export type ModalType = 'material' | 'finish' | 'profile' | null;

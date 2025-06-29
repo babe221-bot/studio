@@ -72,6 +72,7 @@ export const initialEdgeProfiles: EdgeProfile[] = [
   { id: 1, name: 'Ravni rez (pilan)', cost_m: 5 },
   { id: 2, name: 'Polirana ravna ivica', cost_m: 15 },
   { id: 3, name: 'Oborena ivica 2mm (faza)', cost_m: 20 },
+  { id: 7, name: 'Okapnik (utor ispod ploče)', cost_m: 25 },
   { id: 4, name: 'Zaobljena R5 (četvrt-krug)', cost_m: 30 },
   { id: 5, name: 'Polu-zaobljena (polu-C)', cost_m: 45 },
   { id: 6, name: 'Puno zaobljena (C-profil)', cost_m: 60 },
