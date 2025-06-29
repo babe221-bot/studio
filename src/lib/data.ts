@@ -6,28 +6,32 @@ export const initialMaterials: Material[] = [
     name: 'Plano',
     density: 2.7,
     cost_sqm: 220,
-    texture: 'https://placehold.co/1024x1024/F5F5DC/A39E8B.png',
+    texture: 'https://placehold.co/1024x1024/EAE6D9/9D998D.png',
+    color: '#EAE6D9',
   },
   {
     id: 2,
     name: 'Kirmenjak',
     density: 2.65,
     cost_sqm: 180,
-    texture: 'https://placehold.co/1024x1024/EAE8E1/BDBAAB.png',
+    texture: 'https://placehold.co/1024x1024/E1DCC5/A9A594.png',
+    color: '#E1DCC5',
   },
   {
     id: 3,
     name: 'Visočan',
     density: 2.6,
     cost_sqm: 190,
-    texture: 'https://placehold.co/1024x1024/F0EFEA/C1BEB7.png',
+    texture: 'https://placehold.co/1024x1024/DAD6CD/A4A097.png',
+    color: '#DAD6CD',
   },
   {
     id: 4,
     name: 'Sivac',
     density: 2.67,
     cost_sqm: 210,
-    texture: 'https://placehold.co/1024x1024/C5C6C7/8E8F90.png',
+    texture: 'https://placehold.co/1024x1024/C7C7C7/8F8F8F.png',
+    color: '#C7C7C7',
   },
   {
     id: 5,
@@ -35,6 +39,7 @@ export const initialMaterials: Material[] = [
     density: 2.63,
     cost_sqm: 160,
     texture: 'https://placehold.co/1024x1024/DED9C4/A49E82.png',
+    color: '#DED9C4',
   },
   {
     id: 6,
@@ -42,6 +47,7 @@ export const initialMaterials: Material[] = [
     density: 2.68,
     cost_sqm: 280,
     texture: 'https://placehold.co/1024x1024/FDF5E6/B0A492.png',
+    color: '#FDF5E6',
   },
   {
     id: 7,
@@ -49,6 +55,7 @@ export const initialMaterials: Material[] = [
     density: 2.64,
     cost_sqm: 200,
     texture: 'https://placehold.co/1024x1024/DCDCDC/A9A9A9.png',
+    color: '#DCDCDC',
   },
   {
     id: 8,
@@ -56,6 +63,7 @@ export const initialMaterials: Material[] = [
     density: 2.58,
     cost_sqm: 140,
     texture: 'https://placehold.co/1024x1024/FAF0E6/C3B091.png',
+    color: '#FAF0E6',
   },
   {
     id: 9,
@@ -63,6 +71,7 @@ export const initialMaterials: Material[] = [
     density: 2.8,
     cost_sqm: 250,
     texture: 'https://placehold.co/1024x1024/D2B48C/8C7853.png',
+    color: '#D2B48C',
   },
 ];
 

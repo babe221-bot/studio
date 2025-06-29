@@ -19,6 +19,7 @@ const MaterialModal: React.FC<MaterialModalProps> = ({ isOpen, onClose, onSave, 
   const [density, setDensity] = useState(2.7);
   const [costSqm, setCostSqm] = useState(100);
   const [texture, setTexture] = useState('');
+  const [color, setColor] = useState('#FFFFFF');
 
   useEffect(() => {
     if (item) {
@@ -26,11 +27,13 @@ const MaterialModal: React.FC<MaterialModalProps> = ({ isOpen, onClose, onSave, 
       setDensity(item.density);
       setCostSqm(item.cost_sqm);
       setTexture(item.texture);
+      setColor(item.color || '#FFFFFF');
     } else {
       setName('');
       setDensity(2.7);
       setCostSqm(100);
       setTexture('');
+      setColor('#FFFFFF');
     }
   }, [item, isOpen]);
 
@@ -45,6 +48,7 @@ const MaterialModal: React.FC<MaterialModalProps> = ({ isOpen, onClose, onSave, 
       density: parseFloat(density.toString()),
       cost_sqm: parseFloat(costSqm.toString()),
       texture,
+      color,
     });
   };
 
@@ -70,6 +74,10 @@ const MaterialModal: React.FC<MaterialModalProps> = ({ isOpen, onClose, onSave, 
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="material-texture" className="text-right">URL Teksture</Label>
             <Input id="material-texture" value={texture} onChange={e => setTexture(e.target.value)} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="material-color" className="text-right">Boja (HEX)</Label>
+            <Input id="material-color" value={color} onChange={e => setColor(e.target.value)} className="col-span-3" />
           </div>
         </div>
         <DialogFooter>

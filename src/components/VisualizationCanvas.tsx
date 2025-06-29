@@ -296,9 +296,9 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     checkerboardCanvas.height = size * 2;
     const context = checkerboardCanvas.getContext('2d');
     if (context) {
-        context.fillStyle = 'hsl(0, 0%, 94%)';
+        context.fillStyle = 'hsl(220 13% 94%)';
         context.fillRect(0, 0, checkerboardCanvas.width, checkerboardCanvas.height);
-        context.fillStyle = 'hsl(0, 0%, 88%)';
+        context.fillStyle = 'hsl(220 13% 88%)';
         context.fillRect(0, 0, size, size);
         context.fillRect(size, size, size, size);
     }
@@ -391,7 +391,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     }
 
     const originalMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0xffffff,
+        color: material.color ? new THREE.Color(material.color) : 0xffffff,
         metalness: 0.1,
         roughness: 0.7,
         clearcoat: 0.1,
@@ -481,7 +481,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     }
 
     mainGroupRef.current.add(slabGroup);
-    slabGroup.position.y = h/2;
     slabGroup.position.y = 0;
 
     if (cameraRef.current && controlsRef.current) {

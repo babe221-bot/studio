@@ -4,6 +4,7 @@ export interface Material {
   density: number;
   cost_sqm: number;
   texture: string;
+  color: string;
 }
 
 export interface SurfaceFinish {
