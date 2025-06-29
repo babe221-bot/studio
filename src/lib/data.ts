@@ -3,17 +3,17 @@ import type { Material, SurfaceFinish, EdgeProfile } from '@/types';
 export const initialMaterials: Material[] = [
   {
     id: 1,
-    name: 'Kirmenjak',
-    density: 2.65,
-    cost_sqm: 180,
-    texture: 'https://placehold.co/1024x1024/FFFACD/FFD700.png',
+    name: 'Visočan',
+    density: 2.6,
+    cost_sqm: 190,
+    texture: 'https://placehold.co/1024x1024/EAE8E1/BDBAAB.png',
   },
   {
     id: 2,
-    name: 'Kanfanar',
-    density: 2.63,
-    cost_sqm: 160,
-    texture: 'https://placehold.co/1024x1024/DCDCDC/778899.png',
+    name: 'Mironja',
+    density: 2.65,
+    cost_sqm: 170,
+    texture: 'https://placehold.co/1024x1024/DED9C4/A49E82.png',
   },
   {
     id: 3,
@@ -24,24 +24,10 @@ export const initialMaterials: Material[] = [
   },
   {
     id: 4,
-    name: 'Avorio',
-    density: 2.68,
-    cost_sqm: 280,
-    texture: 'https://placehold.co/1024x1024/FDF5E6/CD853F.png',
-  },
-  {
-    id: 5,
-    name: 'Pulenat',
-    density: 2.64,
-    cost_sqm: 200,
-    texture: 'https://placehold.co/1024x1024/E8E4D9/C0B8A8.png',
-  },
-  {
-    id: 6,
-    name: 'Lahor',
-    density: 2.58,
-    cost_sqm: 140,
-    texture: 'https://placehold.co/1024x1024/D8CFC5/B1A395.png',
+    name: 'Sivac',
+    density: 2.67,
+    cost_sqm: 210,
+    texture: 'https://placehold.co/1024x1024/C5C6C7/8E8F90.png',
   }
 ];
 
