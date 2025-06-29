@@ -20,10 +20,10 @@ const drawPlateOutline = (doc: jsPDF, x: number, y: number, dims: { length: numb
     doc.text(`${dims.width.toFixed(1)} cm`, x - 8, y + w / 2, { align: 'center', angle: -90 });
 };
 
-export const generatePdf = (orderItems: OrderItem[]) => {
+export const generatePdfDataUri = (orderItems: OrderItem[]): string | null => {
   if (orderItems.length === 0) {
     alert('Nema stavki za PDF.');
-    return;
+    return null;
   }
   
   const doc = new jsPDF();
@@ -91,5 +91,5 @@ export const generatePdf = (orderItems: OrderItem[]) => {
     align: 'left',
   });
 
-  doc.save(`radni_nalog_${Date.now()}.pdf`);
+  return doc.output('datauristring');
 };

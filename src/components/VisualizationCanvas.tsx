@@ -115,22 +115,28 @@ const VisualizationCanvas: React.FC<VisualizationProps> = ({ dims, material, fin
 
     const extrudeSettings: THREE.ExtrudeGeometryOptions = { depth: height / scale, bevelEnabled: false };
 
-    if (profileName.includes('ravna')) {
+    if (profileName.includes('polirana ravna')) {
         extrudeSettings.bevelEnabled = true;
         extrudeSettings.bevelThickness = 0.002;
         extrudeSettings.bevelSize = 0.001;
         extrudeSettings.bevelSegments = 1;
-    } else if (profileName.includes('šamf')) {
+    } else if (profileName.includes('faza') || profileName.includes('oborena')) {
         extrudeSettings.bevelEnabled = true;
         extrudeSettings.bevelThickness = Math.min(height / scale, 0.02) / 2;
         extrudeSettings.bevelSize = Math.min(height / scale, 0.02) / 2;
         extrudeSettings.bevelSegments = 1;
-    } else if (profileName.includes('polu c')) {
+    } else if (profileName.includes('četvrt-krug')) {
+        const radius = 0.5 / scale; // 5mm radius
+        extrudeSettings.bevelEnabled = true;
+        extrudeSettings.bevelThickness = Math.min(radius, height / (2 * scale));
+        extrudeSettings.bevelSize = Math.min(radius, height / (2 * scale));
+        extrudeSettings.bevelSegments = 4;
+    } else if (profileName.includes('polu-zaobljena')) {
         extrudeSettings.bevelEnabled = true;
         extrudeSettings.bevelThickness = height / (2 * scale);
         extrudeSettings.bevelSize = height / (2 * scale);
         extrudeSettings.bevelSegments = 8;
-    } else if (profileName.includes('puno c')) {
+    } else if (profileName.includes('puno zaobljena')) {
         extrudeSettings.bevelEnabled = true;
         extrudeSettings.bevelThickness = height / (2.1 * scale);
         extrudeSettings.bevelSize = height / (2.1 * scale);

@@ -11,11 +11,12 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { initialMaterials, initialSurfaceFinishes, initialEdgeProfiles } from '@/lib/data';
-import { generatePdf } from '@/lib/pdf';
+import { generatePdfDataUri } from '@/lib/pdf';
 import VisualizationCanvas from '@/components/VisualizationCanvas';
 import MaterialModal from '@/components/modals/MaterialModal';
 import FinishModal from '@/components/modals/FinishModal';
 import ProfileModal from '@/components/modals/ProfileModal';
+import PdfPreviewModal from '@/components/modals/PdfPreviewModal';
 import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, EditableItem, ProcessedEdges } from '@/types';
 import { PlusIcon, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -47,6 +48,7 @@ export function Lab() {
 
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
 
   // Derived State & Calculations
   const selectedMaterial = useMemo(() => materials.find(m => m.id.toString() === selectedMaterialId), [materials, selectedMaterialId]);
@@ -99,6 +101,13 @@ export function Lab() {
     };
     setOrderItems([...orderItems, newOrderItem]);
     toast({ title: "Stavka dodana", description: `${specimenId} je dodan u radni nalog.` });
+  };
+  
+  const handlePreviewPdf = () => {
+    const url = generatePdfDataUri(orderItems);
+    if (url) {
+      setPdfPreviewUrl(url);
+    }
   };
 
   const handleRemoveOrderItem = (orderId: number) => {
@@ -270,7 +279,7 @@ export function Lab() {
             <CardContent>
                 <div className="flex flex-col gap-4 md:flex-row">
                     <Button onClick={handleAddToOrder} className="w-full md:w-auto md:flex-1">Dodaj stavku u nalog</Button>
-                    <Button onClick={() => generatePdf(orderItems)} variant="secondary" className="w-full md:w-auto" disabled={orderItems.length === 0}>Kreiraj PDF Nalog</Button>
+                    <Button onClick={handlePreviewPdf} variant="secondary" className="w-full md:w-auto" disabled={orderItems.length === 0}>Pregled PDF Naloga</Button>
                 </div>
                 <Separator className="my-4" />
                 <ScrollArea className="h-64">
@@ -327,6 +336,11 @@ export function Lab() {
         onClose={() => setModalOpen(null)} 
         onSave={(item) => handleSaveItem(item, 'profile')}
         item={editingItem as EdgeProfile | null} 
+      />
+       <PdfPreviewModal 
+        isOpen={!!pdfPreviewUrl}
+        onClose={() => setPdfPreviewUrl(null)}
+        pdfUrl={pdfPreviewUrl}
       />
     </main>
   );
