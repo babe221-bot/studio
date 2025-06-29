@@ -11,12 +11,10 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { initialMaterials, initialSurfaceFinishes, initialEdgeProfiles } from '@/lib/data';
-import { generatePdfDataUri } from '@/lib/pdf';
 import VisualizationCanvas from '@/components/VisualizationCanvas';
 import MaterialModal from '@/components/modals/MaterialModal';
 import FinishModal from '@/components/modals/FinishModal';
 import ProfileModal from '@/components/modals/ProfileModal';
-import PdfPreviewModal from '@/components/modals/PdfPreviewModal';
 import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, EditableItem, ProcessedEdges } from '@/types';
 import { PlusIcon, Trash2, RefreshCw } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -59,7 +57,6 @@ export function Lab() {
   
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
-  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -83,7 +80,7 @@ export function Lab() {
 
   const calculations = useMemo(() => {
     if (!selectedMaterial || !selectedFinish || !selectedProfile || !length || !width || !height) {
-      return { surfaceArea: 0, weight: 0, materialCost: 0, processingCost: 0, totalCost: 0 };
+      return { surfaceArea: 0, weight: 0, materialCost: 0, processingCost: 0, totalCost: 0, okapnikCost: 0 };
     }
     const length_m = length / 100;
     const width_m = width / 100;
@@ -143,11 +140,24 @@ export function Lab() {
     toast({ title: "Stavka dodana", description: `${specimenId} je dodan u radni nalog.` });
   };
   
-  const handlePreviewPdf = async () => {
-    const url = await generatePdfDataUri(orderItems);
-    if (url) {
-      setPdfPreviewUrl(url);
+  const handleDownloadJson = () => {
+    if (orderItems.length === 0) {
+      toast({ title: "Greška", description: "Nema stavki u nalogu za preuzimanje.", variant: "destructive" });
+      return;
     }
+    const dataStr = JSON.stringify(orderItems, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const linkElement = document.createElement('a');
+    linkElement.href = url;
+    linkElement.download = `radni_nalog_${Date.now()}.json`;
+    document.body.appendChild(linkElement);
+    linkElement.click();
+    document.body.removeChild(linkElement);
+    URL.revokeObjectURL(url);
+    
+    toast({ title: "Preuzimanje uspješno", description: "Radni nalog je spremljen kao JSON datoteka." });
   };
 
   const handleRemoveOrderItem = (orderId: number) => {
@@ -331,7 +341,7 @@ export function Lab() {
             <CardContent>
                 <div className="flex flex-col gap-4 md:flex-row">
                     <Button onClick={handleAddToOrder} className="w-full md:w-auto md:flex-1">Dodaj stavku u nalog</Button>
-                    <Button onClick={handlePreviewPdf} variant="secondary" className="w-full md:w-auto" disabled={orderItems.length === 0}>Pregled PDF Naloga</Button>
+                    <Button onClick={handleDownloadJson} variant="secondary" className="w-full md:w-auto" disabled={orderItems.length === 0}>Preuzmi Nalog (JSON)</Button>
                 </div>
                 <Separator className="my-4" />
                 <ScrollArea className="h-64">
@@ -391,11 +401,6 @@ export function Lab() {
         onClose={() => setModalOpen(null)} 
         onSave={(item) => handleSaveItem(item, 'profile')}
         item={editingItem as EdgeProfile | null} 
-      />
-       <PdfPreviewModal 
-        isOpen={!!pdfPreviewUrl}
-        onClose={() => setPdfPreviewUrl(null)}
-        pdfUrl={pdfPreviewUrl}
       />
     </main>
   );
