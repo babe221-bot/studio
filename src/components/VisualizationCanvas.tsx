@@ -32,20 +32,20 @@ const generateSlabGeometry = (
 
   let profileType: 'chamfer' | 'half-round' | 'full-round' | 'none' = 'none';
   let R = 0;
-  const roundSegments = 8; // Increased for smoother curves
+  const roundSegments = 8;
 
   if (smusMatch) {
     profileType = 'chamfer';
-    R = parseFloat(smusMatch[1]) / 1000; // mm to m
+    R = parseFloat(smusMatch[1]) / 1000; // mm to meters
   } else if (poluRMatch) {
     profileType = 'half-round';
-    R = parseFloat(poluRMatch[1]) / 100; // cm to m
+    R = parseFloat(poluRMatch[1]) / 100; // cm to meters
   } else if (punoRMatch) {
     profileType = 'full-round';
-    R = parseFloat(punoRMatch[1]) / 100; // cm to m
+    R = parseFloat(punoRMatch[1]) / 100; // cm to meters
   }
   
-  R = Math.min(R, H / 2, W / 2, L / 2);
+  R = Math.min(R, H / 2);
 
   const vertices: number[] = [];
   const indices: number[] = [];
@@ -85,14 +85,14 @@ const generateSlabGeometry = (
     
     if (profileType === 'chamfer') {
         const cornerPoints: { [key:string]: any } = {};
-        if (pE1 && pE2) {
+        if (pE1 && pE2) { // Corner with two processed edges
           cornerPoints.main = addVertex(cx - signX * R, H, cz - signZ * R);
           cornerPoints.e1 = addVertex(cx, H - R, cz - signZ * R);
           cornerPoints.e2 = addVertex(cx - signX * R, H - R, cz);
-        } else if (pE1) {
+        } else if (pE1) { // Edge along Z-axis (front/back)
           cornerPoints.main = addVertex(cx, H, cz - signZ * R);
           cornerPoints.e1 = addVertex(cx, H - R, cz - signZ * R);
-        } else { // pE2
+        } else { // pE2, Edge along X-axis (left/right)
           cornerPoints.main = addVertex(cx - signX * R, H, cz);
           cornerPoints.e2 = addVertex(cx - signX * R, H - R, cz);
         }
@@ -101,40 +101,23 @@ const generateSlabGeometry = (
     
     if (profileType === 'half-round' || profileType === 'full-round') {
         const cornerPoints: { [key:string]: any } = { main: [] };
-        const isFullRound = profileType === 'full-round';
-        
-        if(pE1 && pE2) { // Corner
-            for(let i=0; i<=roundSegments; ++i) {
-                const cornerAngle = Math.PI/2;
-                const sliceAngle = (i/roundSegments) * cornerAngle;
-                const y = H - R * (1 - Math.cos(sliceAngle));
-                const r_slice = R * Math.sin(sliceAngle);
-                cornerPoints.main.push(addVertex(cx - signX * (R-r_slice), y, cz - signZ * (R-r_slice)));
+        // Corner and Edge logic is simplified for half-round to generate a profile arc
+        // A more complex implementation would be needed for perfect corner blending (quarter torus)
+        // This simplified version generates the profile as if it's on an edge
+        if (pE1) { // Profile primarily on Z-axis for front/back edge
+             for (let i = 0; i <= roundSegments; i++) {
+                const angle = (i / roundSegments) * (Math.PI / 2);
+                const y = H - R * (1 - Math.sin(angle));
+                const z = cz - signZ * R * (1 - Math.cos(angle));
+                cornerPoints.main.push(addVertex(cx, y, z));
+             }
+        } else { // Profile primarily on X-axis for left/right edge
+            for (let i = 0; i <= roundSegments; i++) {
+                const angle = (i / roundSegments) * (Math.PI / 2);
+                const y = H - R * (1 - Math.sin(angle));
+                const x = cx - signX * R * (1 - Math.cos(angle));
+                cornerPoints.main.push(addVertex(x, y, cz));
             }
-        } else if (pE1) { // Edge along Z
-             if (isFullRound) {
-                // TODO: Implement correct full-round logic if needed
-                for (let i = 0; i <= roundSegments; i++) { cornerPoints.main.push(addVertex(cx, H, cz)); }
-             } else { // Corrected Half-Round Logic
-                 for (let i = 0; i <= roundSegments; i++) {
-                    const angle = (i / roundSegments) * (Math.PI / 2); // 0 to 90 degrees
-                    const y = H - R + R * Math.sin(angle);
-                    const z = cz - (signZ * R * Math.cos(angle));
-                    cornerPoints.main.push(addVertex(cx, y, z));
-                 }
-             }
-        } else { // pE2, Edge along X
-             if(isFullRound) {
-                // TODO: Implement correct full-round logic if needed
-                for (let i = 0; i <= roundSegments; i++) { cornerPoints.main.push(addVertex(cx, H, cz)); }
-             } else { // Corrected Half-Round Logic
-                for (let i = 0; i <= roundSegments; i++) {
-                    const angle = (i / roundSegments) * (Math.PI / 2); // 0 to 90 degrees
-                    const y = H - R + R * Math.sin(angle);
-                    const x = cx - (signX * R * Math.cos(angle));
-                    cornerPoints.main.push(addVertex(x, y, cz));
-                }
-             }
         }
         return cornerPoints;
     }
@@ -147,38 +130,56 @@ const generateSlabGeometry = (
   const bltData = createTopVertices(-halfL, -halfW, processedEdges.back,  processedEdges.left);
   const brtData = createTopVertices( halfL, -halfW, processedEdges.back,  processedEdges.right);
 
+  // Bottom face
   addQuad(points.blb, points.brb, points.frb, points.flb);
 
-  const getTopPoint = (c_data: any) => Array.isArray(c_data.main) ? c_data.main[c_data.main.length-1] : (c_data.e1 || c_data.e2 || c_data.corner);
-  const getSidePoint = (c_data: any) => Array.isArray(c_data.main) ? c_data.main[0] : (c_data.main || c_data.corner);
+  const getTopVertex = (data: any) => {
+    if (Array.isArray(data.main)) return data.main[data.main.length - 1];
+    return data.e1 || data.main || data.corner;
+  };
+  
+  const getSideVertex = (data: any) => {
+    if (Array.isArray(data.main)) return data.main[0];
+    return data.e2 || data.main || data.corner;
+  };
 
-  const connectEdge = (c1_data: any, c2_data: any, isProcessed: boolean, bottomP1: number, bottomP2: number) => {
-    if (!isProcessed || profileType === 'none' || !Array.isArray(c1_data.main)) {
-        addQuad(bottomP1, bottomP2, getSidePoint(c2_data), getSidePoint(c1_data));
-        return;
-    }
-      const c1_verts = c1_data.main;
-      const c2_verts = c2_data.main;
-      
-      for(let i=0; i<roundSegments; i++) {
-          addQuad(bottomP1, bottomP2, c2_verts[i], c1_verts[i]);
-      }
-      addQuad(bottomP1, bottomP2, getSidePoint(c2_data), getSidePoint(c1_data));
-  }
-
-  // Top Surface
-  if (profileType === 'none' || profileType === 'chamfer') {
-     addQuad(
-         bltData.main || bltData.corner, 
-         brtData.main || brtData.corner, 
-         frtData.main || frtData.corner, 
-         fltData.main || fltData.corner
-     );
-  } else { // Rounded profiles - need to build top surface carefully
-      addQuad(getSidePoint(bltData), getSidePoint(brtData), getSidePoint(frtData), getSidePoint(fltData));
-  }
+  // Top Surface - connects the highest points of each corner profile
+  addQuad(
+      getTopVertex(bltData),
+      getTopVertex(brtData),
+      getTopVertex(frtData),
+      getTopVertex(fltData)
+  );
 
   // Side Faces
+  const connectEdge = (c1_data: any, c2_data: any, isProcessed: boolean, bottomP1: number, bottomP2: number) => {
+    const side1 = getSideVertex(c1_data);
+    const side2 = getSideVertex(c2_data);
+    
+    addQuad(bottomP1, bottomP2, side2, side1);
+    
+    if (isProcessed) {
+        const top1 = getTopVertex(c1_data);
+        const top2 = getTopVertex(c2_data);
+        
+        if (profileType === 'chamfer') {
+            addQuad(side1, side2, top2, top1);
+        } else if (profileType === 'half-round' || profileType === 'full-round') {
+            if (Array.isArray(c1_data.main) && Array.isArray(c2_data.main)) {
+                const v1 = c1_data.main;
+                const v2 = c2_data.main;
+                for (let i = 0; i < roundSegments; i++) {
+                    addQuad(v1[i], v2[i], v2[i+1], v1[i+1]);
+                }
+            } else {
+                 addQuad(side1, side2, top2, top1);
+            }
+        } else {
+            addQuad(side1, side2, top2, top1);
+        }
+    }
+  };
+
   connectEdge(fltData, frtData, processedEdges.front, points.flb, points.frb);
   connectEdge(frtData, brtData, processedEdges.right, points.frb, points.brb);
   connectEdge(brtData, bltData, processedEdges.back, points.brb, points.blb);
