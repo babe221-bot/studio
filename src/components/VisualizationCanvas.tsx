@@ -25,6 +25,7 @@ const generateSlabGeometry = (
     processedEdges: ProcessedEdges
   ) => {
     
+  // material groups: 0 = main face (texture), 1 = flat side, 2 = profile face
   const profileName = profile.name.toLowerCase();
   const smusMatch = profileName.match(/smuš c(\d+\.?\d*)/);
   const poluRMatch = profileName.match(/polu-zaobljena r(\d+\.?\d*)cm/);
@@ -103,21 +104,24 @@ const generateSlabGeometry = (
           cornerData.sideArc = [top_v];
           cornerData.frontArc = [top_v];
       } else if (profileType === 'chamfer') {
-          const top_v_main = addVertex(x, H, z);
-          const topX = procX ? x - signX * R : x;
-          const topZ = procZ ? z - signZ * R : z;
-          const chamfer_v_top = addVertex(topX, H, topZ);
-          const chamfer_v_side = addVertex(x, H-R, z);
+          const topX = x - signX * R;
+          const topZ = z - signZ * R;
           
+          const v_side = addVertex(x, H-R, z);
+          const v_front = addVertex(topX, H, z);
+          const v_main = addVertex(x,H,z);
+
           if (procX && procZ) {
-              cornerData.sideArc = [chamfer_v_top, chamfer_v_side];
-              cornerData.frontArc = [chamfer_v_top, chamfer_v_side];
+             const corner_v = addVertex(topX, H, topZ);
+             cornerData.sideArc = [corner_v, v_side];
+             cornerData.frontArc = [corner_v, v_front];
           } else if (procX) {
-              cornerData.sideArc = [chamfer_v_top, chamfer_v_side];
-              cornerData.frontArc = [top_v_main];
+              cornerData.sideArc = [v_front, v_side];
+              cornerData.frontArc = [v_main];
           } else { // procZ
-              cornerData.frontArc = [chamfer_v_top, chamfer_v_side];
-              cornerData.sideArc = [top_v_main];
+              const v_top_z = addVertex(x, H, topZ);
+              cornerData.frontArc = [v_top_z, v_side];
+              cornerData.sideArc = [v_main];
           }
       } else { // half-round or full-round
         const isFullRound = profileType === 'full-round';
@@ -158,20 +162,21 @@ const generateSlabGeometry = (
                 }
                 cornerGrid.push(row);
             }
-
+            
+            const cornerStartIndex = indices.length;
             for (let i = 0; i < segments; i++) {
                 for (let j = 0; j < segments; j++) {
                     addQuad(cornerGrid[i][j], cornerGrid[i+1][j], cornerGrid[i+1][j+1], cornerGrid[i][j+1]);
                 }
             }
+            const cornerCount = indices.length - cornerStartIndex;
+            if (cornerCount > 0) {
+              geometry.addGroup(cornerStartIndex, cornerCount, 2); // Use material 2 for profile corners
+            }
             
             const sideArc: number[] = [], frontArc: number[] = [];
             for(let i=0; i<=segments; i++){
-                // sideArc is for Z-parallel edges (left/right sides)
-                // frontArc is for X-parallel edges (front/back sides)
-                // j=0 -> phi=0 -> cos(phi)=1, sin(phi)=0 -> arc in XY plane -> side edge
                 sideArc.push(cornerGrid[i][0]);
-                // j=segments -> phi=pi/2 -> cos(phi)=0, sin(phi)=1 -> arc in YZ plane -> front edge
                 frontArc.push(cornerGrid[i][segments]);
             }
             cornerData.sideArc = sideArc;
@@ -189,36 +194,23 @@ const generateSlabGeometry = (
       topCorners[key] = cornerData;
   });
 
-  const flt_main_v_idx = topCorners.flt.frontArc[0];
-  const frt_main_v_idx = topCorners.frt.frontArc[0];
-  const brt_main_v_idx = topCorners.brt.frontArc[0]; 
-  const blt_main_v_idx = topCorners.blt.frontArc[0]; 
-  
   const flt_v = topCorners.flt;
   const frt_v = topCorners.frt;
   const brt_v = topCorners.brt;
   const blt_v = topCorners.blt;
 
-  const topFaceIndices: number[] = [];
-
   const mainTopPoints = [
-    flt_v.frontArc[0],
-    frt_v.frontArc[0],
-    brt_v.sideArc[0],
-    blt_v.sideArc[0]
+    flt_v.frontArc[0], frt_v.frontArc[0],
+    brt_v.sideArc[0], blt_v.sideArc[0]
   ];
-
-  if(profileType === 'none') {
-    addQuad(mainTopPoints[0], mainTopPoints[3], mainTopPoints[2], mainTopPoints[1]);
-    topFaceIndices.push(...indices.slice(indices.length-6));
-  } else {
-      const topCenterV = addVertex(0, H, 0);
-      addFace(topCenterV, mainTopPoints[0], mainTopPoints[1]);
-      addFace(topCenterV, mainTopPoints[1], mainTopPoints[2]);
-      addFace(topCenterV, mainTopPoints[2], mainTopPoints[3]);
-      addFace(topCenterV, mainTopPoints[3], mainTopPoints[0]);
-      topFaceIndices.push(...indices.slice(indices.length-12));
-  }
+  
+  const topFaceIndices: number[] = [];
+  const topCenterV = addVertex(0, H, 0);
+  addFace(topCenterV, mainTopPoints[0], mainTopPoints[1]);
+  addFace(topCenterV, mainTopPoints[1], mainTopPoints[2]);
+  addFace(topCenterV, mainTopPoints[2], mainTopPoints[3]);
+  addFace(topCenterV, mainTopPoints[3], mainTopPoints[0]);
+  topFaceIndices.push(...indices.slice(indices.length - 12));
   
   geometry.addGroup(currentFaceIndex, topFaceIndices.length, 0);
   currentFaceIndex += topFaceIndices.length;
@@ -228,24 +220,28 @@ const generateSlabGeometry = (
     const c2 = topCorners[c2_key];
     const arc1_top = isXEdge ? c1.frontArc : c1.sideArc;
     const arc2_top = (isXEdge ? c2.frontArc : c2.sideArc).slice().reverse();
-    
-    const arc1 = [...arc1_top, c1.bottomVertex];
-    const arc2 = [...arc2_top, c2.bottomVertex];
 
-    const startIndex = indices.length;
-    
-    if (arc1.length != arc2.length) {
-      addQuad(arc1[0], arc1[arc1.length-1], arc2[arc2.length-1], arc2[0]);
-    } else {
-      for (let i = 0; i < arc1.length - 1; i++) {
-        addQuad(arc1[i], arc1[i + 1], arc2[i + 1], arc2[i]);
+    if (arc1_top.length > 1 || arc2_top.length > 1) { // Profile exists
+      const profileStartIndex = indices.length;
+      const longerArc = arc1_top.length > arc2_top.length ? arc1_top : arc2_top;
+      const shorterArc = arc1_top.length > arc2_top.length ? arc2_top : arc1_top;
+      
+      for(let i=0; i < longerArc.length -1; i++){
+        const v1 = longerArc[i];
+        const v2 = longerArc[i+1];
+        const v3 = shorterArc.length === 1 ? shorterArc[0] : arc2_top[i+1];
+        const v4 = shorterArc.length === 1 ? shorterArc[0] : arc2_top[i];
+         addQuad(v1, v2, v3, v4);
       }
+      geometry.addGroup(profileStartIndex, indices.length - profileStartIndex, 2); // Material 2 for profile
     }
 
-    const count = indices.length - startIndex;
-    if (count > 0) {
-      geometry.addGroup(startIndex, count, 1);
-    }
+    // Bottom flat section
+    const flatSideStartIndex = indices.length;
+    const lastV1 = arc1_top[arc1_top.length - 1];
+    const lastV2 = arc2_top[arc2_top.length - 1];
+    addQuad(lastV1, c1.bottomVertex, c2.bottomVertex, lastV2);
+    geometry.addGroup(flatSideStartIndex, indices.length - flatSideStartIndex, 1); // Material 1 for flat side
   };
 
   connectEdges('flt', 'frt', true);  // front
@@ -297,9 +293,9 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     checkerboardCanvas.height = size * 2;
     const context = checkerboardCanvas.getContext('2d');
     if (context) {
-        context.fillStyle = 'hsl(220 13% 94%)';
+        context.fillStyle = 'hsl(215 28% 17%)';
         context.fillRect(0, 0, checkerboardCanvas.width, checkerboardCanvas.height);
-        context.fillStyle = 'hsl(220 13% 88%)';
+        context.fillStyle = 'hsl(215 28% 22%)';
         context.fillRect(0, 0, size, size);
         context.fillRect(size, size, size, size);
     }
@@ -401,9 +397,18 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     });
     
     const processedMaterial = new THREE.MeshPhysicalMaterial({
-        color: new THREE.Color(material.color).lerp(new THREE.Color(0xffffff), 0.3),
+        color: new THREE.Color(material.color).lerp(new THREE.Color(0x000000), 0.1),
         metalness: 0.2,
         roughness: 0.5,
+        side: THREE.DoubleSide,
+    });
+
+    const profileMaterial = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color(material.color).lerp(new THREE.Color(0xffffff), 0.5),
+        metalness: 0.3,
+        roughness: 0.2,
+        clearcoat: 0.4,
+        clearcoatRoughness: 0.3,
         side: THREE.DoubleSide,
     });
 
@@ -428,7 +433,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         textureLoader.load(textureUrl, (texture) => {
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
             const repeatFactor = 5 / Math.max(vizL, vizW);
-            texture.repeat.set(repeatFactor, repeatFactor * (vizL/vizW)); // Adjust aspect ratio
+            texture.repeat.set(repeatFactor, repeatFactor * (vizW/vizL));
             originalMaterial.map = texture;
             originalMaterial.needsUpdate = true;
             textureCache.current[textureUrl] = texture;
@@ -437,7 +442,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     }
     
     const geometry = generateSlabGeometry(vizL, vizW, h, profile, vizProcessedEdges);
-    const mainObject = new THREE.Mesh(geometry, [originalMaterial, processedMaterial]);
+    const mainObject = new THREE.Mesh(geometry, [originalMaterial, processedMaterial, profileMaterial]);
     
     const slabGroup = new THREE.Group();
     slabGroup.add(mainObject);
