@@ -345,7 +345,7 @@ export function Lab() {
                                 .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
                                 .join(', ') || 'Nijedna');
                           
-                          const okapnikEdgesString = (Object.entries(item.okapnikEdges)
+                          const okapnikEdgesString = (Object.entries(item.okapnikEdges || {})
                                 .filter(([, selected]) => selected)
                                 .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
                                 .join(', ') || 'Nema');
