@@ -96,28 +96,28 @@ const generateSlabGeometry = (
       const corner = cornerPositions[key as keyof typeof cornerPositions];
       const { x, z, procX, procZ, signX, signZ } = corner;
       const cornerData: any = {};
-      const isProcessed = (profileType !== 'none' && (procX || procZ));
       const blb_corner = addVertex(x, 0, z);
 
-      if (!isProcessed) {
-        const top_v = addVertex(x, H, z);
-        cornerData.sideArc = [top_v, blb_corner];
-        cornerData.frontArc = [top_v, blb_corner];
+      if (profileType === 'none' || (!procX && !procZ)) {
+          const top_v = addVertex(x, H, z);
+          cornerData.sideArc = [top_v];
+          cornerData.frontArc = [top_v];
       } else if (profileType === 'chamfer') {
+          const top_v_main = addVertex(x, H, z);
           const topX = procX ? x - signX * R : x;
           const topZ = procZ ? z - signZ * R : z;
           const chamfer_v_top = addVertex(topX, H, topZ);
           const chamfer_v_side = addVertex(x, H-R, z);
           
-          if(procX && procZ) { // Coved corner
-            cornerData.sideArc = [chamfer_v_top, chamfer_v_side, blb_corner];
-            cornerData.frontArc = [chamfer_v_top, chamfer_v_side, blb_corner];
-          } else if(procX) { // Left/Right edge only
-            cornerData.sideArc = [chamfer_v_top, chamfer_v_side, blb_corner];
-            cornerData.frontArc = [addVertex(x,H,z), blb_corner];
-          } else { // Front/Back edge only
-            cornerData.frontArc = [chamfer_v_top, chamfer_v_side, blb_corner];
-            cornerData.sideArc = [addVertex(x,H,z), blb_corner];
+          if (procX && procZ) {
+              cornerData.sideArc = [chamfer_v_top, chamfer_v_side];
+              cornerData.frontArc = [chamfer_v_top, chamfer_v_side];
+          } else if (procX) {
+              cornerData.sideArc = [chamfer_v_top, chamfer_v_side];
+              cornerData.frontArc = [top_v_main];
+          } else { // procZ
+              cornerData.frontArc = [chamfer_v_top, chamfer_v_side];
+              cornerData.sideArc = [top_v_main];
           }
       } else { // half-round or full-round
         const isFullRound = profileType === 'full-round';
@@ -130,15 +130,15 @@ const generateSlabGeometry = (
             const endAngle = Math.PI / 2;
             for (let i = 0; i <= segments; i++) {
                 const angle = startAngle + (i/segments) * (endAngle - startAngle);
-                const vx = x - arcSignX * radius * Math.cos(angle);
+                const vx = x - arcSignX * radius * (1 - Math.cos(angle));
                 const vy = yCenter + radius * Math.sin(angle);
-                const vz = z - arcSignZ * radius * Math.cos(angle);
+                const vz = z - arcSignZ * radius * (1 - Math.cos(angle));
                 arc.push(addVertex(vx, vy, vz));
             }
             return arc;
         }
 
-        if (procX && procZ) { // Coved corner
+        if (procX && procZ) {
             const cornerGrid: number[][] = [];
             const startAngle = isFullRound ? -Math.PI / 2 : 0;
             const endAngle = Math.PI / 2;
@@ -151,9 +151,9 @@ const generateSlabGeometry = (
 
                 for (let j = 0; j <= segments; j++) {
                     const phi = (j / segments) * (Math.PI / 2);
-                    const vx = x + signX * d_h * Math.cos(phi);
+                    const vx = x - signX * d_h * (1-Math.cos(phi));
                     const vy = yCenter + d_v;
-                    const vz = z + signZ * d_h * Math.sin(phi);
+                    const vz = z - signZ * d_h * (1-Math.sin(phi));
                     row.push(addVertex(vx, vy, vz));
                 }
                 cornerGrid.push(row);
@@ -164,30 +164,36 @@ const generateSlabGeometry = (
                     addQuad(cornerGrid[i][j], cornerGrid[i+1][j], cornerGrid[i+1][j+1], cornerGrid[i][j+1]);
                 }
             }
+            
             const sideArc: number[] = [], frontArc: number[] = [];
             for(let i=0; i<=segments; i++){
-                sideArc.push(cornerGrid[i][0]);
-                frontArc.push(cornerGrid[i][segments]);
+                sideArc.push(cornerGrid[i][segments]);
+                frontArc.push(cornerGrid[i][0]);
             }
             cornerData.sideArc = sideArc;
             cornerData.frontArc = frontArc;
 
         } else if (procZ) { // Front/Back edge only
             cornerData.frontArc = genArc(0, signZ);
-            cornerData.sideArc = [addVertex(x, H, z), blb_corner];
-        } else if (procX) { // Left/Right edge only
+            cornerData.sideArc = [addVertex(x, H, z)];
+        } else { // procX - Left/Right edge only
             cornerData.sideArc = genArc(signX, 0);
-            cornerData.frontArc = [addVertex(x, H, z), blb_corner];
+            cornerData.frontArc = [addVertex(x, H, z)];
         }
       }
+      cornerData.bottomVertex = blb_corner;
       topCorners[key] = cornerData;
   });
 
-  // Top Face
-  const flt_main = vertices.slice(topCorners.flt.frontArc[0]*3, topCorners.flt.frontArc[0]*3 + 3);
-  const frt_main = vertices.slice(topCorners.frt.frontArc[0]*3, topCorners.frt.frontArc[0]*3 + 3);
-  const brt_main = vertices.slice(topCorners.brt.sideArc[0]*3, topCorners.brt.sideArc[0]*3 + 3);
-  const blt_main = vertices.slice(topCorners.blt.sideArc[0]*3, topCorners.blt.sideArc[0]*3 + 3);
+  const flt_main_v_idx = topCorners.flt.frontArc[0];
+  const frt_main_v_idx = topCorners.frt.frontArc[0];
+  const brt_main_v_idx = topCorners.brt.sideArc[0];
+  const blt_main_v_idx = topCorners.blt.sideArc[0];
+
+  const flt_main = vertices.slice(flt_main_v_idx*3, flt_main_v_idx*3 + 3);
+  const frt_main = vertices.slice(frt_main_v_idx*3, frt_main_v_idx*3 + 3);
+  const brt_main = vertices.slice(brt_main_v_idx*3, brt_main_v_idx*3 + 3);
+  const blt_main = vertices.slice(blt_main_v_idx*3, blt_main_v_idx*3 + 3);
   
   const topPlane = new THREE.Shape();
   topPlane.moveTo(flt_main[0], flt_main[2]);
@@ -199,14 +205,15 @@ const generateSlabGeometry = (
   const topGeom = new THREE.ShapeGeometry(topPlane);
   const topVertices = topGeom.attributes.position.array;
   for(let i=0; i < topVertices.length/3; i++){
-      topVertices[i*3+1] = H; // Set Y coordinate to H
+      topVertices[i*3+1] = H; 
   }
   
   const tempGeom = new THREE.BufferGeometry();
   tempGeom.setAttribute('position', new THREE.BufferAttribute(topVertices, 3));
   tempGeom.setIndex(Array.from(topGeom.index.array));
+  tempGeom.computeVertexNormals();
 
-  const existingVertices = vertices.length / 3;
+  const existingVertices = vIdx;
   vertices.push(...Array.from(tempGeom.attributes.position.array));
   const newIndices = Array.from(tempGeom.index.array).map(i => i + existingVertices);
   indices.push(...newIndices);
@@ -214,23 +221,24 @@ const generateSlabGeometry = (
   geometry.addGroup(currentFaceIndex, newIndices.length, 0);
   currentFaceIndex += newIndices.length;
 
-  // Side Faces
   const connectEdges = (c1_key: string, c2_key: string, isXEdge: boolean) => {
     const c1 = topCorners[c1_key];
     const c2 = topCorners[c2_key];
-    const arc1 = isXEdge ? c1.frontArc : c1.sideArc;
-    const arc2 = (isXEdge ? c2.frontArc : c2.sideArc).slice();
+    const arc1_top = isXEdge ? c1.frontArc : c1.sideArc;
+    const arc2_top = (isXEdge ? c2.frontArc : c2.sideArc).slice().reverse();
     
+    const arc1 = [...arc1_top, c1.bottomVertex];
+    const arc2 = [...arc2_top, c2.bottomVertex];
+
     const startIndex = indices.length;
-    const len = arc1.length;
-    if (len !== arc2.length) { 
-        console.error("Mismatched arc lengths, skipping face");
-        return;
-    }
     
-    for (let i = 0; i < len - 1; i++) {
-        // Quad vertices: (c1 top, c1 bottom, c2 bottom, c2 top)
+    if (arc1.length != arc2.length) {
+      console.warn("Mismatched arc lengths for edge connection, using simple connection", c1_key, c2_key);
+      addQuad(arc1[0], arc1[arc1.length-1], arc2[arc2.length-1], arc2[0]);
+    } else {
+      for (let i = 0; i < arc1.length - 1; i++) {
         addQuad(arc1[i], arc1[i + 1], arc2[i + 1], arc2[i]);
+      }
     }
 
     const count = indices.length - startIndex;
@@ -360,24 +368,12 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     
     const { length, width, height } = dims;
 
-    const shouldSwap = width > length;
-    const vizL = (shouldSwap ? width : length) / 100;
-    const vizW = (shouldSwap ? length : width) / 100;
+    const vizL = length / 100;
+    const vizW = width / 100;
     const h = height / 100;
 
-    const vizProcessedEdges: ProcessedEdges = {
-      front: shouldSwap ? processedEdges.left : processedEdges.front,
-      back: shouldSwap ? processedEdges.right : processedEdges.back,
-      left: shouldSwap ? processedEdges.front : processedEdges.left,
-      right: shouldSwap ? processedEdges.back : processedEdges.right,
-    };
-    
-    const vizOkapnikEdges: ProcessedEdges = {
-      front: shouldSwap ? (okapnikEdges.left ?? false) : (okapnikEdges.front ?? false),
-      back: shouldSwap ? (okapnikEdges.right ?? false) : (okapnikEdges.back ?? false),
-      left: shouldSwap ? (okapnikEdges.front ?? false) : (okapnikEdges.left ?? false),
-      right: shouldSwap ? (okapnikEdges.back ?? false) : (okapnikEdges.right ?? false),
-    };
+    const vizProcessedEdges = processedEdges;
+    const vizOkapnikEdges = okapnikEdges;
 
     while (mainGroupRef.current.children.length > 0) {
       const object = mainGroupRef.current.children[0];
@@ -485,8 +481,8 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     }
 
     mainGroupRef.current.add(slabGroup);
-    slabGroup.position.y = h/2; // Center the slab vertically
-    slabGroup.position.y = 0; // Center the slab vertically
+    slabGroup.position.y = h/2;
+    slabGroup.position.y = 0;
 
     if (cameraRef.current && controlsRef.current) {
         const box = new THREE.Box3().setFromObject(slabGroup);
