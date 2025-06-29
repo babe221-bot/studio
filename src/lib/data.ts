@@ -57,13 +57,10 @@ export const initialSurfaceFinishes: SurfaceFinish[] = [
 
 export const initialEdgeProfiles: EdgeProfile[] = [
   { id: 1, name: 'Ravni rez (pilan)', cost_m: 2 },
-  { id: 10, name: 'C0.5 (0.5mm 45°)', cost_m: 5 },
-  { id: 11, name: 'C1 (1mm 45°)', cost_m: 7 },
-  { id: 12, name: 'C2 (2mm 45°)', cost_m: 8 },
-  { id: 13, name: 'C5 (5mm 45°)', cost_m: 10 },
-  { id: 20, name: 'Polu C R1 (radijus 1mm)', cost_m: 8 },
-  { id: 21, name: 'Polu C R2 (radijus 2mm)', cost_m: 10 },
-  { id: 22, name: 'Polu C R3 (radijus 3mm)', cost_m: 12 },
-  { id: 30, name: 'Puno C R5 (radijus 5mm)', cost_m: 15 },
-  { id: 31, name: 'Puno C R10 (radijus 10mm)', cost_m: 20 },
+  { id: 10, name: 'Smuš C2 (2mm 45°)', cost_m: 8 },
+  { id: 11, name: 'Smuš C5 (5mm 45°)', cost_m: 10 },
+  { id: 12, name: 'Smuš C10 (10mm 45°)', cost_m: 12 },
+  { id: 20, name: 'Polu-zaobljena R1.5cm (za visinu 3cm)', cost_m: 15 },
+  { id: 21, name: 'Polu-zaobljena R2.0cm (za visinu 4cm)', cost_m: 18 },
+  { id: 30, name: 'Puno-zaobljena R1.5cm (za visinu 3cm)', cost_m: 20 },
 ];

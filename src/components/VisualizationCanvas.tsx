@@ -109,6 +109,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
   useEffect(() => {
     if (!sceneRef.current || !mainGroupRef.current || !material || !finish || !profile) return;
     
+    // Clear previous objects
     while (mainGroupRef.current.children.length > 0) {
       const object = mainGroupRef.current.children[0];
       mainGroupRef.current.remove(object);
@@ -130,10 +131,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     const w = width / scale;
     const h = height / scale;
 
-    const mainObjectGroup = new THREE.Group();
-    
-    const finishName = finish.name.toLowerCase();
-    const textureUrl = material.texture;
     const stoneMaterial = new THREE.MeshPhysicalMaterial({
         color: 0xffffff,
         metalness: 0.05,
@@ -142,6 +139,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         clearcoatRoughness: 0.5,
     });
 
+    const finishName = finish.name.toLowerCase();
     if (finishName.includes('poliran')) {
         stoneMaterial.roughness = 0.1;
         stoneMaterial.clearcoat = 0.9;
@@ -150,6 +148,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         stoneMaterial.roughness = 0.95;
     }
 
+    const textureUrl = material.texture;
     if (textureUrl) {
       if (textureCache.current[textureUrl]) {
         stoneMaterial.map = textureCache.current[textureUrl];
@@ -167,74 +166,54 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
       }
     }
 
-    const shape = new THREE.Shape();
     const profileName = profile.name.toLowerCase();
     
-    const chamferMatch = profileName.match(/c(\d+\.?\d*)/);
-    const poluRMatch = profileName.match(/polu c r(\d+\.?\d*)/);
-    const punoRMatch = profileName.match(/puno c r(\d+\.?\d*)/);
+    const smusMatch = profileName.match(/smuš c(\d+\.?\d*)mm/);
+    const poluRMatch = profileName.match(/polu-zaobljena r(\d+\.?\d*)cm/);
+    const punoRMatch = profileName.match(/puno-zaobljena r(\d+\.?\d*)cm/);
     
-    shape.moveTo(0, 0); // bottom left
-    shape.lineTo(0, h); // to top left
+    const shape = new THREE.Shape();
+    
+    shape.moveTo(0, 0);
+    shape.lineTo(0, h);
 
     if (poluRMatch) {
-      const R = parseFloat(poluRMatch[1]) / 1000;
+      const R = parseFloat(poluRMatch[1]) / 100; // cm to scene units
       shape.lineTo(l - R, h);
       shape.absarc(l - R, h - R, R, Math.PI / 2, 0, true);
-      shape.lineTo(l, 0);
     } else if(punoRMatch) {
-      const R = parseFloat(punoRMatch[1]) / 1000;
+      const R = parseFloat(punoRMatch[1]) / 100; // cm to scene units
       shape.lineTo(l-R, h);
       shape.absarc(l-R, R, R, Math.PI / 2, -Math.PI/2, true);
-      shape.lineTo(l-R, 0);
-    } else if (chamferMatch) {
-      const chamferSize = parseFloat(chamferMatch[1]) / 1000;
+    } else if (smusMatch) {
+      const chamferSize = parseFloat(smusMatch[1]) / 1000; // mm to scene units
       shape.lineTo(l - chamferSize, h);
       shape.lineTo(l, h - chamferSize);
-      shape.lineTo(l, 0);
     } else { // Ravni rez
       shape.lineTo(l, h);
-      shape.lineTo(l, 0);
     }
-    shape.lineTo(0, 0); // back to bottom left
-
-    // Okapnik is a hole on the bottom face
-    const okapnikDepth = 0.5 / scale;
-    const okapnikWidth = 0.5 / scale;
-    const okapnikOffsetFromEdge = 1.0 / scale;
     
-    const okapnikShape = new THREE.Shape();
-    let hasOkapnik = false;
-    if (okapnikEdges.front) { // front is +z
-      okapnikShape.moveTo(okapnikOffsetFromEdge, w - okapnikOffsetFromEdge);
-      okapnikShape.lineTo(l - okapnikOffsetFromEdge, w - okapnikOffsetFromEdge);
-      okapnikShape.lineTo(l - okapnikOffsetFromEdge, w - okapnikOffsetFromEdge - okapnikWidth);
-      okapnikShape.lineTo(okapnikOffsetFromEdge, w - okapnikOffsetFromEdge - okapnikWidth);
-      hasOkapnik = true;
-    }
-    // Note: for simplicity, this demo only implements okapnik on 'front' side of the extrusion path
+    shape.lineTo(l, 0);
+    shape.lineTo(0, 0);
     
     const extrudeSettings = {
       steps: 1,
       depth: w,
       bevelEnabled: false,
     };
-
-    let geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    geometry.rotateX(-Math.PI/2);
-
-    if (hasOkapnik) {
-      const okapnikPath = new THREE.ExtrudeGeometry(okapnikShape, {depth: okapnikDepth, bevelEnabled: false});
-      okapnikPath.translate(0,0,-okapnikDepth); // position it under the main slab
-      // This is complex, a simpler way is to just add an indicator line.
-    }
     
-    mainObjectGroup.add(new THREE.Mesh(geometry, stoneMaterial));
+    let geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    geometry.rotateX(-Math.PI / 2);
+    
+    const mainObject = new THREE.Mesh(geometry, stoneMaterial);
+    
+    const mainObjectGroup = new THREE.Group();
+    mainObjectGroup.add(mainObject);
     mainObjectGroup.position.set(-l/2, -h/2, -w/2);
     
-    // Add processed edge indicators
     const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xffd700, linewidth: 3 });
     const dx = l / 2, dy = h / 2, dz = w / 2;
+
     const edgePoints: THREE.Vector3[] = [];
 
     if (processedEdges.front) edgePoints.push(new THREE.Vector3(-dx, dy, dz), new THREE.Vector3(dx, dy, dz));
@@ -245,14 +224,12 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     if (edgePoints.length > 0) {
       const edgeGeometry = new THREE.BufferGeometry().setFromPoints(edgePoints);
       const edgeLines = new THREE.LineSegments(edgeGeometry, edgeMaterial);
-      edgeLines.position.set(0, 0, 0); // Position relative to the group
       mainObjectGroup.add(edgeLines);
     }
     
-    // Okapnik visual indicator
     const okapnikMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2 });
     const okapnikPoints: THREE.Vector3[] = [];
-    const oo = okapnikOffsetFromEdge; // okapnik offset
+    const oo = 1.0 / scale; // okapnik offset in scene units
     if(okapnikEdges.front) okapnikPoints.push(new THREE.Vector3(-dx+oo, -dy, dz-oo), new THREE.Vector3(dx-oo, -dy, dz-oo));
     if(okapnikEdges.back) okapnikPoints.push(new THREE.Vector3(-dx+oo, -dy, -dz+oo), new THREE.Vector3(dx-oo, -dy, -dz+oo));
     if(okapnikEdges.left) okapnikPoints.push(new THREE.Vector3(-dx+oo, -dy, -dz+oo), new THREE.Vector3(-dx+oo, -dy, dz-oo));
@@ -266,7 +243,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 
     mainGroupRef.current.add(mainObjectGroup);
 
-    // Update Camera
     if (cameraRef.current && controlsRef.current) {
         const box = new THREE.Box3().setFromObject(mainObjectGroup);
         const center = box.getCenter(new THREE.Vector3());
@@ -275,7 +251,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         const fov = cameraRef.current.fov * (Math.PI / 180);
         let cameraZ = maxDim / (2 * Math.tan(fov / 2));
         
-        cameraZ *= 1.8; // Zoom out a bit
+        cameraZ *= 1.8;
 
         cameraRef.current.position.set(center.x + cameraZ, center.y + cameraZ * 0.5, center.z + cameraZ);
         controlsRef.current.target.copy(center);
