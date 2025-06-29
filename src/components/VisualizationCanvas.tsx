@@ -3,7 +3,6 @@
 import React, { useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { useTheme } from 'next-themes';
 import type { Material as MaterialType, SurfaceFinish, EdgeProfile, ProcessedEdges } from '@/types';
 
 interface VisualizationProps {
@@ -45,7 +44,7 @@ const generateSlabGeometry = (
     R = parseFloat(punoRMatch[1]) / 100; // cm to meters
   }
   
-  R = Math.min(R, H / 2);
+  R = Math.min(R, H / 2, L / 2, W / 2);
 
   const vertices: number[] = [];
   const indices: number[] = [];
@@ -101,23 +100,31 @@ const generateSlabGeometry = (
     
     if (profileType === 'half-round' || profileType === 'full-round') {
         const cornerPoints: { [key:string]: any } = { main: [] };
-        // Corner and Edge logic is simplified for half-round to generate a profile arc
-        // A more complex implementation would be needed for perfect corner blending (quarter torus)
         // This simplified version generates the profile as if it's on an edge
-        if (pE1) { // Profile primarily on Z-axis for front/back edge
+        if (pE1 && pE2) { // Corner - quarter torus
+             for (let i = 0; i <= roundSegments; i++) {
+                const angle = (i / roundSegments) * (Math.PI / 2);
+                const x = cx - signX * R * (1 - Math.cos(angle));
+                const z = cz - signZ * R * (1 - Math.cos(angle));
+                cornerPoints.main.push(addVertex(x, H, z)); // Top point
+                // side points would need more logic
+             }
+        } else if (pE1) { // Profile primarily on Z-axis for front/back edge
              for (let i = 0; i <= roundSegments; i++) {
                 const angle = (i / roundSegments) * (Math.PI / 2);
                 const y = H - R * (1 - Math.sin(angle));
                 const z = cz - signZ * R * (1 - Math.cos(angle));
                 cornerPoints.main.push(addVertex(cx, y, z));
              }
-        } else { // Profile primarily on X-axis for left/right edge
+        } else if (pE2){ // Profile primarily on X-axis for left/right edge
             for (let i = 0; i <= roundSegments; i++) {
                 const angle = (i / roundSegments) * (Math.PI / 2);
                 const y = H - R * (1 - Math.sin(angle));
                 const x = cx - signX * R * (1 - Math.cos(angle));
                 cornerPoints.main.push(addVertex(x, y, cz));
             }
+        } else {
+             cornerPoints.main.push(addVertex(cx,H,cz));
         }
         return cornerPoints;
     }
@@ -134,13 +141,14 @@ const generateSlabGeometry = (
   addQuad(points.blb, points.brb, points.frb, points.flb);
 
   const getTopVertex = (data: any) => {
-    if (Array.isArray(data.main)) return data.main[data.main.length - 1];
-    return data.e1 || data.main || data.corner;
+    if (Array.isArray(data.main) && data.main.length > 0) return data.main[data.main.length - 1];
+    return data.main || data.e1 || data.corner;
   };
   
-  const getSideVertex = (data: any) => {
-    if (Array.isArray(data.main)) return data.main[0];
-    return data.e2 || data.main || data.corner;
+  const getSideVertex = (data: any, axis: 'x' | 'z') => {
+     if (Array.isArray(data.main) && data.main.length > 0) return data.main[0];
+     if (axis === 'x') return data.e1 || data.main || data.corner; // front/back edges are along x
+     return data.e2 || data.main || data.corner; // left/right edges are along z
   };
 
   // Top Surface - connects the highest points of each corner profile
@@ -152,39 +160,38 @@ const generateSlabGeometry = (
   );
 
   // Side Faces
-  const connectEdge = (c1_data: any, c2_data: any, isProcessed: boolean, bottomP1: number, bottomP2: number) => {
-    const side1 = getSideVertex(c1_data);
-    const side2 = getSideVertex(c2_data);
+  const connectEdge = (c1_data: any, c2_data: any, isProcessed: boolean, bottomP1: number, bottomP2: number, axis: 'x' | 'z') => {
+    const side1 = getSideVertex(c1_data, axis);
+    const side2 = getSideVertex(c2_data, axis);
     
     addQuad(bottomP1, bottomP2, side2, side1);
     
     if (isProcessed) {
-        const top1 = getTopVertex(c1_data);
-        const top2 = getTopVertex(c2_data);
-        
         if (profileType === 'chamfer') {
+            const top1 = getTopVertex(c1_data);
+            const top2 = getTopVertex(c2_data);
             addQuad(side1, side2, top2, top1);
         } else if (profileType === 'half-round' || profileType === 'full-round') {
-            if (Array.isArray(c1_data.main) && Array.isArray(c2_data.main)) {
+            if (Array.isArray(c1_data.main) && c1_data.main.length > 1 && Array.isArray(c2_data.main) && c2_data.main.length > 1) {
                 const v1 = c1_data.main;
                 const v2 = c2_data.main;
                 for (let i = 0; i < roundSegments; i++) {
                     addQuad(v1[i], v2[i], v2[i+1], v1[i+1]);
                 }
             } else {
+                 const top1 = getTopVertex(c1_data);
+                 const top2 = getTopVertex(c2_data);
                  addQuad(side1, side2, top2, top1);
             }
-        } else {
-            addQuad(side1, side2, top2, top1);
         }
     }
   };
 
-  connectEdge(fltData, frtData, processedEdges.front, points.flb, points.frb);
-  connectEdge(frtData, brtData, processedEdges.right, points.frb, points.brb);
-  connectEdge(brtData, bltData, processedEdges.back, points.brb, points.blb);
-  connectEdge(bltData, fltData, processedEdges.left, points.blb, points.flb);
-
+  // Simplified connection logic
+  connectEdge(fltData, frtData, processedEdges.front, points.flb, points.frb, 'x');
+  connectEdge(frtData, brtData, processedEdges.right, points.frb, points.brb, 'z');
+  connectEdge(brtData, bltData, processedEdges.back, points.brb, points.blb, 'x');
+  connectEdge(bltData, fltData, processedEdges.left, points.blb, points.flb, 'z');
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
@@ -203,8 +210,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
   const textureCache = useRef<{ [key: string]: THREE.Texture }>({});
   const mainGroupRef = useRef<THREE.Group | null>(null);
   
-  const { resolvedTheme } = useTheme();
-
   useImperativeHandle(ref, () => ({
     getSnapshot: () => {
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
@@ -226,6 +231,8 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
+    // Use a consistent, neutral studio background
+    scene.background = new THREE.Color(0xEAEAEA);
 
     const camera = new THREE.PerspectiveCamera(50, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
     cameraRef.current = camera;
@@ -241,13 +248,17 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     controls.enableDamping = true;
     controlsRef.current = controls;
 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x8d8d8d, 2.5);
-    hemiLight.position.set(0, 50, 0);
-    scene.add(hemiLight);
+    // New lighting setup for a more neutral, studio look
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+    scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
-    dirLight.position.set(-8, 12, 8);
-    scene.add(dirLight);
+    const mainLight = new THREE.DirectionalLight(0xffffff, 2.0);
+    mainLight.position.set(5, 10, 7.5);
+    scene.add(mainLight);
+    
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    fillLight.position.set(-5, -5, -5);
+    scene.add(fillLight);
 
     const mainGroup = new THREE.Group();
     mainGroupRef.current = mainGroup;
@@ -277,12 +288,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
       Object.values(textureCache.current).forEach(texture => texture.dispose());
     };
   }, []);
-
-  useEffect(() => {
-    if (sceneRef.current) {
-      sceneRef.current.background = new THREE.Color(resolvedTheme === 'dark' ? 0x20242E : 0xF0F2F5);
-    }
-  }, [resolvedTheme]);
 
   useEffect(() => {
     if (!sceneRef.current || !mainGroupRef.current || !material || !finish || !profile) return;
@@ -420,7 +425,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         controlsRef.current.update();
     }
     
-  }, [dims, material, finish, profile, processedEdges, okapnikEdges, resolvedTheme]);
+  }, [dims, material, finish, profile, processedEdges, okapnikEdges]);
 
   return <div ref={mountRef} className="h-full w-full rounded-lg" data-ai-hint="stone slab 3d render" />;
 });
