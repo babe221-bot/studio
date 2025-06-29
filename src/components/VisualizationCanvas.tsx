@@ -36,7 +36,7 @@ const generateSlabGeometry = (
 
   if (smusMatch) {
     profileType = 'chamfer';
-    R = parseFloat(smusMatch[1]) / 100; 
+    R = parseFloat(smusMatch[1]) / 1000; 
   } else if (poluRMatch) {
     profileType = 'half-round';
     R = parseFloat(poluRMatch[1]) / 100;
@@ -45,7 +45,7 @@ const generateSlabGeometry = (
     R = parseFloat(punoRMatch[1]) / 100;
   }
   
-  R = Math.min(R, H, W/2, L/2);
+  R = Math.min(R, H / 2, W / 2, L / 2);
 
   const vertices: number[] = [];
   const indices: number[] = [];
@@ -102,30 +102,45 @@ const generateSlabGeometry = (
     if (profileType === 'half-round' || profileType === 'full-round') {
         const cornerPoints: { [key:string]: any } = { main: [] };
         const isFullRound = profileType === 'full-round';
-        const startY = isFullRound ? H - R : H;
-        const startAngle = isFullRound ? Math.PI : Math.PI / 2;
-        const angleRange = isFullRound ? Math.PI : Math.PI / 2;
-
+        
         if(pE1 && pE2) { // Corner
+            const startAngle = isFullRound ? 0 : Math.PI/2;
+            const endAngle = isFullRound ? Math.PI : Math.PI;
+
             for(let i=0; i<=roundSegments; ++i) {
-                const angle = Math.PI/2 + (i/roundSegments) * (Math.PI/2);
-                const r_slice = R * Math.cos(angle);
-                const y_slice = H - R * Math.sin(angle);
-                cornerPoints.main.push(addVertex(cx - signX * r_slice, y_slice, cz - signZ * r_slice));
+                const cornerAngle = Math.PI/2; // for corner between two edges
+                const sliceAngle = (i/roundSegments) * cornerAngle;
+
+                const y = H - R * Math.sin(sliceAngle);
+                const r_slice = R * Math.cos(sliceAngle);
+
+                cornerPoints.main.push(addVertex(cx - signX * r_slice, y, cz - signZ * r_slice));
             }
         } else if (pE1) { // Edge along Z
+             const startAngle = isFullRound ? 0 : Math.PI/2;
+             const endAngle = Math.PI;
              for (let i = 0; i <= roundSegments; i++) {
-                const angle = startAngle - (i/roundSegments) * angleRange;
-                const y = startY + R * Math.sin(angle);
+                const angle = startAngle + (i/roundSegments) * (endAngle-startAngle);
+                const y = H - R * Math.sin(angle);
                 const z_offset = R * Math.cos(angle);
-                cornerPoints.main.push(addVertex(cx, y, cz - signZ * (R-z_offset)));
+                if (isFullRound) {
+                   cornerPoints.main.push(addVertex(cx, y, cz - signZ * z_offset));
+                } else {
+                   cornerPoints.main.push(addVertex(cx, y, cz - signZ * (R - z_offset)));
+                }
              }
         } else { // pE2, Edge along X
+            const startAngle = isFullRound ? 0 : Math.PI/2;
+            const endAngle = Math.PI;
             for (let i = 0; i <= roundSegments; i++) {
-                const angle = startAngle - (i/roundSegments) * angleRange;
-                const y = startY + R * Math.sin(angle);
+                const angle = startAngle + (i/roundSegments) * (endAngle-startAngle);
+                const y = H - R * Math.sin(angle);
                 const x_offset = R * Math.cos(angle);
-                cornerPoints.main.push(addVertex(cx - signX * (R-x_offset), y, cz));
+                if(isFullRound) {
+                    cornerPoints.main.push(addVertex(cx - signX * x_offset, y, cz));
+                } else {
+                    cornerPoints.main.push(addVertex(cx - signX * (R-x_offset), y, cz));
+                }
             }
         }
         return cornerPoints;
@@ -141,34 +156,28 @@ const generateSlabGeometry = (
 
   addQuad(points.blb, points.brb, points.frb, points.flb);
 
-  const connectEdge = (c1_data: any, c2_data: any, isVertical: boolean) => {
-      const c1 = Array.isArray(c1_data.main) ? c1_data.main : [c1_data.e1 || c1_data.main];
-      const c2 = Array.isArray(c2_data.main) ? c2_data.main : [c2_data.e1 || c2_data.main];
+  const connectEdge = (c1_data: any, c2_data: any, isVertical: boolean, isProcessed: boolean, bottomP1: number, bottomP2: number) => {
+    if (!isProcessed) {
+        addQuad(bottomP1, bottomP2, getTopPoint(c2_data), getTopPoint(c1_data));
+        return;
+    }
+
+      const c1 = Array.isArray(c1_data.main) ? c1_data.main : [c1_data.e1 || c1_data.main, c1_data.e2 || c1_data.main];
+      const c2 = Array.isArray(c2_data.main) ? c2_data.main : [c2_data.e1 || c2_data.main, c2_data.e2 || c2_data.main];
       
-      for (let i = 0; i < Math.max(c1.length, c2.length) - 1; i++) {
-          const i1 = Math.min(i, c1.length - 1);
-          const i2 = Math.min(i, c2.length - 1);
-          const i1_next = Math.min(i + 1, c1.length - 1);
-          const i2_next = Math.min(i + 1, c2.length - 1);
-          if (isVertical) addQuad(c1[i1], c2[i2], c2[i2_next], c1[i1_next]);
-          else addQuad(c2[i2], c1[i1], c1[i1_next], c2[i2_next]);
-      }
+      const v_c1 = vertices.slice(c1[0]*3, c1[0]*3+3);
+      const v_c2 = vertices.slice(c2[0]*3, c2[0]*3+3);
+
+      addQuad(bottomP1, bottomP2, c2[0], c1[0]);
   }
 
   const getTopPoint = (c_data: any) => Array.isArray(c_data.main) ? c_data.main[0] : c_data.main;
   addQuad(getTopPoint(blt), getTopPoint(brt), getTopPoint(frt), getTopPoint(flt));
 
-  connectEdge(blt, brt, false);
-  connectEdge(brt, frt, true);
-  connectEdge(flt, frt, false);
-  connectEdge(blt, flt, true);
-
-  const getSidePoint = (c_data: any, isE2: boolean) => Array.isArray(c_data.main) ? c_data.main[c_data.main.length-1] : (isE2 ? c_data.e2 : c_data.e1) || c_data.main;
-
-  addQuad(points.blb, getTopPoint(blt), getSidePoint(blt, false), points.flb);
-  addQuad(points.flb, getTopPoint(flt), getSidePoint(flt, true), points.frb);
-  addQuad(points.frb, getTopPoint(frt), getSidePoint(frt, false), points.brb);
-  addQuad(points.brb, getTopPoint(brt), getSidePoint(brt, true), points.blb);
+  connectEdge(flt, frt, false, processedEdges.front, points.flb, points.frb);
+  connectEdge(frt, brt, true, processedEdges.right, points.frb, points.brb);
+  connectEdge(brt, blt, false, processedEdges.back, points.brb, points.blb);
+  connectEdge(blt, flt, true, processedEdges.left, points.blb, points.flb);
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
