@@ -97,44 +97,68 @@ const generateSlabGeometry = (
       const { x, z, procX, procZ, signX, signZ } = corner;
       const cornerData: any = {};
       const isProcessed = (profileType !== 'none' && (procX || procZ));
+      const blb_corner = addVertex(x, 0, z);
 
       if (!isProcessed) {
-        cornerData.main = cornerData.edgeX = cornerData.edgeZ = addVertex(x, H, z);
-        cornerData.sideArc = [cornerData.main, addVertex(x, 0, z)];
-        cornerData.frontArc = [cornerData.main, addVertex(x, 0, z)];
+        const top_v = addVertex(x, H, z);
+        cornerData.sideArc = [top_v, blb_corner];
+        cornerData.frontArc = [top_v, blb_corner];
       } else if (profileType === 'chamfer') {
           const topX = procX ? x - signX * R : x;
           const topZ = procZ ? z - signZ * R : z;
-          cornerData.main = addVertex(topX, H, topZ);
-          cornerData.edgeX = addVertex(x, procX ? H - R : H, z);
-          cornerData.edgeZ = addVertex(x, procZ ? H - R : H, z);
-          // For chamfer, arcs are simple lines
-          cornerData.sideArc = [procX ? cornerData.main : addVertex(x, H, z), procX ? cornerData.edgeX : addVertex(x, 0, z)];
-          cornerData.frontArc = [procZ ? cornerData.main : addVertex(x, H, z), procZ ? cornerData.edgeZ : addVertex(x, 0, z)];
-
+          const chamfer_v_top = addVertex(topX, H, topZ);
+          const chamfer_v_side = addVertex(x, H-R, z);
+          
+          if(procX && procZ) { // Coved corner
+            cornerData.sideArc = [chamfer_v_top, chamfer_v_side, blb_corner];
+            cornerData.frontArc = [chamfer_v_top, chamfer_v_side, blb_corner];
+          } else if(procX) { // Left/Right edge only
+            cornerData.sideArc = [chamfer_v_top, chamfer_v_side, blb_corner];
+            cornerData.frontArc = [addVertex(x,H,z), blb_corner];
+          } else { // Front/Back edge only
+            cornerData.frontArc = [chamfer_v_top, chamfer_v_side, blb_corner];
+            cornerData.sideArc = [addVertex(x,H,z), blb_corner];
+          }
       } else { // half-round or full-round
         const isFullRound = profileType === 'full-round';
         const radius = isFullRound ? H / 2 : R;
         const yCenter = isFullRound ? H / 2 : H - radius;
-        const startAngle = isFullRound ? -Math.PI / 2 : 0;
-        const endAngle = Math.PI / 2;
+        
+        const genArc = (arcSignX: number, arcSignZ: number) => {
+            const arc: number[] = [];
+            const startAngle = isFullRound ? -Math.PI / 2 : 0;
+            const endAngle = Math.PI / 2;
+            for (let i = 0; i <= segments; i++) {
+                const angle = startAngle + (i/segments) * (endAngle - startAngle);
+                const vx = x - arcSignX * radius * Math.cos(angle);
+                const vy = yCenter + radius * Math.sin(angle);
+                const vz = z - arcSignZ * radius * Math.cos(angle);
+                arc.push(addVertex(vx, vy, vz));
+            }
+            return arc;
+        }
 
         if (procX && procZ) { // Coved corner
             const cornerGrid: number[][] = [];
+            const startAngle = isFullRound ? -Math.PI / 2 : 0;
+            const endAngle = Math.PI / 2;
+            
             for (let i = 0; i <= segments; i++) {
                 const row: number[] = [];
                 const theta = startAngle + (i / segments) * (endAngle - startAngle);
                 const d_v = radius * Math.sin(theta);
-                const d_h = radius * Math.cos(theta);
+                const d_h = radius * (1-Math.cos(theta));
+
                 for (let j = 0; j <= segments; j++) {
                     const phi = (j / segments) * (Math.PI / 2);
-                    const vx = x - signX * d_h * Math.cos(phi);
+                    const vx = x + signX * d_h * Math.cos(phi);
                     const vy = yCenter + d_v;
-                    const vz = z - signZ * d_h * Math.sin(phi);
+                    const vz = z + signZ * d_h * Math.sin(phi);
                     row.push(addVertex(vx, vy, vz));
                 }
                 cornerGrid.push(row);
             }
+
             for (let i = 0; i < segments; i++) {
                 for (let j = 0; j < segments; j++) {
                     addQuad(cornerGrid[i][j], cornerGrid[i+1][j], cornerGrid[i+1][j+1], cornerGrid[i][j+1]);
@@ -147,37 +171,24 @@ const generateSlabGeometry = (
             }
             cornerData.sideArc = sideArc;
             cornerData.frontArc = frontArc;
-        } else if (procZ) { // Z-edge only
-            const arc: number[] = [];
-            for (let i = 0; i <= segments; i++) {
-                const angle = startAngle + (i/segments) * (endAngle - startAngle);
-                arc.push(addVertex(x, yCenter + radius * Math.sin(angle), z - signZ * radius * Math.cos(angle)));
-            }
-            cornerData.frontArc = arc;
-            cornerData.sideArc = [addVertex(x, H, z), addVertex(x, 0, z)];
-        } else if (procX) { // X-edge only
-            const arc: number[] = [];
-            for (let i = 0; i <= segments; i++) {
-                const angle = startAngle + (i/segments) * (endAngle - startAngle);
-                arc.push(addVertex(x - signX * radius * Math.cos(angle), yCenter + radius * Math.sin(angle), z));
-            }
-            cornerData.sideArc = arc;
-            cornerData.frontArc = [addVertex(x, H, z), addVertex(x, 0, z)];
-        } else { // Not processed on this corner, but might connect to a processed edge
-            cornerData.main = cornerData.edgeX = cornerData.edgeZ = addVertex(x, H, z);
-            cornerData.sideArc = [cornerData.main, addVertex(x, 0, z)];
-            cornerData.frontArc = [cornerData.main, addVertex(x, 0, z)];
+
+        } else if (procZ) { // Front/Back edge only
+            cornerData.frontArc = genArc(0, signZ);
+            cornerData.sideArc = [addVertex(x, H, z), blb_corner];
+        } else if (procX) { // Left/Right edge only
+            cornerData.sideArc = genArc(signX, 0);
+            cornerData.frontArc = [addVertex(x, H, z), blb_corner];
         }
       }
       topCorners[key] = cornerData;
   });
 
   // Top Face
-  const flt_main = vertices.slice(topCorners.flt.sideArc[0]*3, topCorners.flt.sideArc[0]*3 + 3);
-  const frt_main = vertices.slice(topCorners.frt.sideArc[0]*3, topCorners.frt.sideArc[0]*3 + 3);
+  const flt_main = vertices.slice(topCorners.flt.frontArc[0]*3, topCorners.flt.frontArc[0]*3 + 3);
+  const frt_main = vertices.slice(topCorners.frt.frontArc[0]*3, topCorners.frt.frontArc[0]*3 + 3);
   const brt_main = vertices.slice(topCorners.brt.sideArc[0]*3, topCorners.brt.sideArc[0]*3 + 3);
   const blt_main = vertices.slice(topCorners.blt.sideArc[0]*3, topCorners.blt.sideArc[0]*3 + 3);
-
+  
   const topPlane = new THREE.Shape();
   topPlane.moveTo(flt_main[0], flt_main[2]);
   topPlane.lineTo(frt_main[0], frt_main[2]);
@@ -204,22 +215,22 @@ const generateSlabGeometry = (
   currentFaceIndex += newIndices.length;
 
   // Side Faces
-  const connectEdges = (c1_key: string, c2_key: string, bottom1: number, bottom2: number, isXEdge: boolean) => {
+  const connectEdges = (c1_key: string, c2_key: string, isXEdge: boolean) => {
     const c1 = topCorners[c1_key];
     const c2 = topCorners[c2_key];
     const arc1 = isXEdge ? c1.frontArc : c1.sideArc;
-    const arc2 = isXEdge ? c2.frontArc.slice().reverse() : c2.sideArc.slice().reverse();
+    const arc2 = (isXEdge ? c2.frontArc : c2.sideArc).slice();
     
     const startIndex = indices.length;
+    const len = arc1.length;
+    if (len !== arc2.length) { 
+        console.error("Mismatched arc lengths, skipping face");
+        return;
+    }
     
-    const len = Math.max(arc1.length, arc2.length);
-
     for (let i = 0; i < len - 1; i++) {
-        const i1 = Math.min(i, arc1.length-1);
-        const i1_next = Math.min(i+1, arc1.length-1);
-        const i2 = Math.min(i, arc2.length-1);
-        const i2_next = Math.min(i+1, arc2.length-1);
-        addQuad(arc1[i1], arc1[i1_next], arc2[i2_next], arc2[i2]);
+        // Quad vertices: (c1 top, c1 bottom, c2 bottom, c2 top)
+        addQuad(arc1[i], arc1[i + 1], arc2[i + 1], arc2[i]);
     }
 
     const count = indices.length - startIndex;
@@ -228,10 +239,10 @@ const generateSlabGeometry = (
     }
   };
 
-  connectEdges('flt', 'frt', flb, frb, true); // front
-  connectEdges('frt', 'brt', frb, brb, false); // right
-  connectEdges('brt', 'blt', brb, blb, true); // back
-  connectEdges('blt', 'flt', blb, flb, false); // left
+  connectEdges('flt', 'frt', true);  // front
+  connectEdges('frt', 'brt', false); // right
+  connectEdges('brt', 'blt', true);  // back
+  connectEdges('blt', 'flt', false); // left
 
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
   geometry.setIndex(indices);
@@ -270,7 +281,25 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
-    scene.background = new THREE.Color(0xF0F0F0);
+    
+    const checkerboardCanvas = document.createElement('canvas');
+    const size = 32;
+    checkerboardCanvas.width = size * 2;
+    checkerboardCanvas.height = size * 2;
+    const context = checkerboardCanvas.getContext('2d');
+    if (context) {
+        context.fillStyle = 'hsl(0, 0%, 94%)';
+        context.fillRect(0, 0, checkerboardCanvas.width, checkerboardCanvas.height);
+        context.fillStyle = 'hsl(0, 0%, 88%)';
+        context.fillRect(0, 0, size, size);
+        context.fillRect(size, size, size, size);
+    }
+    const texture = new THREE.CanvasTexture(checkerboardCanvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(50, 50);
+    scene.background = texture;
+
 
     const camera = new THREE.PerspectiveCamera(50, currentMount.clientWidth / currentMount.clientHeight, 0.1, 1000);
     cameraRef.current = camera;
@@ -286,14 +315,14 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     controls.enableDamping = true;
     controlsRef.current = controls;
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 2.0); 
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2.5); 
     scene.add(ambientLight);
 
-    const mainLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    const mainLight = new THREE.DirectionalLight(0xffffff, 2.0);
     mainLight.position.set(5, 10, 7.5);
     scene.add(mainLight);
     
-    const fillLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    const fillLight = new THREE.DirectionalLight(0xffffff, 1.5);
     fillLight.position.set(-5, -5, -5);
     scene.add(fillLight);
 
