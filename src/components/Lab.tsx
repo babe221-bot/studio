@@ -29,7 +29,6 @@ export function Lab() {
   const { toast } = useToast();
   const canvasRef = useRef<CanvasHandle>(null);
 
-  // State
   const [materials, setMaterials] = useLocalStorage<Material[]>('lab.materials', initialMaterials);
   const [finishes, setFinishes] = useLocalStorage<SurfaceFinish[]>('lab.finishes', initialSurfaceFinishes);
   const [profiles, setProfiles] = useLocalStorage<EdgeProfile[]>('lab.profiles', initialEdgeProfiles);
@@ -61,10 +60,9 @@ export function Lab() {
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(Date.now());
+  const [refreshKey, setRefreshKey] = useState(0);
 
 
-  // Derived State & Calculations
   const selectedMaterial = useMemo(() => materials.find(m => m.id.toString() === selectedMaterialId), [materials, selectedMaterialId]);
   const selectedFinish = useMemo(() => finishes.find(f => f.id.toString() === selectedFinishId), [finishes, selectedFinishId]);
   const selectedProfile = useMemo(() => profiles.find(p => p.id.toString() === selectedProfileId), [profiles, selectedProfileId]);
@@ -107,7 +105,6 @@ export function Lab() {
     okapnik: okapnik,
   }), [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnik]);
 
-  // Handlers
   const handleAddToOrder = () => {
     if (!selectedMaterial || !selectedFinish || !selectedProfile || !specimenId) {
       toast({ title: "Greška", description: "Molimo popunite sva polja.", variant: "destructive" });
@@ -297,7 +294,7 @@ export function Lab() {
           <Card className="h-full min-h-[400px] md:min-h-[600px] lg:min-h-full">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>3D Vizualizacija</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setRefreshKey(Date.now())} title="Osvježi 3D prikaz">
+              <Button variant="ghost" size="icon" onClick={() => setRefreshKey(k => k + 1)} title="Osvježi 3D prikaz">
                 <RefreshCw className="h-4 w-4" />
               </Button>
             </CardHeader>
@@ -356,7 +353,6 @@ export function Lab() {
         </div>
       </div>
       
-      {/* Modals */}
       <MaterialModal 
         isOpen={modalOpen === 'material'} 
         onClose={() => setModalOpen(null)} 
