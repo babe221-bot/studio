@@ -111,9 +111,25 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     
     const { length, width, height } = dims;
     const scale = 100;
-    const l = length / scale;
-    const w = width / scale;
+
+    const shouldSwap = width > length;
+    const vizL = (shouldSwap ? width : length) / scale;
+    const vizW = (shouldSwap ? length : width) / scale;
     const h = height / scale;
+
+    const vizProcessedEdges: ProcessedEdges = {
+      front: shouldSwap ? processedEdges.left : processedEdges.front,
+      back: shouldSwap ? processedEdges.right : processedEdges.back,
+      left: shouldSwap ? processedEdges.front : processedEdges.left,
+      right: shouldSwap ? processedEdges.back : processedEdges.right,
+    };
+    
+    const vizOkapnikEdges: ProcessedEdges = {
+      front: shouldSwap ? okapnikEdges.left : okapnikEdges.front,
+      back: shouldSwap ? okapnikEdges.right : okapnikEdges.back,
+      left: shouldSwap ? okapnikEdges.front : okapnikEdges.left,
+      right: shouldSwap ? okapnikEdges.back : okapnikEdges.right,
+    };
 
     while (mainGroupRef.current.children.length > 0) {
       const object = mainGroupRef.current.children[0];
@@ -156,8 +172,8 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
         const textureLoader = new THREE.TextureLoader();
         textureLoader.load(textureUrl, (texture) => {
             texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-            const repeatFactor = 5 / (l > w ? l : w);
-            texture.repeat.set(repeatFactor, repeatFactor * (w/l));
+            const repeatFactor = 5 / (vizL > vizW ? vizL : vizW);
+            texture.repeat.set(repeatFactor, repeatFactor * (vizW/vizL));
             stoneMaterial.map = texture;
             stoneMaterial.needsUpdate = true;
             textureCache.current[textureUrl] = texture;
@@ -170,61 +186,53 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     const poluRMatch = profileName.match(/polu-zaobljena r(\d+\.?\d*)cm/);
     const punoRMatch = profileName.match(/puno-zaobljena r(\d+\.?\d*)cm/);
     
-    // The shape is the cross-section on the XY plane (length x height)
     const shape = new THREE.Shape();
-    shape.moveTo(0, 0); // Bottom-left
-    shape.lineTo(0, h); // Top-left
+    shape.moveTo(0, 0); 
+    shape.lineTo(0, h);
 
     if (poluRMatch) {
-      const R = parseFloat(poluRMatch[1]) / 100; // cm to scene units
-      shape.lineTo(l - R, h);
-      shape.absarc(l - R, h - R, R, Math.PI / 2, 0, true);
-      shape.lineTo(l, 0);
+      const R = parseFloat(poluRMatch[1]) / scale;
+      shape.lineTo(vizL - R, h);
+      shape.absarc(vizL - R, h - R, R, Math.PI / 2, 0, true);
+      shape.lineTo(vizL, 0);
     } else if (punoRMatch) {
-      const R = parseFloat(punoRMatch[1]) / 100; // cm to scene units
-      shape.lineTo(l - R, h);
-      shape.absarc(l - R, h - R, R, Math.PI / 2, -Math.PI / 2, true);
-      shape.lineTo(l, 0);
+      const R = parseFloat(punoRMatch[1]) / scale;
+      shape.lineTo(vizL - R, h);
+      shape.absarc(vizL - R, h - R, R, Math.PI / 2, -Math.PI / 2, true);
+      shape.lineTo(vizL, 0);
     } else if (smusMatch) {
-      const chamferSize = parseFloat(smusMatch[1]) / 1000; // mm to scene units
-      shape.lineTo(l - chamferSize, h);
-      shape.lineTo(l, h - chamferSize);
-      shape.lineTo(l, 0);
-    } else { // Ravni rez (default)
-      shape.lineTo(l, h);
-      shape.lineTo(l, 0);
+      const chamferSize = parseFloat(smusMatch[1]) / 1000;
+      shape.lineTo(vizL - chamferSize, h);
+      shape.lineTo(vizL, h - chamferSize);
+      shape.lineTo(vizL, 0);
+    } else { 
+      shape.lineTo(vizL, h);
+      shape.lineTo(vizL, 0);
     }
     
-    shape.lineTo(0, 0); // Close shape
+    shape.lineTo(0, 0); 
     
     const extrudeSettings = {
       steps: 1,
-      depth: w, // Extrude by width
+      depth: vizW,
       bevelEnabled: false,
     };
     
     let geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-    // After extrusion along Z, the object is in X(length) Y(height) Z(width)
-    // We rotate to get a standard coordinate system: X(length), Y(width), Z(height)
     geometry.rotateX(-Math.PI / 2);
-    // After rotation, the geometry bounding box is: x:[0,l], y:[0,w], z:[-h,0]
-
+    
     const mainObject = new THREE.Mesh(geometry, stoneMaterial);
     
-    // Create a group to hold the slab and its decorative lines.
-    // This group will be centered in the scene.
     const slabGroup = new THREE.Group();
     slabGroup.add(mainObject);
     
     const edgeMaterial = new THREE.LineBasicMaterial({ color: 0xffd700, linewidth: 3 });
     const edgePoints: THREE.Vector3[] = [];
     
-    // Define lines in the local coordinate system of the ExtrudeGeometry
-    // Top face is at z=0
-    if (processedEdges.front) { edgePoints.push(new THREE.Vector3(0, w, 0), new THREE.Vector3(l, w, 0)); } // +Y direction
-    if (processedEdges.back) { edgePoints.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(l, 0, 0)); }  // -Y direction
-    if (processedEdges.left) { edgePoints.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, w, 0)); }   // -X direction
-    if (processedEdges.right) { edgePoints.push(new THREE.Vector3(l, 0, 0), new THREE.Vector3(l, w, 0)); }  // +X direction
+    if (vizProcessedEdges.front) { edgePoints.push(new THREE.Vector3(0, vizW, 0), new THREE.Vector3(vizL, vizW, 0)); }
+    if (vizProcessedEdges.back) { edgePoints.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(vizL, 0, 0)); }
+    if (vizProcessedEdges.left) { edgePoints.push(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, vizW, 0)); }
+    if (vizProcessedEdges.right) { edgePoints.push(new THREE.Vector3(vizL, 0, 0), new THREE.Vector3(vizL, vizW, 0)); }
     
     if (edgePoints.length > 0) {
       const edgeGeometry = new THREE.BufferGeometry().setFromPoints(edgePoints);
@@ -234,13 +242,12 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     
     const okapnikMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2 });
     const okapnikPoints: THREE.Vector3[] = [];
-    const okapnikOffset = 2.0 / scale; // okapnik offset in scene units
+    const okapnikOffset = 2.0 / scale;
     
-    // Bottom face is at z=-h
-    if(okapnikEdges.front) { okapnikPoints.push(new THREE.Vector3(okapnikOffset, w - okapnikOffset, -h), new THREE.Vector3(l - okapnikOffset, w - okapnikOffset, -h)); }
-    if(okapnikEdges.back) { okapnikPoints.push(new THREE.Vector3(okapnikOffset, okapnikOffset, -h), new THREE.Vector3(l - okapnikOffset, okapnikOffset, -h)); }
-    if(okapnikEdges.left) { okapnikPoints.push(new THREE.Vector3(okapnikOffset, okapnikOffset, -h), new THREE.Vector3(okapnikOffset, w - okapnikOffset, -h)); }
-    if(okapnikEdges.right) { okapnikPoints.push(new THREE.Vector3(l - okapnikOffset, okapnikOffset, -h), new THREE.Vector3(l - okapnikOffset, w - okapnikOffset, -h)); }
+    if(vizOkapnikEdges.front) { okapnikPoints.push(new THREE.Vector3(okapnikOffset, vizW - okapnikOffset, -h), new THREE.Vector3(vizL - okapnikOffset, vizW - okapnikOffset, -h)); }
+    if(vizOkapnikEdges.back) { okapnikPoints.push(new THREE.Vector3(okapnikOffset, okapnikOffset, -h), new THREE.Vector3(vizL - okapnikOffset, okapnikOffset, -h)); }
+    if(vizOkapnikEdges.left) { okapnikPoints.push(new THREE.Vector3(okapnikOffset, okapnikOffset, -h), new THREE.Vector3(okapnikOffset, vizW - okapnikOffset, -h)); }
+    if(vizOkapnikEdges.right) { okapnikPoints.push(new THREE.Vector3(vizL - okapnikOffset, okapnikOffset, -h), new THREE.Vector3(vizL - okapnikOffset, vizW - okapnikOffset, -h)); }
 
     if (okapnikPoints.length > 0) {
       const okapnikLinesGeom = new THREE.BufferGeometry().setFromPoints(okapnikPoints);
@@ -248,8 +255,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
       slabGroup.add(okapnikLines);
     }
 
-    // Center the entire group in the scene
-    slabGroup.position.set(-l / 2, -w / 2, h / 2);
+    slabGroup.position.set(-vizL / 2, -vizW / 2, h / 2);
     mainGroupRef.current.add(slabGroup);
 
     if (cameraRef.current && controlsRef.current) {
