@@ -163,8 +163,8 @@ const generateSlabGeometry = (
              addQuad(cornerGrid[i][j], cornerGrid[i+1][j], cornerGrid[i+1][j+1], cornerGrid[i][j+1]);
           }
         }
-        data.sideArc = cornerGrid.map(row => row[0]);
-        data.frontArc = cornerGrid.map(row => row[row.length - 1]);
+        data.sideArc = cornerGrid.map(row => row[0]).reverse();
+        data.frontArc = cornerGrid[0];
       }
       addGroup(cornerFaceStart, indices.length - cornerFaceStart, 2); // Material 2 for profile corners
     }
@@ -174,23 +174,23 @@ const generateSlabGeometry = (
 
   // --- Main Faces (Top/Bottom) ---
   const bottomFaceStart = indices.length;
-  addQuad(cornerData.flt.base_bl, cornerData.frt.base_bl, cornerData.brt.base_bl, cornerData.blt.base_bl);
+  addQuad(cornerData.blt.base_bl, cornerData.brt.base_bl, cornerData.frt.base_bl, cornerData.flt.base_bl);
   addGroup(bottomFaceStart, indices.length - bottomFaceStart, 0);
 
   const topFaceStart = indices.length;
-  const flt_main = cornerData.flt.frontArc.slice(-1)[0];
+  const flt_main = cornerData.flt.sideArc.slice(-1)[0];
   const frt_main = cornerData.frt.frontArc.slice(-1)[0];
-  const brt_main = cornerData.brt.frontArc.slice(-1)[0];
+  const brt_main = cornerData.brt.sideArc.slice(-1)[0];
   const blt_main = cornerData.blt.frontArc.slice(-1)[0];
-  addQuad(flt_main, frt_main, brt_main, blt_main);
+  addQuad(blt_main, brt_main, frt_main, flt_main);
   addGroup(topFaceStart, indices.length - topFaceStart, 0);
 
   // --- Connect Edges (Sides) ---
-  const connectAndBuildSides = (c1_key: string, c2_key: string, isXEdge: boolean) => {
+  const connectAndBuildSides = (c1_key: string, c2_key: string, isFrontBack: boolean) => {
     const c1 = cornerData[c1_key];
     const c2 = cornerData[c2_key];
-    const arc1 = isXEdge ? c1.frontArc : c1.sideArc;
-    const arc2 = (isXEdge ? c2.frontArc : c2.sideArc).slice().reverse();
+    const arc1 = isFrontBack ? c1.frontArc : c1.sideArc;
+    const arc2 = (isFrontBack ? c2.frontArc : c2.sideArc).slice().reverse();
 
     // Profiled Surface (Material 2)
     const profileFaceStart = indices.length;
@@ -348,11 +348,11 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 
     const finishName = finish.name.toLowerCase();
     if (finishName.includes('poliran')) {
-        originalMaterial.roughness = 0.6; // Less rough, but still matte
-        originalMaterial.clearcoat = 0;   // No shine
+        originalMaterial.roughness = 0.8;
+        originalMaterial.clearcoat = 0;
     } else {
-        originalMaterial.roughness = 0.9; // Very matte
-        originalMaterial.clearcoat = 0;   // No shine
+        originalMaterial.roughness = 0.9;
+        originalMaterial.clearcoat = 0;
     }
 
     const textureUrl = material.texture;
@@ -407,6 +407,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     if(okapnikEdges.right) slabGroup.add(createOkapnik(vizW, true)).position.set((vizL/2) - okapnikOffset, -okapnikGrooveDepth/2, 0);
 
     mainGroupRef.current.add(slabGroup);
+    // No rotation
     slabGroup.position.y = -h / 2;
 
     if (cameraRef.current && controlsRef.current) {
@@ -429,3 +430,5 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 
 VisualizationCanvas.displayName = 'VisualizationCanvas';
 export default VisualizationCanvas;
+
+    
