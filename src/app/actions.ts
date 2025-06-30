@@ -16,9 +16,17 @@ export async function uploadPdfToStorage(pdfBase64: string, fileName: string) {
     
     console.log(`${fileName} uploaded to ${bucketName}.`);
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error('ERROR uploading file to GCS:', error);
-    return { success: false, error: 'Failed to upload file.' };
+    let errorMessage = 'Failed to upload file.';
+    if (error.code === 403) {
+      errorMessage = 'Permission denied. Ensure the service account has "Storage Object Creator" role.';
+    } else if (error.code === 404) {
+      errorMessage = `Bucket "${bucketName}" not found.`;
+    } else if (error.message) {
+      errorMessage = `An error occurred: ${error.message}`;
+    }
+    return { success: false, error: errorMessage };
   }
 }
 

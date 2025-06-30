@@ -61,6 +61,7 @@ export function Lab() {
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [historyKey, setHistoryKey] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
@@ -171,6 +172,7 @@ export function Lab() {
 
       if (result.success) {
         toast({ title: "Spremanje uspješno", description: "Radni nalog je spremljen u Cloud Storage." });
+        setHistoryKey(k => k + 1);
       } else {
         throw new Error(result.error || "Nepoznata greška pri spremanju.");
       }
@@ -421,7 +423,7 @@ export function Lab() {
         </div>
 
         <div className="lg:col-span-3 xl:col-span-4">
-          <WorkOrderHistory />
+          <WorkOrderHistory key={historyKey} />
         </div>
       </div>
       
