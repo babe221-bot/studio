@@ -14,6 +14,7 @@ import VisualizationCanvas from '@/components/VisualizationCanvas';
 import MaterialModal from '@/components/modals/MaterialModal';
 import FinishModal from '@/components/modals/FinishModal';
 import ProfileModal from '@/components/modals/ProfileModal';
+import { WorkOrderHistory } from '@/components/WorkOrderHistory';
 import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, EditableItem, ProcessedEdges } from '@/types';
 import { PlusIcon, Trash2, RefreshCw, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -394,6 +395,10 @@ export function Lab() {
                 </ScrollArea>
             </CardContent>
           </Card>
+        </div>
+
+        <div className="lg:col-span-3 xl:col-span-4">
+          <WorkOrderHistory />
         </div>
       </div>
       
