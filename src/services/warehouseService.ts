@@ -6,7 +6,9 @@ import { BigQuery } from '@google-cloud/bigquery';
 // (e.g., when running on Google Cloud infrastructure like App Hosting or Cloud Run).
 // For local development, you would need to set up authentication, e.g., by running
 // `gcloud auth application-default login` in your terminal.
-const bigqueryClient = new BigQuery();
+const bigqueryClient = new BigQuery({
+  projectId: process.env.PROJECT_ID,
+});
 
 /**
  * Fetches sample data from a BigQuery table.

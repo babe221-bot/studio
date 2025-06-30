@@ -2,7 +2,9 @@
 
 import { Storage } from '@google-cloud/storage';
 
-const storage = new Storage();
+const storage = new Storage({
+  projectId: process.env.PROJECT_ID,
+});
 const bucketName = 'radninalog';
 
 export async function uploadPdfToStorage(pdfBase64: string, fileName: string) {
