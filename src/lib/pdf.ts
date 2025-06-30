@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { OrderItem } from '@/types';
 
-export const generatePdf = (orderItems: OrderItem[]) => {
+export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -137,5 +137,5 @@ export const generatePdf = (orderItems: OrderItem[]) => {
 
   });
 
-  doc.save(`radni_nalog_${Date.now()}.pdf`);
+  return doc.output('dataurlstring');
 };
