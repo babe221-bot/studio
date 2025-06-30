@@ -38,6 +38,16 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
       doc.addImage(item.snapshotDataUri, 'PNG', titleBlockX, margin + 40, imgWidth, imgHeight);
     }
     
+    const processedEdgesString = Object.entries(item.processedEdges)
+      .filter(([, v]) => v)
+      .map(([k]) => k.charAt(0).toUpperCase() + k.slice(1))
+      .join(', ') || 'Nema';
+
+    const okapnikEdgesString = Object.entries(item.okapnikEdges)
+      .filter(([, v]) => v)
+      .map(([k]) => k.charAt(0).toUpperCase() + k.slice(1))
+      .join(', ') || 'Nema';
+
     autoTable(doc, {
       startY: margin + 40,
       head: [['Specifikacija', 'Vrijednost']],
@@ -46,8 +56,8 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
         ['Obrada lica', item.finish.name],
         ['Profil ivice', item.profile.name],
         ['Dimenzije (DxŠxV)', `${item.dims.length} x ${item.dims.width} x ${item.dims.height} cm`],
-        ['Obrada ivica', Object.entries(item.processedEdges).filter(([,v])=>v).map(([k])=>k).join(', ') || 'Nema'],
-        ['Okapnik', Object.entries(item.okapnikEdges).filter(([,v])=>v).map(([k])=>k).join(', ') || 'Nema'],
+        ['Obrada ivica', processedEdgesString],
+        ['Okapnik', okapnikEdgesString],
         ['Ukupni Trošak', `€ ${item.totalCost.toFixed(2)}`],
       ],
       theme: 'grid',
@@ -113,7 +123,7 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
     doc.rect(currentX, viewY, L, H);
     if (item.okapnikEdges.front || item.okapnikEdges.back) {
         doc.setLineDashPattern([2, 1], 0);
-        const okapnikOffset = 1.0 * scale;
+        const okapnikOffset = 2.0 * scale;
         doc.line(currentX + okapnikOffset, viewY + H, currentX + L - okapnikOffset, viewY + H);
         doc.setLineDashPattern([], 0);
     }
@@ -128,7 +138,7 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
     doc.rect(currentX, viewY, W, H);
     if (item.okapnikEdges.left || item.okapnikEdges.right) {
         doc.setLineDashPattern([2, 1], 0);
-        const okapnikOffset = 1.0 * scale;
+        const okapnikOffset = 2.0 * scale;
         doc.line(currentX + okapnikOffset, viewY + H, currentX + W - okapnikOffset, viewY + H);
         doc.setLineDashPattern([], 0);
     }

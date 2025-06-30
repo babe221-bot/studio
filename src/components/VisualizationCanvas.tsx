@@ -413,13 +413,29 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
       sideMaterial
     );
     
-    if(okapnikEdges.front) slabGroup.add(createOkapnik(vizL, false)).position.set(0, -okapnikGrooveDepth/2, (vizW/2) - okapnikOffset);
-    if(okapnikEdges.back) slabGroup.add(createOkapnik(vizL, false)).position.set(0, -okapnikGrooveDepth/2, -(vizW/2) + okapnikOffset);
-    if(okapnikEdges.left) slabGroup.add(createOkapnik(vizW, true)).position.set(-(vizL/2) + okapnikOffset, -okapnikGrooveDepth/2, 0);
-    if(okapnikEdges.right) slabGroup.add(createOkapnik(vizW, true)).position.set((vizL/2) - okapnikOffset, -okapnikGrooveDepth/2, 0);
+    if (okapnikEdges.front) {
+      const okapnik = createOkapnik(vizL, false);
+      okapnik.position.set(0, -h / 2, (vizW / 2) - okapnikOffset);
+      slabGroup.add(okapnik);
+    }
+    if (okapnikEdges.back) {
+      const okapnik = createOkapnik(vizL, false);
+      okapnik.position.set(0, -h / 2, -(vizW / 2) + okapnikOffset);
+      slabGroup.add(okapnik);
+    }
+    if (okapnikEdges.left) {
+      const okapnik = createOkapnik(vizW, true);
+      okapnik.position.set(-(vizL / 2) + okapnikOffset, -h / 2, 0);
+      slabGroup.add(okapnik);
+    }
+    if (okapnikEdges.right) {
+      const okapnik = createOkapnik(vizW, true);
+      okapnik.position.set((vizL / 2) - okapnikOffset, -h / 2, 0);
+      slabGroup.add(okapnik);
+    }
 
     mainGroupRef.current.add(slabGroup);
-    slabGroup.position.y = -h / 2;
+    slabGroup.position.y = h / 2;
 
     if (cameraRef.current && controlsRef.current) {
         const box = new THREE.Box3().setFromObject(slabGroup);
