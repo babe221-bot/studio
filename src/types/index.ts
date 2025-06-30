@@ -45,4 +45,12 @@ export interface OrderItem {
 
 export type ModalType = 'material' | 'finish' | 'profile' | null;
 
+export interface ConstructionElement {
+  id: string;
+  name: string;
+  defaultLength: number;
+  defaultWidth: number;
+  defaultHeight: number;
+}
+
 export type EditableItem = Material | SurfaceFinish | EdgeProfile;

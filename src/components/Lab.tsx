@@ -10,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { initialMaterials, initialSurfaceFinishes, initialEdgeProfiles } from '@/lib/data';
+import { constructionElements } from '@/lib/constructionElements';
 import VisualizationCanvas from '@/components/VisualizationCanvas';
 import MaterialModal from '@/components/modals/MaterialModal';
 import FinishModal from '@/components/modals/FinishModal';
@@ -34,10 +35,10 @@ export function Lab() {
   const [profiles, setProfiles] = useState<EdgeProfile[]>(initialEdgeProfiles);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
 
-  const [specimenId, setSpecimenId] = useState('Kuhinjska ploča K01');
-  const [length, setLength] = useState(280);
-  const [width, setWidth] = useState(62);
-  const [height, setHeight] = useState(3);
+  const [specimenId, setSpecimenId] = useState(`${constructionElements[0].name} 01`);
+  const [length, setLength] = useState(constructionElements[0].defaultLength);
+  const [width, setWidth] = useState(constructionElements[0].defaultWidth);
+  const [height, setHeight] = useState(constructionElements[0].defaultHeight);
 
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | undefined>(initialMaterials[0]?.id.toString());
   const [selectedFinishId, setSelectedFinishId] = useState<string | undefined>(initialSurfaceFinishes[0]?.id.toString());
@@ -63,7 +64,6 @@ export function Lab() {
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    // Auto-disable okapnik if the corresponding edge is not processed
     const newOkapnikEdges: ProcessedEdges = { ...okapnikEdges };
     let changed = false;
     for (const edge of Object.keys(processedEdges) as Array<keyof ProcessedEdges>) {
@@ -120,6 +120,16 @@ export function Lab() {
     okapnikEdges: okapnikEdges,
   }), [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnikEdges]);
 
+  const handleElementTypeChange = (elementId: string) => {
+    const element = constructionElements.find(e => e.id === elementId);
+    if (element) {
+      setLength(element.defaultLength);
+      setWidth(element.defaultWidth);
+      setHeight(element.defaultHeight);
+      setSpecimenId(`${element.name} 01`);
+    }
+  };
+  
   const handleAddToOrder = () => {
     if (!selectedMaterial || !selectedFinish || !selectedProfile || !specimenId) {
       toast({ title: "Greška", description: "Molimo popunite sva polja.", variant: "destructive" });
@@ -219,6 +229,19 @@ export function Lab() {
           <Card>
             <CardHeader><CardTitle>1. Unos naloga</CardTitle></CardHeader>
             <CardContent className="space-y-4">
+               <div className="space-y-2">
+                <Label htmlFor="element-type-select">Tip elementa</Label>
+                <Select onValueChange={handleElementTypeChange} defaultValue={constructionElements[0].id}>
+                  <SelectTrigger id="element-type-select">
+                    <SelectValue placeholder="Odaberite tip elementa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {constructionElements.map(el => (
+                      <SelectItem key={el.id} value={el.id}>{el.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="specimen-id">ID / Naziv komada</Label>
                 <Input id="specimen-id" value={specimenId} onChange={e => setSpecimenId(e.target.value)} placeholder="npr. Kuhinjska ploča K01" />
