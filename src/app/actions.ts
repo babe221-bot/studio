@@ -19,12 +19,14 @@ export async function uploadPdfToStorage(pdfBase64: string, fileName: string) {
     console.log(`${fileName} uploaded to ${bucketName}.`);
     return { success: true };
   } catch (error: any) {
-    console.error('ERROR uploading file to GCS:', error);
+    console.error('FULL GCS UPLOAD ERROR:', JSON.stringify(error, null, 2));
     let errorMessage = 'Failed to upload file.';
     if (error.code === 403) {
       errorMessage = 'Permission denied. Ensure the service account has "Storage Object Creator" role.';
     } else if (error.code === 404) {
       errorMessage = `Bucket "${bucketName}" not found.`;
+    } else if (error.message && error.message.includes('Could not refresh access token')) {
+      errorMessage = 'Authentication failed. Please ensure the service account has the "Service Account Token Creator" role in your Google Cloud project\'s IAM settings.';
     } else if (error.message) {
       errorMessage = `An error occurred: ${error.message}`;
     }
@@ -43,12 +45,16 @@ export async function listPdfsFromStorage() {
       }));
     return { success: true, pdfs };
   } catch (error: any) {
-    console.error('ERROR listing files from GCS:', error);
+    console.error('FULL GCS LIST ERROR:', JSON.stringify(error, null, 2));
     let errorMessage = 'Failed to list files from storage.';
     if (error.code === 403) {
       errorMessage = 'Permission denied. Ensure the service account has "Storage Object Viewer" role.';
     } else if (error.code === 404) {
       errorMessage = `Bucket "${bucketName}" not found.`;
+    } else if (error.message && error.message.includes('Could not refresh access token')) {
+      errorMessage = 'Authentication failed. Please ensure the service account has the "Service Account Token Creator" role in your Google Cloud project\'s IAM settings.';
+    } else if (error.message) {
+      errorMessage = `An error occurred: ${error.message}`;
     }
     return { success: false, error: errorMessage };
   }
