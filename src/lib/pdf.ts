@@ -1,25 +1,20 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { OrderItem } from '@/types';
-import { robotoRegularBase64, robotoBoldBase64 } from '@/lib/fonts';
 
+// NOTE: This version uses standard jsPDF fonts to ensure stability.
+// Support for special characters like č,ć,š may be limited in the final PDF.
 export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
   try {
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3' });
-
-    // --- Font Registration ---
-    // This is crucial for UTF-8 character support (č,ć,š,đ,ž)
-    doc.addFileToVFS('Roboto-Regular.ttf', robotoRegularBase64);
-    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
-    doc.addFileToVFS('Roboto-Bold.ttf', robotoBoldBase64);
-    doc.addFont('Roboto-Bold.ttf', 'Roboto', 'bold');
 
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
 
     const setFont = (style: 'bold' | 'normal', size: number) => {
-      doc.setFont('Roboto', style);
+      // Using standard, built-in Helvetica font to avoid encoding errors
+      doc.setFont('Helvetica', style);
       doc.setFontSize(size);
     };
 
@@ -35,7 +30,7 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
 
       // --- Header ---
       setFont('bold', 24);
-      doc.text('TEHNIČKA SPECIFIKACIJA', margin + 10, margin + 15);
+      doc.text('TEHNICKA SPECIFIKACIJA', margin + 10, margin + 15);
       
       setFont('normal', 12);
       doc.text(`ID Komada: ${item.id}`, margin + 10, margin + 25);
@@ -58,7 +53,7 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
         } catch(e) {
             console.error("Failed to add image to PDF", e);
             setFont('normal', 9);
-            doc.text("Greška pri dodavanju 3D slike.", titleBlockX, margin + 40);
+            doc.text("Greska pri dodavanju 3D slike.", titleBlockX, margin + 40);
         }
       }
       
@@ -80,14 +75,14 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
           ['Materijal', item.material.name],
           ['Obrada lica', item.finish.name],
           ['Profil ivice', item.profile.name],
-          ['Dimenzije (DxŠxV)', `${item.dims.length} x ${item.dims.width} x ${item.dims.height} cm`],
+          ['Dimenzije (DxSXV)', `${item.dims.length} x ${item.dims.width} x ${item.dims.height} cm`],
           ['Obrada ivica', processedEdgesString],
           ['Okapnik', okapnikEdgesString],
-          ['Ukupni Trošak', `€ ${item.totalCost.toFixed(2)}`],
+          ['Ukupni Trosak', `€ ${item.totalCost.toFixed(2)}`],
         ],
         theme: 'grid',
-        headStyles: { fillColor: [52, 73, 94], textColor: 255, font: 'Roboto', fontStyle: 'bold' },
-        bodyStyles: { font: 'Roboto', fontStyle: 'normal' },
+        headStyles: { fillColor: [52, 73, 94], textColor: 255, font: 'Helvetica', fontStyle: 'bold' },
+        bodyStyles: { font: 'Helvetica', fontStyle: 'normal' },
         margin: { left: margin + 10 },
         tableWidth: pageWidth - (margin * 2) - 140, 
       });
@@ -199,5 +194,3 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
     return "";
   }
 };
-
-    
