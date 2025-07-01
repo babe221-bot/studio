@@ -3,7 +3,6 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import type { UserOptions } from 'jspdf-autotable';
-import { robotoRegularBase64, robotoBoldBase64 } from './fonts';
 import type { OrderItem } from '@/types';
 
 interface jsPDFWithAutoTable extends jsPDF {
@@ -15,21 +14,18 @@ export const generateAndDownloadPdf = (orderItems: OrderItem[]) => {
   try {
     const doc = new jsPDF() as jsPDFWithAutoTable;
 
-    // Register fonts
-    doc.addFileToVFS('Roboto-Regular.ttf', robotoRegularBase64);
-    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
-    doc.addFileToVFS('Roboto-Bold.ttf', robotoBoldBase64);
-    doc.addFont('Roboto-Bold.ttf', 'Roboto', 'bold');
+    // NOTE: Removed custom font loading to prevent encoding errors.
+    // This will use a standard font. Croatian diacritics may not render correctly.
 
     // Set font for the entire document
-    doc.setFont('Roboto', 'normal');
+    doc.setFont('Helvetica', 'normal');
 
     // Add header
     doc.setFontSize(20);
-    doc.setFont('Roboto', 'bold');
+    doc.setFont('Helvetica', 'bold');
     doc.text('Radni Nalog', 14, 22);
     doc.setFontSize(11);
-    doc.setFont('Roboto', 'normal');
+    doc.setFont('Helvetica', 'normal');
     const date = new Date().toLocaleDateString('hr-HR');
     doc.text(date, 14, 29);
 
@@ -62,10 +58,10 @@ export const generateAndDownloadPdf = (orderItems: OrderItem[]) => {
         fillColor: [38, 50, 56], // Dark grey
         textColor: 255,
         fontStyle: 'bold',
-        font: 'Roboto',
+        font: 'Helvetica',
       },
       styles: {
-        font: 'Roboto',
+        font: 'Helvetica',
         fontStyle: 'normal',
         cellPadding: 2,
         fontSize: 10,
@@ -79,7 +75,7 @@ export const generateAndDownloadPdf = (orderItems: OrderItem[]) => {
     const totalCost = orderItems.reduce((acc, item) => acc + item.totalCost, 0);
     const finalY = (doc as any).autoTable.previous.finalY;
     doc.setFontSize(12);
-    doc.setFont('Roboto', 'bold');
+    doc.setFont('Helvetica', 'bold');
     doc.text(`UKUPNO: ${totalCost.toFixed(2)} €`, 14, finalY + 15);
 
     doc.save(`Radni_Nalog_${date.replace(/\./g, '-')}.pdf`);
