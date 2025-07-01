@@ -25,29 +25,36 @@ const technicalDrawingFlow = ai.defineFlow(
     outputSchema: TechnicalDrawingOutputSchema,
   },
   async (input) => {
-    const processedEdgesString = input.processedEdges.length > 0 ? input.processedEdges.join(', ') : 'Nema';
-    const okapnikEdgesString = input.okapnikEdges.length > 0 ? input.okapnikEdges.join(', ') : 'Nema';
     
-    const promptText = `
-      Create a very clean, minimalist, black and white technical line drawing of a rectangular stone slab.
-      The drawing must be a simple orthographic top-down view (plan view).
-      The background must be pure white. The lines must be black.
+    const promptParts = [
+      'Create a very clean, minimalist, black and white technical line drawing of a rectangular stone slab.',
+      'The drawing must be a simple orthographic top-down view (plan view).',
+      'The background must be pure white. The lines must be black.',
+      `The dimensions of the slab are ${input.length} cm (length) by ${input.width} cm (width).`,
+      'Draw clear dimension lines and label the length and width with these values.',
+      `The surface finish for this slab is "${input.surfaceFinishName}". Add this text centered on the slab drawing in a clean, uppercase, non-obtrusive font.`,
+      `The edge profile for this slab is "${input.profileName}".`
+    ];
 
-      The dimensions of the slab are ${input.length} cm (length) by ${input.width} cm (width).
-      Draw clear dimension lines and label the length and width with these values.
+    if (input.processedEdges.length > 0) {
+      const processedEdgesString = input.processedEdges.join(', ');
+      promptParts.push(
+        `The following edges are processed: ${processedEdgesString}.`,
+        'Indicate the processed edges on the drawing with a slightly thicker line weight compared to the non-processed edges.'
+      );
+    }
 
-      The surface finish for this slab is "${input.surfaceFinishName}". Add this text centered on the slab drawing in a clean, uppercase, non-obtrusive font.
+    if (input.okapnikEdges.length > 0) {
+      const okapnikEdgesString = input.okapnikEdges.join(', ');
+      promptParts.push(
+        `The following edges have a drip edge (okapnik): ${okapnikEdgesString}.`,
+        'Indicate the drip edge on the drawing using a dashed line just inside the main edge line.'
+      );
+    }
 
-      The edge profile for this slab is "${input.profileName}".
+    promptParts.push('Do not add any other logos or annotations. The output must be only the technical drawing itself.');
 
-      The following edges are processed: ${processedEdgesString}.
-      Indicate the processed edges on the drawing with a slightly thicker line weight compared to the non-processed edges.
-
-      The following edges have a drip edge (okapnik): ${okapnikEdgesString}.
-      Indicate the drip edge on the drawing using a dashed line just inside the main edge line.
-
-      Do not add any other logos or annotations. The output must be only the technical drawing itself.
-    `;
+    const promptText = promptParts.join('\n');
 
     const { media } = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
