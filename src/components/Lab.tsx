@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -17,9 +16,9 @@ import MaterialModal from '@/components/modals/MaterialModal';
 import FinishModal from '@/components/modals/FinishModal';
 import ProfileModal from '@/components/modals/ProfileModal';
 import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, EditableItem, ProcessedEdges } from '@/types';
-import { PlusIcon, Trash2, RefreshCw, Loader2 } from 'lucide-react';
+import { PlusIcon, Trash2, RefreshCw } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { createGoogleDoc } from '@/app/actions';
+import { generateAndDownloadPdf } from '@/lib/pdf';
 
 type CanvasHandle = {
   getSnapshot: () => string | null;
@@ -60,7 +59,6 @@ export function Lab() {
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const newOkapnikEdges: ProcessedEdges = { ...okapnikEdges };
@@ -152,21 +150,28 @@ export function Lab() {
     toast({ title: "Stavka dodana", description: `${specimenId} je dodan u radni nalog.` });
   };
   
-  const handleSaveToGoogleDocs = async () => {
+  const handleDownloadPdf = () => {
     if (orderItems.length === 0) {
-      toast({ title: "Greška", description: "Nema stavki u nalogu za spremanje.", variant: "destructive" });
+      toast({
+        title: "Nalog je prazan",
+        description: "Molimo dodajte barem jednu stavku prije izrade PDF-a.",
+        variant: "destructive",
+      });
       return;
     }
-    setIsSaving(true);
     try {
-      const { documentId } = await createGoogleDoc(orderItems);
-      window.open(`https://docs.google.com/document/d/${documentId}/edit`, '_blank');
-      toast({ title: "Uspjeh", description: "Radni nalog je uspješno kreiran kao Google Dokument." });
+      generateAndDownloadPdf(orderItems);
+      toast({
+        title: "Uspjeh",
+        description: "Radni nalog je uspješno preuzet kao PDF.",
+      });
     } catch (error: any) {
-      console.error("Google Docs creation error:", error);
-      toast({ title: "Greška pri kreiranju dokumenta", description: "Došlo je do greške. Provjerite konzolu za detalje.", variant: "destructive" });
-    } finally {
-      setIsSaving(false);
+      console.error("PDF generation error:", error);
+      toast({
+        title: "Greška pri kreiranju PDF-a",
+        description: error.message || "Došlo je do greške. Provjerite konzolu za detalje.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -365,9 +370,8 @@ export function Lab() {
             <CardContent>
                 <div className="flex flex-col gap-4 md:flex-row md:items-center">
                     <Button onClick={handleAddToOrder} className="w-full md:w-auto flex-1">Dodaj stavku u nalog</Button>
-                     <Button onClick={handleSaveToGoogleDocs} variant="outline" className="w-full md:w-auto flex-1" disabled={orderItems.length === 0 || isSaving}>
-                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Spremi Nalog (Google Doc)
+                     <Button onClick={handleDownloadPdf} variant="outline" className="w-full md:w-auto flex-1" disabled={orderItems.length === 0}>
+                        Preuzmi Nalog (PDF)
                     </Button>
                 </div>
                 <Separator className="my-4" />
