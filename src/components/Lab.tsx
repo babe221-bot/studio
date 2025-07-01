@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -185,6 +186,30 @@ export function Lab() {
       toast({ title: "Neočekivana greška", description: "Došlo je do neočekivane greške prilikom kreiranja ili spremanja PDF-a.", variant: "destructive" });
     } finally {
       setIsUploading(false);
+    }
+  };
+  
+  const handleDownloadPdfLocally = () => {
+    if (orderItems.length === 0) {
+      toast({ title: "Greška", description: "Nema stavki u nalogu za preuzimanje.", variant: "destructive" });
+      return;
+    }
+    try {
+      const dataUri = generatePdfAsDataUri(orderItems);
+      if (!dataUri || !dataUri.startsWith('data:application/pdf;base64,')) {
+        toast({ title: "Greška pri generiranju PDF-a", description: "Nije moguće kreirati ispravan PDF dokument.", variant: "destructive" });
+        return;
+      }
+      const link = document.createElement('a');
+      link.href = dataUri;
+      link.download = `radni_nalog_${Date.now()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({ title: "Preuzimanje započeto", description: "PDF radni nalog je poslan u vaš preglednik." });
+    } catch (error: any) {
+      console.error("Client-side PDF Generation/Download Error:", error);
+      toast({ title: "Neočekivana greška", description: "Došlo je do neočekivane greške prilikom kreiranja PDF-a.", variant: "destructive" });
     }
   };
 
@@ -380,12 +405,17 @@ export function Lab() {
           <Card>
             <CardHeader><CardTitle>5. Radni nalog</CardTitle></CardHeader>
             <CardContent>
-                <div className="flex flex-col gap-4 md:flex-row">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center">
                     <Button onClick={handleAddToOrder} className="w-full md:w-auto md:flex-1">Dodaj stavku u nalog</Button>
-                    <Button onClick={handleSavePdfToCloud} variant="secondary" className="w-full md:w-auto" disabled={orderItems.length === 0 || isUploading}>
-                      {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Spremi Nalog u Cloud
-                    </Button>
+                    <div className="flex flex-col gap-2 md:flex-row md:w-auto">
+                        <Button onClick={handleDownloadPdfLocally} variant="outline" className="w-full md:w-auto" disabled={orderItems.length === 0}>
+                            Preuzmi Nalog (PDF)
+                        </Button>
+                        <Button onClick={handleSavePdfToCloud} variant="secondary" className="w-full md:w-auto" disabled={orderItems.length === 0 || isUploading}>
+                          {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Spremi Nalog u Cloud
+                        </Button>
+                    </div>
                 </div>
                 <Separator className="my-4" />
                 <ScrollArea className="h-64">
@@ -453,3 +483,5 @@ export function Lab() {
     </main>
   );
 }
+
+    
