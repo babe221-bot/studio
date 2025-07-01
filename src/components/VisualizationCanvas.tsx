@@ -56,16 +56,25 @@ const generateSlabGeometry = (
 
     if (smusMatch) {
         profileType = 'chamfer';
-        R = Math.min(parseFloat(smusMatch[1]) / 100, H, L / 2, W / 2);
+        // Profile name has value in mm, convert to meters
+        const val_m = parseFloat(smusMatch[1]) / 1000;
+        R = Math.min(val_m, H, L / 2, W / 2);
     } else if (poluRMatch) {
         profileType = 'half-round';
-        R = Math.min(parseFloat(poluRMatch[1]), H * 100) / 100;
+        // Profile name has value in cm, convert to meters
+        const val_m = parseFloat(poluRMatch[1]) / 100;
+        R = Math.min(val_m, H);
     } else if (punoRMatch) {
         profileType = 'full-round';
+        // Radius is half the height
         R = H / 2;
     }
-    if (R <= 1e-6) profileType = 'none';
 
+    if (R <= 1e-6) {
+        profileType = 'none';
+        R = 0;
+    }
+    
     const corners = {
         flt: { x: -halfL, z: halfW, procX: processedEdges.left, procZ: processedEdges.front, signX: -1, signZ: 1 },
         frt: { x: halfL, z: halfW, procX: processedEdges.right, procZ: processedEdges.front, signX: 1, signZ: 1 },
