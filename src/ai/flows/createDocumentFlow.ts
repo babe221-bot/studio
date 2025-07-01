@@ -6,6 +6,7 @@
  */
 import { z } from 'genkit';
 import { ai } from '@/ai/genkit';
+import { GoogleAuth } from 'google-auth-library';
 import { google } from 'googleapis';
 
 const OrderItemSchema = z.object({
@@ -51,51 +52,6 @@ const OrderItemSchema = z.object({
 
 const CreateDocumentInputSchema = z.array(OrderItemSchema);
 
-// Using any for requests to avoid excessive type complexity for Google API
-const insertText = (text: string, props?: { bold?: boolean; fontSize?: number }) => {
-    const textStyle: any = {
-        foregroundColor: {
-            color: {
-                rgbColor: { red: 0, green: 0, blue: 0 }
-            }
-        },
-    };
-    if (props?.fontSize) {
-        textStyle.weightedFontFamily = { fontFamily: 'Roboto' };
-        textStyle.fontSize = { magnitude: props.fontSize, unit: 'PT' };
-    }
-    if (props?.bold) {
-        textStyle.bold = true;
-    }
-    return {
-      insertText: {
-        location: { index: 1 },
-        text: text,
-      },
-      updateTextStyle: {
-          range: { startIndex: 1, endIndex: text.length },
-          textStyle: textStyle,
-          fields: '*',
-      }
-    };
-  };
-  
-const insertTable = (rows: number, columns: number) => {
-    return {
-      insertTable: {
-        location: { index: 1 },
-        rows,
-        columns,
-      },
-    };
-};
-  
-const insertPageBreak = () => ({
-      insertPageBreak: {
-          location: { index: 1 }
-      }
-});
-
 export const createDocumentFlow = ai.defineFlow(
   {
     name: 'createDocumentFlow',
@@ -103,13 +59,17 @@ export const createDocumentFlow = ai.defineFlow(
     outputSchema: z.object({ documentId: z.string() }),
   },
   async (orderItems) => {
-    const auth = await google.auth.getClient({
+    // Use GoogleAuth explicitly to get a token.
+    // This can sometimes resolve environment-specific issues.
+    const auth = new GoogleAuth({
       scopes: ['https://www.googleapis.com/auth/documents'],
     });
 
-    const docs = google.docs({ version: 'v1', auth });
+    const client = await auth.getClient();
+    const docs = google.docs({ version: 'v1', auth: client });
 
     const docTitle = `Radni Nalog - ${new Date().toLocaleDateString('hr-HR')}`;
+    
     const createResponse = await docs.documents.create({
       requestBody: { title: docTitle },
     });
@@ -119,55 +79,55 @@ export const createDocumentFlow = ai.defineFlow(
 
     let requests: any[] = [];
     
-    // Reverse items to insert them from bottom to top, as required by the API
-    const reversedItems = [...orderItems].reverse();
-
-    reversedItems.forEach((item, index) => {
-        if (index > 0) {
-            requests.push(insertPageBreak());
-        }
-
-        const processedEdgesString = Object.entries(item.processedEdges)
+    // Build content as a single string to ensure reliability
+    let fullTextContent = '';
+    orderItems.forEach((item, index) => {
+      const processedEdgesString = Object.entries(item.processedEdges)
             .filter(([, v]) => v)
             .map(([k]) => k.charAt(0).toUpperCase() + k.slice(1))
             .join(', ') || 'Nema';
         
-        const okapnikEdgesString = Object.entries(item.okapnikEdges || {})
+      const okapnikEdgesString = Object.entries(item.okapnikEdges || {})
             .filter(([, v]) => v)
             .map(([k]) => k.charAt(0).toUpperCase() + k.slice(1))
             .join(', ') || 'Nema';
 
-        const tableRows = [
-            ['Materijal', item.material.name],
-            ['Obrada lica', item.finish.name],
-            ['Profil ivice', item.profile.name],
-            ['Dimenzije (DxŠxV)', `${item.dims.length} x ${item.dims.width} x ${item.dims.height} cm`],
-            ['Obrada ivica', processedEdgesString],
-            ['Okapnik', okapnikEdgesString],
-            ['Ukupni Trošak', `€ ${item.totalCost.toFixed(2)}`],
-        ];
-        
-        // This is a simplified way to insert text into a table.
-        // It inserts the whole table content as a single text block,
-        // with tabs separating columns and newlines separating rows.
-        const tableContentString = tableRows.map(row => row.join('\t')).join('\n') + '\n';
+      fullTextContent += `\n\nStavka ${index + 1}: ${item.id}\n`;
+      fullTextContent += `---------------------------------\n`;
+      fullTextContent += `Materijal: ${item.material.name}\n`;
+      fullTextContent += `Dimenzije (DxŠxV): ${item.dims.length} x ${item.dims.width} x ${item.dims.height} cm\n`;
+      fullTextContent += `Obrada lica: ${item.finish.name}\n`;
+      fullTextContent += `Profil ivice: ${item.profile.name}\n`;
+      fullTextContent += `Obrada ivica: ${processedEdgesString}\n`;
+      fullTextContent += `Okapnik: ${okapnikEdgesString}\n`;
+      fullTextContent += `Ukupni Trošak: € ${item.totalCost.toFixed(2)}\n`;
+    });
 
-        requests.push({ insertText: { location: { index: 1 }, text: tableContentString }});
-        requests.push(insertTable(tableRows.length, 2));
-
-        // Add headers for the item
-        requests.push(insertText(`\n`)); // Spacing
-        requests.push(insertText(`ID Komada: ${item.id}\n`, { fontSize: 14 }));
-        requests.push(insertText(`TEHNIČKA SPECIFIKACIJA\n`, { fontSize: 18, bold: true }));
+    // A single request to insert the title and the content
+    requests.push({
+      insertText: {
+        location: { index: 1 },
+        text: `${docTitle}\n${fullTextContent}`,
+      },
     });
     
-    requests.push(insertText(`${docTitle}\n`, { fontSize: 24, bold: true }));
+    // Style the title as a heading
+    requests.push({
+        updateTextStyle: {
+            range: { startIndex: 1, endIndex: docTitle.length + 1 },
+            textStyle: {
+                bold: true,
+                fontSize: { magnitude: 18, unit: 'PT' },
+            },
+            fields: 'bold,fontSize',
+        }
+    });
 
     if (requests.length > 0) {
-        await docs.documents.batchUpdate({
-            documentId,
-            requestBody: { requests },
-        });
+      await docs.documents.batchUpdate({
+        documentId,
+        requestBody: { requests },
+      });
     }
 
     return { documentId };
