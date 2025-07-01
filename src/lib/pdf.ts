@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { OrderItem } from '@/types';
-import { liberationSansRegularBase64, liberationSansBoldBase64 } from '@/lib/fonts';
+import { robotoRegularBase64, robotoBoldBase64 } from '@/lib/fonts';
 
 export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
   try {
@@ -9,12 +9,12 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
 
     // --- Font Registration ---
     // Register the regular font
-    doc.addFileToVFS('LiberationSans-Regular.ttf', liberationSansRegularBase64);
-    doc.addFont('LiberationSans-Regular.ttf', 'LiberationSans', 'normal');
+    doc.addFileToVFS('Roboto-Regular.ttf', robotoRegularBase64);
+    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
 
     // Register the bold font
-    doc.addFileToVFS('LiberationSans-Bold.ttf', liberationSansBoldBase64);
-    doc.addFont('LiberationSans-Bold.ttf', 'LiberationSans', 'bold');
+    doc.addFileToVFS('Roboto-Bold.ttf', robotoBoldBase64);
+    doc.addFont('Roboto-Bold.ttf', 'Roboto', 'bold');
 
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -24,7 +24,7 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
     const setFont = (style: 'bold' | 'normal' | 'italic', size: number) => {
       // Italic is not supported with this custom font, fallback to normal
       const fontStyle = style === 'bold' ? 'bold' : 'normal';
-      doc.setFont('LiberationSans', fontStyle);
+      doc.setFont('Roboto', fontStyle);
       doc.setFontSize(size);
     };
 
@@ -91,8 +91,8 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
           ['Ukupni Trošak', `€ ${item.totalCost.toFixed(2)}`],
         ],
         theme: 'grid',
-        headStyles: { fillColor: [52, 73, 94], textColor: 255, font: 'LiberationSans', fontStyle: 'bold' },
-        bodyStyles: { font: 'LiberationSans', fontStyle: 'normal' },
+        headStyles: { fillColor: [52, 73, 94], textColor: 255, font: 'Roboto', fontStyle: 'bold' },
+        bodyStyles: { font: 'Roboto', fontStyle: 'normal' },
         margin: { left: margin + 10 },
         tableWidth: pageWidth - (margin * 2) - 130, // Page width - margins - image block width
       });
@@ -208,4 +208,3 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
     return "";
   }
 };
-
