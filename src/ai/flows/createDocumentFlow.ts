@@ -62,6 +62,7 @@ export const createDocumentFlow = ai.defineFlow(
     // Use GoogleAuth explicitly to get a token.
     // This can sometimes resolve environment-specific issues.
     const auth = new GoogleAuth({
+      projectId: 'stone-464500', // Explicitly set project ID
       scopes: ['https://www.googleapis.com/auth/documents'],
     });
 
