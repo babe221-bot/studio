@@ -17,9 +17,9 @@ import MaterialModal from '@/components/modals/MaterialModal';
 import FinishModal from '@/components/modals/FinishModal';
 import ProfileModal from '@/components/modals/ProfileModal';
 import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, EditableItem, ProcessedEdges } from '@/types';
-import { PlusIcon, Trash2, RefreshCw } from 'lucide-react';
+import { PlusIcon, Trash2, RefreshCw, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { generatePdfAsDataUri } from '@/lib/pdf';
+import { createGoogleDoc } from '@/app/actions';
 
 type CanvasHandle = {
   getSnapshot: () => string | null;
@@ -60,6 +60,7 @@ export function Lab() {
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const newOkapnikEdges: ProcessedEdges = { ...okapnikEdges };
@@ -151,29 +152,24 @@ export function Lab() {
     toast({ title: "Stavka dodana", description: `${specimenId} je dodan u radni nalog.` });
   };
   
-  const handleDownloadPdfLocally = () => {
+  const handleSaveToGoogleDocs = async () => {
     if (orderItems.length === 0) {
-      toast({ title: "Greška", description: "Nema stavki u nalogu za preuzimanje.", variant: "destructive" });
+      toast({ title: "Greška", description: "Nema stavki u nalogu za spremanje.", variant: "destructive" });
       return;
     }
+    setIsSaving(true);
     try {
-      const dataUri = generatePdfAsDataUri(orderItems);
-      if (!dataUri || !dataUri.startsWith('data:application/pdf;base64,')) {
-        toast({ title: "Greška pri generiranju PDF-a", description: "Nije moguće kreirati ispravan PDF dokument.", variant: "destructive" });
-        return;
-      }
-      const link = document.createElement('a');
-      link.href = dataUri;
-      link.download = `radni_nalog_${Date.now()}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast({ title: "Preuzimanje započeto", description: "PDF radni nalog je poslan u vaš preglednik." });
+      const { documentId } = await createGoogleDoc(orderItems);
+      window.open(`https://docs.google.com/document/d/${documentId}/edit`, '_blank');
+      toast({ title: "Uspjeh", description: "Radni nalog je uspješno kreiran kao Google Dokument." });
     } catch (error: any) {
-      console.error("Client-side PDF Generation/Download Error:", error);
-      toast({ title: "Neočekivana greška", description: "Došlo je do neočekivane greške prilikom kreiranja PDF-a.", variant: "destructive" });
+      console.error("Google Docs creation error:", error);
+      toast({ title: "Greška pri kreiranju dokumenta", description: "Došlo je do greške. Provjerite konzolu za detalje.", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
     }
   };
+
 
   const handleRemoveOrderItem = (orderId: number) => {
     setOrderItems(orderItems.filter(item => item.orderId !== orderId));
@@ -369,8 +365,9 @@ export function Lab() {
             <CardContent>
                 <div className="flex flex-col gap-4 md:flex-row md:items-center">
                     <Button onClick={handleAddToOrder} className="w-full md:w-auto flex-1">Dodaj stavku u nalog</Button>
-                    <Button onClick={handleDownloadPdfLocally} variant="outline" className="w-full md:w-auto flex-1" disabled={orderItems.length === 0}>
-                        Preuzmi Nalog (PDF)
+                     <Button onClick={handleSaveToGoogleDocs} variant="outline" className="w-full md:w-auto flex-1" disabled={orderItems.length === 0 || isSaving}>
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Spremi Nalog (Google Doc)
                     </Button>
                 </div>
                 <Separator className="my-4" />
@@ -435,5 +432,3 @@ export function Lab() {
     </main>
   );
 }
-
-    
