@@ -1,17 +1,30 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { OrderItem } from '@/types';
+import { liberationSansRegularBase64, liberationSansBoldBase64 } from '@/lib/fonts';
 
 export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
   try {
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3' });
+
+    // --- Font Registration ---
+    // Register the regular font
+    doc.addFileToVFS('LiberationSans-Regular.ttf', liberationSansRegularBase64);
+    doc.addFont('LiberationSans-Regular.ttf', 'LiberationSans', 'normal');
+
+    // Register the bold font
+    doc.addFileToVFS('LiberationSans-Bold.ttf', liberationSansBoldBase64);
+    doc.addFont('LiberationSans-Bold.ttf', 'LiberationSans', 'bold');
+
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
 
     // A helper function to avoid repeating font settings
     const setFont = (style: 'bold' | 'normal' | 'italic', size: number) => {
-      doc.setFont('helvetica', style);
+      // Italic is not supported with this custom font, fallback to normal
+      const fontStyle = style === 'bold' ? 'bold' : 'normal';
+      doc.setFont('LiberationSans', fontStyle);
       doc.setFontSize(size);
     };
 
@@ -36,6 +49,7 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
       const titleBlockX = pageWidth - margin - 120;
       const titleBlockY = margin;
       doc.rect(titleBlockX, titleBlockY, 120, 30);
+      setFont('normal', 10);
       doc.text('Klijent: _________________', titleBlockX + 5, titleBlockY + 8);
       doc.text('Projekt: _________________', titleBlockX + 5, titleBlockY + 16);
       doc.text(`Datum: ${new Date().toLocaleDateString('hr-HR')}`, titleBlockX + 5, titleBlockY + 24);
@@ -59,13 +73,13 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
         .map(([k]) => k.charAt(0).toUpperCase() + k.slice(1))
         .join(', ') || 'Nema';
 
-      const okapnikEdgesString = Object.entries(item.okapnikEdges)
+      const okapnikEdgesString = Object.entries(item.okapnikEdges || {})
         .filter(([, v]) => v)
         .map(([k]) => k.charAt(0).toUpperCase() + k.slice(1))
         .join(', ') || 'Nema';
 
       autoTable(doc, {
-        startY: margin + 35, // Adjusted position
+        startY: margin + 35,
         head: [['Specifikacija', 'Vrijednost']],
         body: [
           ['Materijal', item.material.name],
@@ -77,8 +91,8 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
           ['Ukupni Trošak', `€ ${item.totalCost.toFixed(2)}`],
         ],
         theme: 'grid',
-        headStyles: { fillColor: [52, 73, 94], textColor: 255 },
-        // Use a fixed width for the table so it doesn't collide with the image
+        headStyles: { fillColor: [52, 73, 94], textColor: 255, font: 'LiberationSans', fontStyle: 'bold' },
+        bodyStyles: { font: 'LiberationSans', fontStyle: 'normal' },
         margin: { left: margin + 10 },
         tableWidth: pageWidth - (margin * 2) - 130, // Page width - margins - image block width
       });
@@ -194,3 +208,4 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
     return "";
   }
 };
+
