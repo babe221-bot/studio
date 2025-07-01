@@ -7,7 +7,7 @@ import { BigQuery } from '@google-cloud/bigquery';
 // For local development, you would need to set up authentication, e.g., by running
 // `gcloud auth application-default login` in your terminal.
 const bigqueryClient = new BigQuery({
-  projectId: 'stone-464500',
+  projectId: 'stone-c4507',
 });
 
 /**
