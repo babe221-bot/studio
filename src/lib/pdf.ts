@@ -12,22 +12,27 @@ type EdgeNameMap = {
 export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeNameMap) {
   try {
     const doc = new jsPDF();
+    const pageHeight = doc.internal.pageSize.height;
+    const pageWidth = doc.internal.pageSize.width;
+    const margin = 14;
+    let cursorY = margin;
 
-    // Set font - Using standard Helvetica to avoid encoding issues.
-    // Croatian characters might not display correctly.
-    doc.setFont('Helvetica', 'normal');
-
-    // Title
+    // --- Title ---
+    // Use built-in Helvetica to avoid font issues
+    doc.setFont('Helvetica', 'bold');
     doc.setFontSize(18);
-    doc.text(`Radni Nalog - ${new Date().toLocaleDateString('hr-HR')}`, 14, 22);
-
-    // Prepare data for the table
-    const tableColumn = ["ID", "Opis", "Dimenzije (cm)", "Cijena"];
-    const tableRows: (string | number)[][] = [];
-
+    doc.text(`Radni Nalog`, margin, cursorY);
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(12);
+    cursorY += 7;
+    doc.text(`${new Date().toLocaleDateString('hr-HR')}`, margin, cursorY);
+    cursorY += 15;
+    
     let totalCost = 0;
 
-    orderItems.forEach(item => {
+    // --- Items Loop ---
+    orderItems.forEach((item, index) => {
+      totalCost += item.totalCost;
       const processedEdgesString = Object.entries(item.processedEdges)
         .filter(([, v]) => v)
         .map(([k]) => edgeNames[k as keyof typeof edgeNames])
@@ -37,60 +42,86 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
         .filter(([, v]) => v)
         .map(([k]) => edgeNames[k as keyof typeof edgeNames])
         .join(', ') || 'Nema';
-
-      const description = [
-        `Materijal: ${item.material.name}`,
-        `Obrada lica: ${item.finish.name}`,
-        `Profil ivice: ${item.profile.name}`,
-        `Obrada ivica: ${processedEdgesString}`,
-        `Okapnik: ${okapnikEdgesString}`
-      ].join('\n');
-
-      const dimensions = `${item.dims.length} x ${item.dims.width} x ${item.dims.height}`;
-      const price = `€${item.totalCost.toFixed(2)}`;
       
-      const itemRow = [
-        item.id,
-        description,
-        dimensions,
-        price
-      ];
-      tableRows.push(itemRow);
-      totalCost += item.totalCost;
-    });
+      const itemHeightEstimate = 70; // Rough estimate for image + table
+      if (cursorY + itemHeightEstimate > pageHeight - margin) {
+        doc.addPage();
+        cursorY = margin;
+      }
+      
+      doc.setFontSize(14);
+      doc.setFont('Helvetica', 'bold');
+      doc.text(`Stavka ${index + 1}: ${item.id}`, margin, cursorY);
+      cursorY += 6;
 
-    // Add table to the document
-    autoTable(doc, {
-      head: [tableColumn],
-      body: tableRows,
-      startY: 30,
-      theme: 'grid',
-      headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
-      styles: { font: 'Helvetica', fontSize: 9, cellPadding: 2 },
-      columnStyles: {
-        0: { cellWidth: 35 },
-        1: { cellWidth: 80 },
-        2: { cellWidth: 'auto' },
-        3: { cellWidth: 25, halign: 'right' }
-      },
-      didDrawPage: function (data) {
-        // This is a workaround to ensure the startY is respected on every page
-        data.settings.startY = 30;
+      const imageWidth = 60;
+      const imageHeight = 45;
+
+      if (item.snapshotDataUri) {
+        try {
+          // Add the 2D snapshot
+          doc.addImage(item.snapshotDataUri, 'PNG', margin, cursorY, imageWidth, imageHeight);
+        } catch (e) {
+          console.error("Greška pri dodavanju slike za stavku:", item.id, e);
+          doc.text("Slika nije dostupna", margin, cursorY + imageHeight / 2);
+        }
+      } else {
+        doc.text("Nema 2D crteža", margin, cursorY + imageHeight / 2);
+      }
+      
+      // Create the table with item details
+      const tableRows = [
+        ['Materijal', item.material.name],
+        ['Obrada lica', item.finish.name],
+        ['Profil ivice', item.profile.name],
+        ['Dimenzije (cm)', `${item.dims.length} x ${item.dims.width} x ${item.dims.height}`],
+        ['Obrada ivica', processedEdgesString],
+        ['Okapnik', okapnikEdgesString],
+        [{ content: 'Cijena stavke', styles: { fontStyle: 'bold' } }, { content: `€${item.totalCost.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } }]
+      ];
+      
+      const tableX = margin + imageWidth + 10;
+      
+      autoTable(doc, {
+        startY: cursorY,
+        head: [],
+        body: tableRows,
+        theme: 'grid',
+        tableWidth: pageWidth - tableX - margin,
+        margin: { left: tableX },
+        styles: { font: 'Helvetica', fontSize: 9, cellPadding: 1.5 },
+        columnStyles: {
+            0: { fontStyle: 'bold', cellWidth: 35 },
+            1: { cellWidth: 'auto' },
+        },
+      });
+
+      const tableFinalY = (doc as any).lastAutoTable.finalY;
+      cursorY = Math.max(cursorY + imageHeight, tableFinalY) + 10;
+
+      // Add a separator line
+      if (index < orderItems.length - 1) {
+          doc.setDrawColor(200, 200, 200); // light grey
+          doc.line(margin, cursorY, pageWidth - margin, cursorY);
+          cursorY += 10;
       }
     });
 
-    // Add total cost
-    const finalY = (doc as any).lastAutoTable.finalY; // Eensure we get the end of the table
-    doc.setFontSize(12);
+    // --- Total Cost Summary ---
+    if (cursorY + 20 > pageHeight - margin) {
+      doc.addPage();
+      cursorY = margin;
+    }
+    
+    doc.setFontSize(16);
     doc.setFont('Helvetica', 'bold');
-    doc.text(`UKUPNO: €${totalCost.toFixed(2)}`, 14, finalY + 15);
+    doc.text(`UKUPNO: €${totalCost.toFixed(2)}`, margin, cursorY);
 
-
-    // Save the PDF
+    // --- Save PDF ---
     doc.save(`Radni_Nalog_${new Date().toISOString().split('T')[0]}.pdf`);
 
   } catch (error) {
     console.error("PDF generation error:", error);
-    alert("Došlo je do greške pri izradi PDF-a.");
+    alert("Došlo je do greške pri izradi PDF-a. Provjerite konzolu za detalje.");
   }
 }
