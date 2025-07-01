@@ -62,7 +62,7 @@ export const createDocumentFlow = ai.defineFlow(
     // Use GoogleAuth explicitly to get a token.
     // This can sometimes resolve environment-specific issues.
     const auth = new GoogleAuth({
-      projectId: 'stone-464500', // Explicitly set project ID
+      projectId: 'stone-464500', // Explicitly set project ID to ensure correct auth context
       scopes: ['https://www.googleapis.com/auth/documents'],
     });
 
@@ -103,6 +103,12 @@ export const createDocumentFlow = ai.defineFlow(
       fullTextContent += `Okapnik: ${okapnikEdgesString}\n`;
       fullTextContent += `Ukupni Trošak: € ${item.totalCost.toFixed(2)}\n`;
     });
+    
+    const totalCost = orderItems.reduce((acc, item) => acc + item.totalCost, 0);
+    fullTextContent += `\n\n=================================\n`;
+    fullTextContent += `UKUPNO: € ${totalCost.toFixed(2)}\n`;
+    fullTextContent += `=================================\n`;
+
 
     // A single request to insert the title and the content
     requests.push({
