@@ -58,42 +58,14 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
       // --- Images ---
       const imageBlockY = cursorY;
       let imageBlockHeight = 0;
-      const imageGap = 10;
-      const imageWidth = (pageWidth - margin * 2 - imageGap) / 2;
-      
-      // --- Isometric Image ---
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.text('3D Prikaz', margin, imageBlockY);
-      if (item.isometricSnapshotDataUri) {
-        try {
-            const containerWidth = imageWidth;
-            const containerHeight = 45; 
-            const imgAspectRatio = 1024 / 768; // 4:3 
-
-            let finalWidth, finalHeight;
-            if (imgAspectRatio > containerWidth / containerHeight) {
-                finalWidth = containerWidth;
-                finalHeight = finalWidth / imgAspectRatio;
-            } else {
-                finalHeight = containerHeight;
-                finalWidth = finalHeight * imgAspectRatio;
-            }
-
-            const xOffset = (containerWidth - finalWidth) / 2;
-            const yOffset = (containerHeight - finalHeight) / 2;
-          
-            doc.addImage(item.isometricSnapshotDataUri, 'PNG', margin + xOffset, imageBlockY + 2 + yOffset, finalWidth, finalHeight);
-            imageBlockHeight = Math.max(imageBlockHeight, containerHeight + 2);
-        } catch (e) {
-            console.error("Greška pri dodavanju 3D slike za stavku:", item.id, e);
-            doc.text("Slika nije dostupna", margin, imageBlockY + 20);
-        }
-      }
 
       // --- Plan (Top-down) Image with Dimensions ---
-      const planImageX = margin + imageWidth + imageGap;
+      const planImageX = margin;
+      const imageWidth = pageWidth - margin * 2;
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(8);
       doc.text('Tlocrt (mjere u cm)', planImageX, imageBlockY);
+
       if (item.planSnapshotDataUri) {
         try {
           const planImageHeight = (imageWidth * item.dims.width) / item.dims.length;

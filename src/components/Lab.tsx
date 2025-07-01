@@ -134,7 +134,6 @@ export function Lab() {
       toast({ title: "Greška", description: "Molimo popunite sva polja.", variant: "destructive" });
       return;
     }
-    const isometricSnapshotDataUri = canvasRef.current?.getIsometricSnapshot() || undefined;
     const planSnapshotDataUri = canvasRef.current?.getPlanSnapshot() || undefined;
 
     const newOrderItem: OrderItem = {
@@ -147,7 +146,6 @@ export function Lab() {
       processedEdges: processedEdges,
       okapnikEdges: okapnikEdges,
       totalCost: calculations.totalCost,
-      isometricSnapshotDataUri,
       planSnapshotDataUri,
     };
     setOrderItems([...orderItems, newOrderItem]);
