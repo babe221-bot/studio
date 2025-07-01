@@ -162,6 +162,13 @@ export function Lab() {
     setIsUploading(true);
     try {
       const dataUri = generatePdfAsDataUri(orderItems);
+      
+      if (!dataUri || !dataUri.startsWith('data:application/pdf;base64,')) {
+        toast({ title: "Greška pri generiranju PDF-a", description: "Nije moguće kreirati ispravan PDF dokument.", variant: "destructive" });
+        setIsUploading(false);
+        return;
+      }
+
       const pdfBase64 = dataUri.split(',')[1];
       const fileName = `radni_nalog_${Date.now()}.pdf`;
       
@@ -174,7 +181,8 @@ export function Lab() {
         toast({ title: "Greška pri spremanju", description: result.error || 'Nepoznata greška.', variant: "destructive" });
       }
     } catch (error: any) {
-      toast({ title: "Greška pri spremanju", description: error.message, variant: "destructive" });
+      console.error("Client-side PDF Generation/Upload Error:", error);
+      toast({ title: "Neočekivana greška", description: "Došlo je do neočekivane greške prilikom kreiranja ili spremanja PDF-a.", variant: "destructive" });
     } finally {
       setIsUploading(false);
     }
