@@ -27,12 +27,13 @@ const technicalDrawingFlow = ai.defineFlow(
   async (input) => {
     
     const promptParts = [
-      'Create a very clean, minimalist, black and white technical line drawing of a rectangular stone slab.',
+      'Create a very clean, minimalist, black and white technical line drawing of a rectangular stone slab, in the style of a CAD drawing.',
       'The drawing must be a simple orthographic top-down view (plan view).',
       'The background must be pure white. The lines must be black.',
+      'Do not add any perspective, shadows, or gradients. The output should be only the 2D drawing.',
       `The dimensions of the slab are ${input.length} cm (length) by ${input.width} cm (width).`,
-      'Draw clear dimension lines and label the length and width with these values.',
-      `The surface finish for this slab is "${input.surfaceFinishName}". Add this text centered on the slab drawing in a clean, uppercase, non-obtrusive font.`,
+      'Draw clear dimension lines with arrows and label the length and width with their respective values.',
+      `The surface finish for this slab is "${input.surfaceFinishName}". Add this text centered on the slab drawing in a clean, uppercase, sans-serif font.`,
       `The edge profile for this slab is "${input.profileName}".`
     ];
 
@@ -40,7 +41,7 @@ const technicalDrawingFlow = ai.defineFlow(
       const processedEdgesString = input.processedEdges.join(', ');
       promptParts.push(
         `The following edges are processed: ${processedEdgesString}.`,
-        'Indicate the processed edges on the drawing with a slightly thicker line weight compared to the non-processed edges.'
+        'Indicate the processed edges on the drawing with a slightly thicker line weight (e.g., 2pt) compared to the non-processed edges (e.g., 1pt).'
       );
     }
 
@@ -48,11 +49,11 @@ const technicalDrawingFlow = ai.defineFlow(
       const okapnikEdgesString = input.okapnikEdges.join(', ');
       promptParts.push(
         `The following edges have a drip edge (okapnik): ${okapnikEdgesString}.`,
-        'Indicate the drip edge on the drawing using a dashed line just inside the main edge line.'
+        'Indicate the drip edge on the drawing using a dashed line placed just inside the main edge line on the specified edges.'
       );
     }
 
-    promptParts.push('Do not add any other logos or annotations. The output must be only the technical drawing itself.');
+    promptParts.push('Do not add any other text, logos, or annotations. The output must be only the technical drawing itself on a white background.');
 
     const promptText = promptParts.join('\n');
 
