@@ -34,7 +34,9 @@ const technicalDrawingFlow = ai.defineFlow(
       The background must be pure white. The lines must be black.
 
       The dimensions of the slab are ${input.length} cm (length) by ${input.width} cm (width).
-      Draw dimension lines and clearly label the length and width with these values.
+      Draw clear dimension lines and label the length and width with these values.
+
+      The surface finish for this slab is "${input.surfaceFinishName}". Add this text centered on the slab drawing in a clean, uppercase, non-obtrusive font.
 
       The edge profile for this slab is "${input.profileName}".
 
@@ -44,7 +46,7 @@ const technicalDrawingFlow = ai.defineFlow(
       The following edges have a drip edge (okapnik): ${okapnikEdgesString}.
       Indicate the drip edge on the drawing using a dashed line just inside the main edge line.
 
-      Do not add any other text, logos, or annotations. The output must be only the technical drawing itself.
+      Do not add any other logos or annotations. The output must be only the technical drawing itself.
     `;
 
     const { media } = await ai.generate({

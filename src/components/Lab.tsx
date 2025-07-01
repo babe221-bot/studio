@@ -152,6 +152,7 @@ export function Lab() {
             length,
             width,
             profileName: selectedProfile.name,
+            surfaceFinishName: selectedFinish.name,
             processedEdges: processedEdgesNames,
             okapnikEdges: okapnikEdgesNames
         });

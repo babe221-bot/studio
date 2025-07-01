@@ -62,6 +62,7 @@ export const TechnicalDrawingInputSchema = z.object({
   length: z.number().describe('The length of the slab in cm.'),
   width: z.number().describe('The width of the slab in cm.'),
   profileName: z.string().describe('The name of the edge profile.'),
+  surfaceFinishName: z.string().describe('The name of the surface finish.'),
   processedEdges: z.array(z.string()).describe('A list of edges to be processed (e.g., "Prednja", "Lijeva").'),
   okapnikEdges: z.array(z.string()).describe('A list of edges with a drip edge (okapnik).'),
 });
