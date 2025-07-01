@@ -403,5 +403,3 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
 
 VisualizationCanvas.displayName = 'VisualizationCanvas';
 export default VisualizationCanvas;
-
-    
