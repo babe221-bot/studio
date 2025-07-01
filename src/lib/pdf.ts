@@ -67,12 +67,27 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
       doc.text('3D Prikaz', margin, imageBlockY);
       if (item.isometricSnapshotDataUri) {
         try {
-          const imageHeight = 45; // Fixed height for a consistent look
-          doc.addImage(item.isometricSnapshotDataUri, 'PNG', margin, imageBlockY + 2, imageWidth, imageHeight);
-          imageBlockHeight = Math.max(imageBlockHeight, imageHeight + 2);
+            const containerWidth = imageWidth;
+            const containerHeight = 45; 
+            const imgAspectRatio = 1024 / 768; // 4:3 
+
+            let finalWidth, finalHeight;
+            if (imgAspectRatio > containerWidth / containerHeight) {
+                finalWidth = containerWidth;
+                finalHeight = finalWidth / imgAspectRatio;
+            } else {
+                finalHeight = containerHeight;
+                finalWidth = finalHeight * imgAspectRatio;
+            }
+
+            const xOffset = (containerWidth - finalWidth) / 2;
+            const yOffset = (containerHeight - finalHeight) / 2;
+          
+            doc.addImage(item.isometricSnapshotDataUri, 'PNG', margin + xOffset, imageBlockY + 2 + yOffset, finalWidth, finalHeight);
+            imageBlockHeight = Math.max(imageBlockHeight, containerHeight + 2);
         } catch (e) {
-          console.error("Greška pri dodavanju 3D slike za stavku:", item.id, e);
-          doc.text("Slika nije dostupna", margin, imageBlockY + 20);
+            console.error("Greška pri dodavanju 3D slike za stavku:", item.id, e);
+            doc.text("Slika nije dostupna", margin, imageBlockY + 20);
         }
       }
 
