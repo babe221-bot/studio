@@ -17,9 +17,10 @@ import FinishModal from '@/components/modals/FinishModal';
 import ProfileModal from '@/components/modals/ProfileModal';
 import { WorkOrderHistory } from '@/components/WorkOrderHistory';
 import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, EditableItem, ProcessedEdges } from '@/types';
-import { PlusIcon, Trash2, RefreshCw } from 'lucide-react';
+import { PlusIcon, Trash2, RefreshCw, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { generatePdfAsDataUri } from '@/lib/pdf';
+import { uploadPdfToStorage } from '@/app/actions';
 
 type CanvasHandle = {
   getSnapshot: () => string | null;
@@ -60,6 +61,8 @@ export function Lab() {
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [historyKey, setHistoryKey] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     const newOkapnikEdges: ProcessedEdges = { ...okapnikEdges };
@@ -151,22 +154,29 @@ export function Lab() {
     toast({ title: "Stavka dodana", description: `${specimenId} je dodan u radni nalog.` });
   };
   
-  const handleDownloadPdf = () => {
+  const handleSavePdfToCloud = async () => {
     if (orderItems.length === 0) {
-      toast({ title: "Greška", description: "Nema stavki u nalogu za preuzimanje.", variant: "destructive" });
+      toast({ title: "Greška", description: "Nema stavki u nalogu za spremanje.", variant: "destructive" });
       return;
     }
+    setIsUploading(true);
     try {
       const dataUri = generatePdfAsDataUri(orderItems);
-      const link = document.createElement('a');
-      link.href = dataUri;
-      link.download = `radni_nalog_${Date.now()}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast({ title: "Preuzimanje uspješno", description: "Radni nalog se preuzima." });
+      const pdfBase64 = dataUri.split(',')[1];
+      const fileName = `radni_nalog_${Date.now()}.pdf`;
+      
+      const result = await uploadPdfToStorage(pdfBase64, fileName);
+
+      if (result.success) {
+        toast({ title: "Spremanje uspješno", description: "Radni nalog je spremljen u Cloud Storage." });
+        setHistoryKey(k => k + 1);
+      } else {
+        toast({ title: "Greška pri spremanju", description: result.error || 'Nepoznata greška.', variant: "destructive" });
+      }
     } catch (error: any) {
-      toast({ title: "Greška pri preuzimanju", description: error.message, variant: "destructive" });
+      toast({ title: "Greška pri spremanju", description: error.message, variant: "destructive" });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -364,8 +374,9 @@ export function Lab() {
             <CardContent>
                 <div className="flex flex-col gap-4 md:flex-row">
                     <Button onClick={handleAddToOrder} className="w-full md:w-auto md:flex-1">Dodaj stavku u nalog</Button>
-                    <Button onClick={handleDownloadPdf} variant="secondary" className="w-full md:w-auto" disabled={orderItems.length === 0}>
-                      Preuzmi Nalog (PDF)
+                    <Button onClick={handleSavePdfToCloud} variant="secondary" className="w-full md:w-auto" disabled={orderItems.length === 0 || isUploading}>
+                      {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Spremi Nalog u Cloud
                     </Button>
                 </div>
                 <Separator className="my-4" />
@@ -409,7 +420,7 @@ export function Lab() {
         </div>
 
         <div className="lg:col-span-3 xl:col-span-4">
-          <WorkOrderHistory />
+          <WorkOrderHistory key={historyKey} />
         </div>
       </div>
       
