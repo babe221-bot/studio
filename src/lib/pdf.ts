@@ -8,11 +8,9 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3' });
 
     // --- Font Registration ---
-    // Register the regular font
+    // This is crucial for UTF-8 character support (č,ć,š,đ,ž)
     doc.addFileToVFS('Roboto-Regular.ttf', robotoRegularBase64);
     doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
-
-    // Register the bold font
     doc.addFileToVFS('Roboto-Bold.ttf', robotoBoldBase64);
     doc.addFont('Roboto-Bold.ttf', 'Roboto', 'bold');
 
@@ -20,11 +18,8 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
 
-    // A helper function to avoid repeating font settings
-    const setFont = (style: 'bold' | 'normal' | 'italic', size: number) => {
-      // Italic is not supported with this custom font, fallback to normal
-      const fontStyle = style === 'bold' ? 'bold' : 'normal';
-      doc.setFont('Roboto', fontStyle);
+    const setFont = (style: 'bold' | 'normal', size: number) => {
+      doc.setFont('Roboto', style);
       doc.setFontSize(size);
     };
 
@@ -62,7 +57,7 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
           doc.addImage(item.snapshotDataUri, 'PNG', titleBlockX, margin + 40, imgWidth, imgHeight);
         } catch(e) {
             console.error("Failed to add image to PDF", e);
-            setFont('italic', 9);
+            setFont('normal', 9);
             doc.text("Greška pri dodavanju 3D slike.", titleBlockX, margin + 40);
         }
       }
@@ -94,13 +89,13 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
         headStyles: { fillColor: [52, 73, 94], textColor: 255, font: 'Roboto', fontStyle: 'bold' },
         bodyStyles: { font: 'Roboto', fontStyle: 'normal' },
         margin: { left: margin + 10 },
-        tableWidth: pageWidth - (margin * 2) - 130, // Page width - margins - image block width
+        tableWidth: pageWidth - (margin * 2) - 140, 
       });
 
       // --- Technical Drawings ---
       const drawingsY = margin + 130;
       const drawingsX = margin + 10;
-      const scale = 0.5; // 0.5 mm in PDF per 1 cm in reality
+      const scale = 0.5; 
       
       const L = Math.max(0, item.dims.length * scale);
       const W = Math.max(0, item.dims.width * scale);
@@ -111,25 +106,24 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
           doc.text(text, x, y);
       }
 
-      // Simplified and robust dimension drawing
       const drawDimension = (x1: number, y1: number, x2: number, y2: number, text: string, vertical = false) => {
           setFont('normal', 8);
           doc.setLineWidth(0.1);
           doc.setDrawColor(0);
           doc.line(x1, y1, x2, y2); // dimension line
           if (vertical) {
-              doc.line(x1 - 2, y1, x1 + 2, y1); // start tick
-              doc.line(x2 - 2, y2, x2 + 2, y2); // end tick
+              doc.line(x1 - 2, y1, x1 + 2, y1);
+              doc.line(x2 - 2, y2, x2 + 2, y2);
               doc.text(text, x1 - 4, y1 + (y2-y1)/2, {align: 'right', baseline: 'middle'});
           } else {
-              doc.line(x1, y1 - 2, x1, y1 + 2); // start tick
-              doc.line(x2, y2 - 2, x2, y2 + 2); // end tick
+              doc.line(x1, y1 - 2, x1, y1 + 2);
+              doc.line(x2, y2 - 2, x2, y2 + 2);
               doc.text(text, x1 + (x2-x1)/2, y1 - 3, {align: 'center'});
           }
       }
       
-      const VIEW_WIDTH = 120; // Fixed width for each drawing view container
-      const VIEW_HEIGHT = 100; // Fixed height for each drawing view container
+      const VIEW_WIDTH = 120;
+      const VIEW_HEIGHT = 100;
 
       // --- Tlocrt (Top View) ---
       let currentX = drawingsX;
@@ -143,13 +137,13 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
       
       doc.setLineWidth(0.8);
       doc.setDrawColor(231, 76, 60);
-      if (item.processedEdges.front) doc.line(viewOriginX, viewOriginY + W, viewOriginX + L, viewOriginY + W); // Front is bottom in top-view
-      if (item.processedEdges.back) doc.line(viewOriginX, viewOriginY, viewOriginX + L, viewOriginY);     // Back is top in top-view
+      if (item.processedEdges.front) doc.line(viewOriginX, viewOriginY + W, viewOriginX + L, viewOriginY + W);
+      if (item.processedEdges.back) doc.line(viewOriginX, viewOriginY, viewOriginX + L, viewOriginY);
       if (item.processedEdges.left) doc.line(viewOriginX, viewOriginY, viewOriginX, viewOriginY + W);
       if (item.processedEdges.right) doc.line(viewOriginX + L, viewOriginY, viewOriginX + L, viewOriginY + W);
       
       doc.setDrawColor(0);
-      setFont('italic', 9);
+      setFont('normal', 9);
       if(L > 0 && W > 0) doc.text(item.finish.name, viewOriginX + L/2, viewOriginY + W/2, { align: 'center', baseline: 'middle' });
       
       if (L > 0) drawDimension(viewOriginX, viewOriginY - 8, viewOriginX + L, viewOriginY - 8, `${item.dims.length} cm`);
@@ -165,10 +159,9 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
       doc.setDrawColor(0);
       if (L > 0 && H > 0) doc.rect(viewOriginX, viewOriginY, L, H);
 
-      if (item.okapnikEdges.front) { // Only front okapnik is visible in front view
+      if (item.okapnikEdges.front) {
           doc.setLineDashPattern([2, 1], 0);
           const okapnikOffset = 2.0 * scale;
-          // Okapnik is on the bottom face
           if (L > okapnikOffset * 2) {
             doc.line(viewOriginX + okapnikOffset, viewOriginY + H, viewOriginX + L - okapnikOffset, viewOriginY + H);
           }
@@ -187,10 +180,9 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
       doc.setDrawColor(0);
       if (W > 0 && H > 0) doc.rect(viewOriginX, viewOriginY, W, H);
       
-      if (item.okapnikEdges.left) { // Only left okapnik is visible in left-side view
+      if (item.okapnikEdges.left) {
           doc.setLineDashPattern([2, 1], 0);
           const okapnikOffset = 2.0 * scale;
-           // Okapnik is on the bottom face
           if (W > okapnikOffset * 2) {
             doc.line(viewOriginX + okapnikOffset, viewOriginY + H, viewOriginX + W - okapnikOffset, viewOriginY + H);
           }
@@ -204,7 +196,8 @@ export const generatePdfAsDataUri = (orderItems: OrderItem[]): string => {
 
   } catch (error) {
     console.error("Critical error during PDF generation:", error);
-    // Return empty string or some indicator of failure
     return "";
   }
 };
+
+    

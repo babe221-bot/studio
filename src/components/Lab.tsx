@@ -369,7 +369,7 @@ export function Lab() {
             <CardContent>
                 <div className="flex flex-col gap-4 md:flex-row md:items-center">
                     <Button onClick={handleAddToOrder} className="w-full md:w-auto flex-1">Dodaj stavku u nalog</Button>
-                    <Button onClick={handleDownloadPdfLocally} variant="secondary" className="w-full md:w-auto flex-1" disabled={orderItems.length === 0}>
+                    <Button onClick={handleDownloadPdfLocally} variant="outline" className="w-full md:w-auto flex-1" disabled={orderItems.length === 0}>
                         Preuzmi Nalog (PDF)
                     </Button>
                 </div>
@@ -435,3 +435,5 @@ export function Lab() {
     </main>
   );
 }
+
+    
