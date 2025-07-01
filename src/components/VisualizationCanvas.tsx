@@ -195,12 +195,31 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
   useImperativeHandle(ref, () => ({
     getSnapshot: () => {
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
-        const originalBackground = sceneRef.current.background;
-        sceneRef.current.background = new THREE.Color(0xffffff); // White background for snapshot
-        rendererRef.current.render(sceneRef.current, cameraRef.current);
-        const dataUrl = rendererRef.current.domElement.toDataURL('image/png');
-        sceneRef.current.background = originalBackground;
-        rendererRef.current.render(sceneRef.current, cameraRef.current);
+        const renderer = rendererRef.current;
+        const scene = sceneRef.current;
+        const camera = cameraRef.current;
+
+        const originalSize = new THREE.Vector2();
+        renderer.getSize(originalSize);
+
+        const snapshotWidth = 2048;
+        const snapshotHeight = (snapshotWidth / originalSize.x) * originalSize.y;
+
+        renderer.setSize(snapshotWidth, snapshotHeight, false);
+        camera.aspect = snapshotWidth / snapshotHeight;
+        camera.updateProjectionMatrix();
+
+        const originalBackground = scene.background;
+        scene.background = new THREE.Color(0xffffff);
+        renderer.render(scene, camera);
+        const dataUrl = renderer.domElement.toDataURL('image/png');
+        
+        scene.background = originalBackground;
+        renderer.setSize(originalSize.x, originalSize.y, false);
+        camera.aspect = originalSize.x / originalSize.y;
+        camera.updateProjectionMatrix();
+        renderer.render(scene, camera);
+
         return dataUrl;
       }
       return null;
