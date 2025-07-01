@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
@@ -21,7 +22,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { generateAndDownloadPdf } from '@/lib/pdf';
 
 type CanvasHandle = {
-  getSnapshot: () => string | null;
+  getIsometricSnapshot: () => string | null;
+  getPlanSnapshot: () => string | null;
 };
 
 export function Lab() {
@@ -132,7 +134,8 @@ export function Lab() {
       toast({ title: "Greška", description: "Molimo popunite sva polja.", variant: "destructive" });
       return;
     }
-    const snapshotDataUri = canvasRef.current?.getSnapshot() || undefined;
+    const isometricSnapshotDataUri = canvasRef.current?.getIsometricSnapshot() || undefined;
+    const planSnapshotDataUri = canvasRef.current?.getPlanSnapshot() || undefined;
 
     const newOrderItem: OrderItem = {
       orderId: Date.now(),
@@ -144,7 +147,8 @@ export function Lab() {
       processedEdges: processedEdges,
       okapnikEdges: okapnikEdges,
       totalCost: calculations.totalCost,
-      snapshotDataUri,
+      isometricSnapshotDataUri,
+      planSnapshotDataUri,
     };
     setOrderItems([...orderItems, newOrderItem]);
     toast({ title: "Stavka dodana", description: `${specimenId} je dodan u radni nalog.` });

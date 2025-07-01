@@ -1,3 +1,4 @@
+
 export interface Material {
   id: number;
   name: string;
@@ -40,7 +41,8 @@ export interface OrderItem {
   processedEdges: ProcessedEdges;
   okapnikEdges: ProcessedEdges;
   totalCost: number;
-  snapshotDataUri?: string;
+  isometricSnapshotDataUri?: string;
+  planSnapshotDataUri?: string;
 }
 
 export type ModalType = 'material' | 'finish' | 'profile' | null;
