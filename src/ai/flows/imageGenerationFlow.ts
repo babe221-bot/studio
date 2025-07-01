@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow for generating technical drawings of stone slabs.
@@ -27,33 +28,31 @@ const technicalDrawingFlow = ai.defineFlow(
   async (input) => {
     
     const promptParts = [
-      'Create a very clean, minimalist, black and white technical line drawing of a rectangular stone slab, in the style of a CAD drawing.',
-      'The drawing must be a simple orthographic top-down view (plan view).',
-      'The background must be pure white. The lines must be black.',
-      'Do not add any perspective, shadows, or gradients. The output should be only the 2D drawing.',
-      `The dimensions of the slab are ${input.length} cm (length) by ${input.width} cm (width).`,
-      'Draw clear dimension lines with arrows and label the length and width with their respective values.',
-      `The surface finish for this slab is "${input.surfaceFinishName}". Add this text centered on the slab drawing in a clean, uppercase, sans-serif font.`,
-      `The edge profile for this slab is "${input.profileName}".`
+      'A professional 2D technical drawing of a rectangular stone slab, in the style of a clean, black and white CAD engineering blueprint.',
+      'The drawing must consist of a single, clear orthographic top-down view (plan view).',
+      `It must feature precise, clearly legible dimensioning. Draw clear dimension lines with arrows to label the overall length as '${input.length} cm' and the overall width as '${input.width} cm'.`,
+      `The surface finish for the slab is "${input.surfaceFinishName}". This text must be annotated clearly in the center of the slab in a clean, uppercase, sans-serif font.`,
+      `The edge profile for all processed edges is "${input.profileName}".`,
     ];
 
     if (input.processedEdges.length > 0) {
       const processedEdgesString = input.processedEdges.join(', ');
       promptParts.push(
-        `The following edges are processed: ${processedEdgesString}.`,
-        'Indicate the processed edges on the drawing with a slightly thicker line weight (e.g., 2pt) compared to the non-processed edges (e.g., 1pt).'
+        `The following edges are processed: ${processedEdgesString}. Indicate these processed edges on the drawing with a significantly thicker line weight (e.g., 2pt) compared to non-processed edges (e.g., 1pt).`
       );
     }
 
     if (input.okapnikEdges.length > 0) {
       const okapnikEdgesString = input.okapnikEdges.join(', ');
       promptParts.push(
-        `The following edges have a drip edge (okapnik): ${okapnikEdgesString}.`,
-        'Indicate the drip edge on the drawing using a dashed line placed just inside the main edge line on the specified edges.'
+        `The following edges have a drip edge (okapnik): ${okapnikEdgesString}. Indicate the drip edge on the drawing by using a dashed line placed just inside the main edge line on the specified edges.`
       );
     }
 
-    promptParts.push('Do not add any other text, logos, or annotations. The output must be only the technical drawing itself on a white background.');
+    promptParts.push(
+        'The style must be clean black and white line art on a pure white background. Use standard drafting conventions and line weights.',
+        'Crucially, there must be no isometric views, 3D perspectives, shadows, gradients, or any colors other than black and white. Do not include any logos or extraneous annotations. The output must be only the technical drawing itself.'
+    );
 
     const promptText = promptParts.join('\n');
 
