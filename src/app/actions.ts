@@ -3,7 +3,7 @@
 import { Storage } from '@google-cloud/storage';
 
 const storage = new Storage({
-  projectId: process.env.PROJECT_ID,
+  projectId: 'stone-464500',
 });
 const bucketName = 'radninalog';
 
