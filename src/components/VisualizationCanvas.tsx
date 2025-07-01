@@ -16,8 +16,7 @@ interface VisualizationProps {
 }
 
 type CanvasHandle = {
-  getIsometricSnapshot: () => string | null;
-  getPlanSnapshot: () => string | null;
+  // Snapshots are no longer needed from the canvas since AI generates the drawings
 };
 
 // This function is a more robust implementation for generating the slab geometry.
@@ -193,118 +192,10 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(({ dims
     new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.1, roughness: 0.8 }), // 2: Profile
   ], []);
 
-  const getSnapshotDataUrl = (
-    renderer: THREE.WebGLRenderer,
-    scene: THREE.Scene,
-    camera: THREE.PerspectiveCamera | THREE.OrthographicCamera
-  ): string | null => {
-      const originalSize = new THREE.Vector2();
-      renderer.getSize(originalSize);
-
-      const snapshotWidth = 1024;
-      const snapshotHeight = 768; // 4:3 aspect ratio
-
-      renderer.setSize(snapshotWidth, snapshotHeight, false);
-      
-      if (camera instanceof THREE.PerspectiveCamera) {
-        camera.aspect = snapshotWidth / snapshotHeight;
-      } else { // Orthographic
-        const slabGroup = mainGroupRef.current!;
-        const box = new THREE.Box3().setFromObject(slabGroup);
-        const size = box.getSize(new THREE.Vector3());
-        
-        const objectAspectRatio = size.x / size.z;
-        const cameraAspectRatio = snapshotWidth / snapshotHeight;
-        
-        if (cameraAspectRatio > objectAspectRatio) {
-          const newHeight = size.x / cameraAspectRatio;
-          camera.top = newHeight / 2;
-          camera.bottom = -newHeight / 2;
-        } else {
-          const newWidth = size.z * cameraAspectRatio;
-          camera.left = -newWidth / 2;
-          camera.right = newWidth / 2;
-        }
-      }
-      camera.updateProjectionMatrix();
-
-      const originalBackground = scene.background;
-      scene.background = new THREE.Color(0xffffff); // Use white background for PDF
-      renderer.render(scene, camera);
-      const dataUrl = renderer.domElement.toDataURL('image/png');
-      
-      // Restore
-      scene.background = originalBackground;
-      renderer.setSize(originalSize.x, originalSize.y, false);
-      
-      if (cameraRef.current) {
-        cameraRef.current.aspect = originalSize.x / originalSize.y;
-        cameraRef.current.updateProjectionMatrix();
-      }
-      
-      renderer.render(scene, cameraRef.current!);
-      return dataUrl;
-  };
-
+  // useImperativeHandle is no longer needed as we don't take snapshots from the canvas
   useImperativeHandle(ref, () => ({
-    getIsometricSnapshot: () => {
-      if (!rendererRef.current || !sceneRef.current || !cameraRef.current || !mainGroupRef.current) return null;
-      
-      const renderer = rendererRef.current;
-      const scene = sceneRef.current;
-      const camera = cameraRef.current;
-      
-      const originalCameraPos = camera.position.clone();
-      const originalTarget = controlsRef.current?.target.clone();
-
-      const box = new THREE.Box3().setFromObject(mainGroupRef.current);
-      const center = box.getCenter(new THREE.Vector3());
-      const size = box.getSize(new THREE.Vector3());
-      const maxDim = Math.max(size.x, size.y, size.z);
-      
-      const cameraOffset = maxDim * 1.5;
-      camera.position.set(center.x + cameraOffset, center.y + cameraOffset * 0.8, center.z + cameraOffset);
-      if(controlsRef.current) controlsRef.current.target.copy(center);
-      
-      const dataUrl = getSnapshotDataUrl(renderer, scene, camera);
-      
-      camera.position.copy(originalCameraPos);
-      if (controlsRef.current && originalTarget) controlsRef.current.target.copy(originalTarget);
-      camera.updateProjectionMatrix();
-      renderer.render(scene, camera);
-
-      return dataUrl;
-    },
-    getPlanSnapshot: () => {
-      if (!rendererRef.current || !sceneRef.current || !mainGroupRef.current) return null;
-      
-      const renderer = rendererRef.current;
-      const scene = sceneRef.current;
-      const slabGroup = mainGroupRef.current;
-
-      const box = new THREE.Box3().setFromObject(slabGroup);
-      const size = box.getSize(new THREE.Vector3());
-      const center = box.getCenter(new THREE.Vector3());
-
-      const padding = 1.1;
-      const orthoCam = new THREE.OrthographicCamera(
-          (-size.x / 2) * padding, (size.x / 2) * padding,
-          (size.z / 2) * padding, (-size.z / 2) * padding,
-          0.1, 1000
-      );
-      
-      orthoCam.position.set(center.x, center.y + size.y + 1, center.z);
-      orthoCam.lookAt(center);
-
-      const dataUrl = getSnapshotDataUrl(renderer, scene, orthoCam);
-      
-      if (cameraRef.current) {
-          renderer.render(scene, cameraRef.current);
-      }
-      return dataUrl;
-    }
+    // No methods are exposed
   }));
-
 
   useEffect(() => {
     const currentMount = mountRef.current;

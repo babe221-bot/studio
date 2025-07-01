@@ -1,4 +1,6 @@
 
+import { z } from 'zod';
+
 export interface Material {
   id: number;
   name: string;
@@ -41,7 +43,6 @@ export interface OrderItem {
   processedEdges: ProcessedEdges;
   okapnikEdges: ProcessedEdges;
   totalCost: number;
-  isometricSnapshotDataUri?: string;
   planSnapshotDataUri?: string;
 }
 
@@ -56,3 +57,17 @@ export interface ConstructionElement {
 }
 
 export type EditableItem = Material | SurfaceFinish | EdgeProfile;
+
+export const TechnicalDrawingInputSchema = z.object({
+  length: z.number().describe('The length of the slab in cm.'),
+  width: z.number().describe('The width of the slab in cm.'),
+  profileName: z.string().describe('The name of the edge profile.'),
+  processedEdges: z.array(z.string()).describe('A list of edges to be processed (e.g., "Prednja", "Lijeva").'),
+  okapnikEdges: z.array(z.string()).describe('A list of edges with a drip edge (okapnik).'),
+});
+export type TechnicalDrawingInput = z.infer<typeof TechnicalDrawingInputSchema>;
+
+export const TechnicalDrawingOutputSchema = z.object({
+    imageDataUri: z.string().describe("The generated technical drawing as a data URI. Expected format: 'data:image/png;base64,<encoded_data>'."),
+});
+export type TechnicalDrawingOutput = z.infer<typeof TechnicalDrawingOutputSchema>;

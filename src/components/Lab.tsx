@@ -17,18 +17,13 @@ import MaterialModal from '@/components/modals/MaterialModal';
 import FinishModal from '@/components/modals/FinishModal';
 import ProfileModal from '@/components/modals/ProfileModal';
 import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, EditableItem, ProcessedEdges } from '@/types';
-import { PlusIcon, Trash2, RefreshCw, FileDown } from 'lucide-react';
+import { PlusIcon, Trash2, RefreshCw, FileDown, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { generateAndDownloadPdf } from '@/lib/pdf';
-
-type CanvasHandle = {
-  getIsometricSnapshot: () => string | null;
-  getPlanSnapshot: () => string | null;
-};
+import { generateTechnicalDrawing } from '@/ai/flows/imageGenerationFlow';
 
 export function Lab() {
   const { toast } = useToast();
-  const canvasRef = useRef<CanvasHandle>(null);
 
   const [materials, setMaterials] = useState<Material[]>(initialMaterials);
   const [finishes, setFinishes] = useState<SurfaceFinish[]>(initialSurfaceFinishes);
@@ -61,6 +56,7 @@ export function Lab() {
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isAddingItem, setIsAddingItem] = useState(false);
 
   useEffect(() => {
     const newOkapnikEdges: ProcessedEdges = { ...okapnikEdges };
@@ -129,28 +125,63 @@ export function Lab() {
     }
   };
   
-  const handleAddToOrder = () => {
+  const edgeNames = {
+    front: 'Prednja',
+    back: 'Zadnja',
+    left: 'Lijeva',
+    right: 'Desna'
+  };
+
+  const handleAddToOrder = async () => {
     if (!selectedMaterial || !selectedFinish || !selectedProfile || !specimenId) {
       toast({ title: "Greška", description: "Molimo popunite sva polja.", variant: "destructive" });
       return;
     }
-    const planSnapshotDataUri = canvasRef.current?.getPlanSnapshot() || undefined;
 
-    const newOrderItem: OrderItem = {
-      orderId: Date.now(),
-      id: specimenId,
-      dims: { length, width, height },
-      material: selectedMaterial,
-      finish: selectedFinish,
-      profile: selectedProfile,
-      processedEdges: processedEdges,
-      okapnikEdges: okapnikEdges,
-      totalCost: calculations.totalCost,
-      planSnapshotDataUri,
-    };
-    setOrderItems([...orderItems, newOrderItem]);
-    toast({ title: "Stavka dodana", description: `${specimenId} je dodan u radni nalog.` });
+    setIsAddingItem(true);
+    try {
+        const processedEdgesNames = (Object.entries(processedEdges)
+            .filter(([, selected]) => selected)
+            .map(([edge]) => edgeNames[edge as keyof typeof edgeNames]));
+        
+        const okapnikEdgesNames = (Object.entries(okapnikEdges)
+            .filter(([, selected]) => selected)
+            .map(([edge]) => edgeNames[edge as keyof typeof edgeNames]));
+
+        const drawingResponse = await generateTechnicalDrawing({
+            length,
+            width,
+            profileName: selectedProfile.name,
+            processedEdges: processedEdgesNames,
+            okapnikEdges: okapnikEdgesNames
+        });
+
+        const newOrderItem: OrderItem = {
+          orderId: Date.now(),
+          id: specimenId,
+          dims: { length, width, height },
+          material: selectedMaterial,
+          finish: selectedFinish,
+          profile: selectedProfile,
+          processedEdges: processedEdges,
+          okapnikEdges: okapnikEdges,
+          totalCost: calculations.totalCost,
+          planSnapshotDataUri: drawingResponse.imageDataUri,
+        };
+        setOrderItems([...orderItems, newOrderItem]);
+        toast({ title: "Stavka dodana", description: `${specimenId} je dodan u radni nalog.` });
+    } catch (error) {
+        console.error("Error generating technical drawing:", error);
+        toast({
+            title: "Greška pri generiranju crteža",
+            description: "AI model nije uspio generirati tehnički crtež. Molimo pokušajte ponovno.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsAddingItem(false);
+    }
   };
+
 
   const handleDownloadPdf = () => {
     if (orderItems.length === 0) {
@@ -197,13 +228,6 @@ export function Lab() {
     toast({ title: "Spremljeno", description: "Stavka je uspješno spremljena." });
   };
   
-  const edgeNames = {
-    front: 'Prednja',
-    back: 'Zadnja',
-    left: 'Lijeva',
-    right: 'Desna'
-  };
-
   return (
     <main className="container mx-auto p-4 md:p-6 lg:p-8">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 xl:grid-cols-4">
@@ -347,7 +371,7 @@ export function Lab() {
               </Button>
             </CardHeader>
             <CardContent className="h-full pb-0">
-               <VisualizationCanvas key={refreshKey} ref={canvasRef} {...visualizationState} />
+               <VisualizationCanvas key={refreshKey} {...visualizationState} />
             </CardContent>
           </Card>
         </div>
@@ -357,7 +381,10 @@ export function Lab() {
             <CardHeader><CardTitle>5. Radni nalog</CardTitle></CardHeader>
             <CardContent>
                 <div className="flex flex-col gap-4 md:flex-row md:items-center">
-                    <Button onClick={handleAddToOrder} className="w-full md:w-auto flex-1">Dodaj stavku u nalog</Button>
+                    <Button onClick={handleAddToOrder} className="w-full md:w-auto flex-1" disabled={isAddingItem}>
+                      {isAddingItem && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {isAddingItem ? 'Generiram crtež...' : 'Dodaj stavku u nalog'}
+                    </Button>
                      <Button onClick={handleDownloadPdf} variant="outline" className="w-full md:w-auto flex-1" disabled={orderItems.length === 0}>
                         <FileDown className="mr-2 h-4 w-4" />
                         Preuzmi Nalog (PDF)

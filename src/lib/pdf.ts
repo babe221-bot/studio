@@ -19,7 +19,6 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
     let cursorY = margin;
 
     // --- Title ---
-    // Use built-in Helvetica to avoid font issues with diacritics
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(18);
     doc.text(`Radni Nalog`, margin, cursorY);
@@ -44,7 +43,7 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
         .map(([k]) => edgeNames[k as keyof typeof edgeNames])
         .join(', ') || 'Nema';
       
-      const itemHeightEstimate = 120; // Estimate for images + table
+      const itemHeightEstimate = 120;
       if (cursorY + itemHeightEstimate > pageHeight - margin) {
         doc.addPage();
         cursorY = margin;
@@ -55,49 +54,28 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
       doc.text(`Stavka ${index + 1}: ${item.id}`, margin, cursorY);
       cursorY += 8;
 
-      // --- Images ---
+      // --- AI-Generated Technical Drawing ---
       const imageBlockY = cursorY;
       let imageBlockHeight = 0;
 
-      // --- Plan (Top-down) Image with Dimensions ---
       const planImageX = margin;
-      const imageWidth = pageWidth - margin * 2;
       doc.setFont('Helvetica', 'normal');
       doc.setFontSize(8);
-      doc.text('Tlocrt (mjere u cm)', planImageX, imageBlockY);
+      doc.text('Tehnički crtež', planImageX, imageBlockY);
 
       if (item.planSnapshotDataUri) {
         try {
-          const planImageHeight = (imageWidth * item.dims.width) / item.dims.length;
-          doc.addImage(item.planSnapshotDataUri, 'PNG', planImageX, imageBlockY + 2, imageWidth, planImageHeight);
-          imageBlockHeight = Math.max(imageBlockHeight, planImageHeight + 2);
-
-          // Draw dimensions on plan view
-          doc.setDrawColor(0);
-          doc.setLineWidth(0.2);
-          doc.setFontSize(7);
-          doc.setTextColor(0);
-
-          const p = 4; // padding for dimension lines
-
-          // Length dimension (horizontal)
-          const lenY = imageBlockY + 2 + planImageHeight + p;
-          doc.line(planImageX, lenY, planImageX + imageWidth, lenY); // main line
-          doc.line(planImageX, lenY - 1.5, planImageX, lenY + 1.5); // left tick
-          doc.line(planImageX + imageWidth, lenY - 1.5, planImageX + imageWidth, lenY + 1.5); // right tick
-          doc.text(item.dims.length.toString(), planImageX + imageWidth / 2, lenY - 1, { align: 'center' });
-          imageBlockHeight = Math.max(imageBlockHeight, planImageHeight + p + 4); // update height with dimensions
-
-          // Width dimension (vertical)
-          const widX = planImageX + imageWidth + p;
-          doc.line(widX, imageBlockY + 2, widX, imageBlockY + 2 + planImageHeight); // main line
-          doc.line(widX - 1.5, imageBlockY + 2, widX + 1.5, imageBlockY + 2); // top tick
-          doc.line(widX - 1.5, imageBlockY + 2 + planImageHeight, widX + 1.5, imageBlockY + 2 + planImageHeight); // bottom tick
-          doc.text(item.dims.width.toString(), widX + 1, imageBlockY + 2 + planImageHeight / 2, { align: 'center', angle: -90 });
+          const imageWidth = pageWidth - margin * 2;
+          const imageHeight = 80; // Fixed height for the drawing area for consistency
+          doc.addImage(item.planSnapshotDataUri, 'PNG', planImageX, imageBlockY + 4, imageWidth, imageHeight, undefined, 'FAST');
+          imageBlockHeight = Math.max(imageBlockHeight, imageHeight + 4);
         } catch (e) {
-          console.error("Greška pri dodavanju tlocrta:", item.id, e);
-          doc.text("Tlocrt nije dostupan", planImageX, imageBlockY + 20);
+          console.error("Greška pri dodavanju AI crteža:", item.id, e);
+          doc.text("Tehnički crtež nije dostupan", planImageX, imageBlockY + 20);
         }
+      } else {
+         doc.text("Tehnički crtež nije generiran", planImageX, imageBlockY + 20);
+         imageBlockHeight = 20;
       }
 
       cursorY += imageBlockHeight + 10;
