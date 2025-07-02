@@ -52,7 +52,7 @@ export function Lab() {
   });
 
   const [okapnikEdges, setOkapnikEdges] = useState<ProcessedEdges>({
-    front: true,
+    front: false,
     back: false,
     left: false,
     right: false,
@@ -193,11 +193,8 @@ export function Lab() {
         setProcessedEdges({ front: true, back: false, left: false, right: false });
       }
 
-      if (element.id.includes('stepenica')) {
-        setOkapnikEdges({ front: false, back: false, left: false, right: false });
-      } else {
-        setOkapnikEdges({ front: true, back: false, left: false, right: false });
-      }
+      // Okapnik is off by default for all elements
+      setOkapnikEdges({ front: false, back: false, left: false, right: false });
     }
   };
   
