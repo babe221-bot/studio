@@ -36,10 +36,13 @@ const technicalDrawingFlow = ai.defineFlow(
           'A professional 2D technical drawing of a rectangular stone slab, in the style of a clean, black and white CAD engineering blueprint.',
           'The drawing must consist of a single, clear orthographic top-down view (plan view).',
           `It must feature precise, clearly legible dimensioning. Draw clear dimension lines with arrows to label the overall length as '${input.length} cm' and the overall width as '${input.width} cm'.`,
-          `The surface finish for the slab is "${input.surfaceFinishName}". This text must be annotated clearly in the center of the slab in a clean, uppercase, sans-serif font.`,
         ];
 
-        if (input.profileName && input.profileName !== 'Ravni rez (pilan)') {
+        if (input.surfaceFinishName && input.surfaceFinishName !== 'Bez obrade') {
+          promptParts.push(`The surface finish for the slab is "${input.surfaceFinishName}". This text must be annotated clearly in the center of the slab in a clean, uppercase, sans-serif font.`);
+        }
+
+        if (input.profileName && input.profileName !== 'Ravni rez (Pilan)') {
              promptParts.push(`The edge profile for all processed edges is "${input.profileName}".`);
         }
 

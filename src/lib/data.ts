@@ -92,6 +92,7 @@ export const initialMaterials: Material[] = [
 ];
 
 export const initialSurfaceFinishes: SurfaceFinish[] = [
+  { id: 0, name: 'Bez obrade', cost_sqm: 0 },
   { id: 1, name: 'Poliranje (Polished)', cost_sqm: 15 },
   { id: 2, name: 'Brušenje (Honed)', cost_sqm: 12 },
   { id: 3, name: 'Četkanje (Brushed)', cost_sqm: 18 },
