@@ -16,7 +16,7 @@ import VisualizationCanvas from '@/components/VisualizationCanvas';
 import MaterialModal from '@/components/modals/MaterialModal';
 import FinishModal from '@/components/modals/FinishModal';
 import ProfileModal from '@/components/modals/ProfileModal';
-import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, EditableItem, ProcessedEdges } from '@/types';
+import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, EditableItem, ProcessedEdges, ConstructionElement } from '@/types';
 import { PlusIcon, Trash2, RefreshCw, FileDown, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { generateAndDownloadPdf } from '@/lib/pdf';
@@ -29,6 +29,9 @@ export function Lab() {
   const [finishes, setFinishes] = useState<SurfaceFinish[]>(initialSurfaceFinishes);
   const [profiles, setProfiles] = useState<EdgeProfile[]>(initialEdgeProfiles);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+
+  const [selectedElement, setSelectedElement] = useState<ConstructionElement | undefined>(constructionElements[0]);
+  const [orderedQuantity, setOrderedQuantity] = useState(10);
 
   const [specimenId, setSpecimenId] = useState(`${constructionElements[0].name} 01`);
   const [length, setLength] = useState(constructionElements[0].defaultLength);
@@ -77,9 +80,19 @@ export function Lab() {
   const selectedProfile = useMemo(() => profiles.find(p => p.id.toString() === selectedProfileId), [profiles, selectedProfileId]);
 
   const calculations = useMemo(() => {
-    if (!selectedMaterial || !selectedFinish || !selectedProfile || !length || !width || !height) {
+    if (!selectedMaterial || !selectedFinish || !selectedProfile || !height) {
       return { surfaceArea: 0, weight: 0, materialCost: 0, processingCost: 0, totalCost: 0, okapnikCost: 0 };
     }
+
+    if (selectedElement?.hasQuantityInput) {
+        const materialCost = orderedQuantity * selectedMaterial.cost_sqm;
+        const processingCost = orderedQuantity * selectedFinish.cost_sqm;
+        const totalCost = materialCost + processingCost;
+        const weight_kg = orderedQuantity * height * selectedMaterial.density * 10;
+        
+        return { surfaceArea: orderedQuantity, weight: weight_kg, materialCost, processingCost, okapnikCost: 0, totalCost };
+    }
+
     const length_m = length / 100;
     const width_m = width / 100;
     const OKAPNIK_COST_PER_M = 5;
@@ -104,7 +117,7 @@ export function Lab() {
     const totalCost = materialCost + processingCost + okapnikCost;
     
     return { surfaceArea: surfaceArea_m2, weight: weight_kg, materialCost, processingCost, okapnikCost, totalCost };
-  }, [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnikEdges]);
+  }, [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnikEdges, selectedElement, orderedQuantity]);
 
   const visualizationState = useMemo(() => ({
     dims: { length, width, height },
@@ -118,10 +131,19 @@ export function Lab() {
   const handleElementTypeChange = (elementId: string) => {
     const element = constructionElements.find(e => e.id === elementId);
     if (element) {
+      setSelectedElement(element);
       setLength(element.defaultLength);
       setWidth(element.defaultWidth);
       setHeight(element.defaultHeight);
       setSpecimenId(`${element.name} 01`);
+
+      if (element.hasQuantityInput) {
+        setProcessedEdges({ front: false, back: false, left: false, right: false });
+        setOkapnikEdges({ front: false, back: false, left: false, right: false });
+      } else {
+        setProcessedEdges({ front: true, back: false, left: true, right: true });
+        setOkapnikEdges({ front: true, back: false, left: false, right: false });
+      }
     }
   };
   
@@ -157,6 +179,10 @@ export function Lab() {
             okapnikEdges: okapnikEdgesNames
         });
 
+        if (!drawingResponse.imageDataUri) {
+             throw new Error("AI nije uspio generirati sliku.");
+        }
+
         const newOrderItem: OrderItem = {
           orderId: Date.now(),
           id: specimenId,
@@ -168,6 +194,7 @@ export function Lab() {
           okapnikEdges: okapnikEdges,
           totalCost: calculations.totalCost,
           planSnapshotDataUri: drawingResponse.imageDataUri,
+          quantity_sqm: selectedElement?.hasQuantityInput ? orderedQuantity : undefined,
         };
         setOrderItems([...orderItems, newOrderItem]);
         toast({ title: "Stavka dodana", description: `${specimenId} je dodan u radni nalog.` });
@@ -268,6 +295,12 @@ export function Lab() {
                   <Input id="height" type="number" value={height} onChange={e => setHeight(parseFloat(e.target.value) || 0)} />
                 </div>
               </div>
+               {selectedElement?.hasQuantityInput && (
+                <div className="space-y-2 pt-2">
+                  <Label htmlFor="quantity">Količina (m²)</Label>
+                  <Input id="quantity" type="number" value={orderedQuantity} onChange={e => setOrderedQuantity(parseFloat(e.target.value) || 0)} />
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -302,61 +335,71 @@ export function Lab() {
                   <Button variant="ghost" size="icon" onClick={() => handleOpenModal('finish')}><PlusIcon className="h-4 w-4" /></Button>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Profil i obrada ivica</Label>
-                <div className="flex items-center gap-2">
-                   <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
-                        <SelectTrigger id="edge-profile-select"><SelectValue placeholder="Odaberite profil" /></SelectTrigger>
-                        <SelectContent>
-                            {profiles.map(p => <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                   <Button variant="ghost" size="icon" onClick={() => handleOpenModal('profile')}><PlusIcon className="h-4 w-4" /></Button>
-                </div>
-                <div className="space-y-2 pt-2">
-                    <Label className="text-sm">Primijeni obradu na ivicama:</Label>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
-                       {Object.keys(edgeNames).map((edge) => (
-                          <div className="flex items-center space-x-2" key={edge}>
-                            <Checkbox 
-                                id={`edge-${edge}`} 
-                                checked={processedEdges[edge as keyof ProcessedEdges]} 
-                                onCheckedChange={(checked) => setProcessedEdges(prev => ({...prev, [edge]: !!checked}))}
-                            />
-                            <Label htmlFor={`edge-${edge}`} className="font-normal cursor-pointer">{edgeNames[edge as keyof typeof edgeNames]}</Label>
-                        </div>
-                       ))}
+              
+              {!selectedElement?.hasQuantityInput && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Profil i obrada ivica</Label>
+                    <div className="flex items-center gap-2">
+                      <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
+                            <SelectTrigger id="edge-profile-select"><SelectValue placeholder="Odaberite profil" /></SelectTrigger>
+                            <SelectContent>
+                                {profiles.map(p => <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                      <Button variant="ghost" size="icon" onClick={() => handleOpenModal('profile')}><PlusIcon className="h-4 w-4" /></Button>
                     </div>
-                </div>
-                <div className="space-y-2 pt-2">
-                    <Label className="text-sm">Dodaj okapnik na ivicama:</Label>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
-                       {Object.keys(edgeNames).map((edge) => (
-                          <div className="flex items-center space-x-2" key={`okapnik-${edge}`}>
-                            <Checkbox 
-                                id={`okapnik-${edge}`} 
-                                checked={okapnikEdges[edge as keyof ProcessedEdges]} 
-                                onCheckedChange={(checked) => setOkapnikEdges(prev => ({...prev, [edge]: !!checked}))}
-                                disabled={!processedEdges[edge as keyof ProcessedEdges]}
-                            />
-                            <Label htmlFor={`okapnik-${edge}`} className={`font-normal cursor-pointer ${!processedEdges[edge as keyof ProcessedEdges] ? 'text-muted-foreground' : ''}`}>{edgeNames[edge as keyof typeof edgeNames]}</Label>
-                        </div>
-                       ))}
-                    </div>
-                </div>
-              </div>
+                  </div>
+                  <div className="space-y-2 pt-2">
+                      <Label className="text-sm">Primijeni obradu na ivicama:</Label>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
+                        {Object.keys(edgeNames).map((edge) => (
+                            <div className="flex items-center space-x-2" key={edge}>
+                              <Checkbox 
+                                  id={`edge-${edge}`} 
+                                  checked={processedEdges[edge as keyof ProcessedEdges]} 
+                                  onCheckedChange={(checked) => setProcessedEdges(prev => ({...prev, [edge]: !!checked}))}
+                              />
+                              <Label htmlFor={`edge-${edge}`} className="font-normal cursor-pointer">{edgeNames[edge as keyof typeof edgeNames]}</Label>
+                          </div>
+                        ))}
+                      </div>
+                  </div>
+                  <div className="space-y-2 pt-2">
+                      <Label className="text-sm">Dodaj okapnik na ivicama:</Label>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
+                        {Object.keys(edgeNames).map((edge) => (
+                            <div className="flex items-center space-x-2" key={`okapnik-${edge}`}>
+                              <Checkbox 
+                                  id={`okapnik-${edge}`} 
+                                  checked={okapnikEdges[edge as keyof ProcessedEdges]} 
+                                  onCheckedChange={(checked) => setOkapnikEdges(prev => ({...prev, [edge]: !!checked}))}
+                                  disabled={!processedEdges[edge as keyof ProcessedEdges]}
+                              />
+                              <Label htmlFor={`okapnik-${edge}`} className={`font-normal cursor-pointer ${!processedEdges[edge as keyof ProcessedEdges] ? 'text-muted-foreground' : ''}`}>{edgeNames[edge as keyof typeof edgeNames]}</Label>
+                          </div>
+                        ))}
+                      </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
            <Card>
             <CardHeader><CardTitle>4. Kalkulacija</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Površina</span><span className="font-medium font-code">{calculations.surfaceArea.toFixed(2)} m²</span></div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{selectedElement?.hasQuantityInput ? 'Naručena Količina' : 'Površina'}</span>
+                <span className="font-medium font-code">{calculations.surfaceArea.toFixed(2)} m²</span>
+              </div>
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Težina</span><span className="font-medium font-code">{calculations.weight.toFixed(1)} kg</span></div>
               <Separator />
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak materijala</span><span className="font-medium font-code">€{calculations.materialCost.toFixed(2)}</span></div>
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak obrade</span><span className="font-medium font-code">€{calculations.processingCost.toFixed(2)}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak okapnika</span><span className="font-medium font-code">€{calculations.okapnikCost.toFixed(2)}</span></div>
+              {!selectedElement?.hasQuantityInput && (
+                <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak okapnika</span><span className="font-medium font-code">€{calculations.okapnikCost.toFixed(2)}</span></div>
+              )}
               <Separator />
               <div className="flex justify-between text-lg font-bold text-primary"><span >Ukupni trošak</span><span>€{calculations.totalCost.toFixed(2)}</span></div>
             </CardContent>
@@ -413,8 +456,14 @@ export function Lab() {
                                 <div className="flex-1">
                                     <p className="font-semibold">{item.id}</p>
                                     <p className="text-xs text-muted-foreground">{item.material.name} | {item.finish.name} | {item.profile.name}</p>
-                                    <p className="text-xs text-muted-foreground">Obrađene ivice: {processedEdgesString}</p>
-                                    <p className="text-xs text-muted-foreground">Okapnik: {okapnikEdgesString}</p>
+                                    {item.quantity_sqm ? (
+                                      <p className="text-xs text-muted-foreground">Količina: {item.quantity_sqm} m² (ploča: {item.dims.length}x{item.dims.width}cm)</p>
+                                    ) : (
+                                      <>
+                                        <p className="text-xs text-muted-foreground">Obrađene ivice: {processedEdgesString}</p>
+                                        <p className="text-xs text-muted-foreground">Okapnik: {okapnikEdgesString}</p>
+                                      </>
+                                    )}
                                 </div>
                                 <div className="text-right">
                                     <p className="font-semibold">€{item.totalCost.toFixed(2)}</p>

@@ -44,6 +44,7 @@ export interface OrderItem {
   okapnikEdges: ProcessedEdges;
   totalCost: number;
   planSnapshotDataUri?: string;
+  quantity_sqm?: number;
 }
 
 export type ModalType = 'material' | 'finish' | 'profile' | null;
@@ -54,6 +55,7 @@ export interface ConstructionElement {
   defaultLength: number;
   defaultWidth: number;
   defaultHeight: number;
+  hasQuantityInput?: boolean;
 }
 
 export type EditableItem = Material | SurfaceFinish | EdgeProfile;

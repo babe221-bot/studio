@@ -85,11 +85,17 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
         ['Materijal', item.material.name],
         ['Obrada lica', item.finish.name],
         ['Profil ivice', item.profile.name],
-        ['Dimenzije (cm)', `${item.dims.length} x ${item.dims.width} x ${item.dims.height}`],
-        ['Obrada ivica', processedEdgesString],
-        ['Okapnik', okapnikEdgesString],
+        item.quantity_sqm 
+          ? ['Naručena količina', `${item.quantity_sqm.toFixed(2)} m²`]
+          : ['Dimenzije (cm)', `${item.dims.length} x ${item.dims.width} x ${item.dims.height}`],
+        item.quantity_sqm 
+          ? ['Dimenzije ploče (cm)', `${item.dims.length} x ${item.dims.width} x ${item.dims.height}`]
+          : ['Obrada ivica', processedEdgesString],
+        item.quantity_sqm 
+          ? null
+          : ['Okapnik', okapnikEdgesString],
         [{ content: 'Cijena stavke', styles: { fontStyle: 'bold' } }, { content: `€${item.totalCost.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } }]
-      ];
+      ].filter(Boolean) as any[];
       
       autoTable(doc, {
         startY: cursorY,
