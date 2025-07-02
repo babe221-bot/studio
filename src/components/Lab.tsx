@@ -47,8 +47,8 @@ export function Lab() {
   const [processedEdges, setProcessedEdges] = useState<ProcessedEdges>({
     front: true,
     back: false,
-    left: true,
-    right: true,
+    left: false,
+    right: false,
   });
 
   const [okapnikEdges, setOkapnikEdges] = useState<ProcessedEdges>({
@@ -190,7 +190,7 @@ export function Lab() {
       if (element.orderUnit === 'sqm' || element.orderUnit === 'lm') {
         setProcessedEdges({ front: false, back: false, left: false, right: false });
       } else {
-        setProcessedEdges({ front: true, back: false, left: true, right: true });
+        setProcessedEdges({ front: true, back: false, left: false, right: false });
       }
 
       if (element.id.includes('stepenica')) {
