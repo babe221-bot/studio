@@ -73,20 +73,39 @@ export const initialMaterials: Material[] = [
     texture: 'https://placehold.co/1024x1024/D2B48C/8C7853.png',
     color: '#D2B48C',
   },
+  {
+    id: 10,
+    name: 'Botticino',
+    density: 2.7,
+    cost_sqm: 350,
+    texture: 'https://placehold.co/1024x1024/E6DCC9/B9A793.png',
+    color: '#E6DCC9',
+  },
+  {
+    id: 11,
+    name: 'Carrara C',
+    density: 2.71,
+    cost_sqm: 450,
+    texture: 'https://placehold.co/1024x1024/F5F5F5/CCCCCC.png',
+    color: '#F5F5F5',
+  },
 ];
 
 export const initialSurfaceFinishes: SurfaceFinish[] = [
-  { id: 1, name: 'Poliranje', cost_sqm: 15 },
-  { id: 2, name: 'Martelina fina', cost_sqm: 20 },
-  { id: 3, name: 'Bućarda fina', cost_sqm: 18 },
-  { id: 4, name: 'Bućarda gruba', cost_sqm: 12 },
-  { id: 5, name: 'Štokovanje', cost_sqm: 8 },
-  { id: 6, name: 'Plamena obrada', cost_sqm: 12 },
-  { id: 7, name: 'Pjeskarenje', cost_sqm: 10 },
+  { id: 1, name: 'Poliranje (Polished)', cost_sqm: 15 },
+  { id: 2, name: 'Brušenje (Honed)', cost_sqm: 12 },
+  { id: 3, name: 'Četkanje (Brushed)', cost_sqm: 18 },
+  { id: 4, name: 'Paljenje (Flamed)', cost_sqm: 20 },
+  { id: 5, name: 'Pjeskarenje (Sandblasted)', cost_sqm: 22 },
+  { id: 6, name: 'Bućardanje (Bush-hammered)', cost_sqm: 25 },
+  { id: 7, name: 'Štokovanje (Tooled)', cost_sqm: 23 },
+  { id: 8, name: 'Antico (Antiqued)', cost_sqm: 28 },
+  { id: 9, name: 'Martelina (Martellina)', cost_sqm: 20 },
+  { id: 10, name: 'Pilano (Sawn)', cost_sqm: 5 },
 ];
 
 export const initialEdgeProfiles: EdgeProfile[] = [
-  { id: 1, name: 'Ravni rez (pilan)', cost_m: 2 },
+  { id: 1, name: 'Ravni rez (Pilan)', cost_m: 2 },
   { id: 10, name: 'Smuš C0.5 (0.5mm 45°)', cost_m: 5 },
   { id: 11, name: 'Smuš C1 (1mm 45°)', cost_m: 7 },
   { id: 12, name: 'Smuš C2 (2mm 45°)', cost_m: 8 },
@@ -97,6 +116,8 @@ export const initialEdgeProfiles: EdgeProfile[] = [
   { id: 20, name: 'Polu-zaobljena R1cm', cost_m: 12 },
   { id: 21, name: 'Polu-zaobljena R1.5cm', cost_m: 15 },
   { id: 22, name: 'Polu-zaobljena R2cm', cost_m: 18 },
-  { id: 30, name: 'Puno-zaobljena R1.5cm', cost_m: 20 },
-  { id: 31, name: 'Puno-zaobljena R2cm', cost_m: 25 },
+  { id: 30, name: 'Puno-zaobljena R1.5cm (Half Bullnose)', cost_m: 20 },
+  { id: 31, name: 'Puno-zaobljena R2cm (Half Bullnose)', cost_m: 25 },
+  { id: 40, name: 'T-profil', cost_m: 35 },
+  { id: 41, name: 'Dupli T-profil', cost_m: 45 },
 ];
