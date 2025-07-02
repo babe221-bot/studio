@@ -44,7 +44,9 @@ export interface OrderItem {
   okapnikEdges: ProcessedEdges;
   totalCost: number;
   planSnapshotDataUri?: string;
-  quantity_sqm?: number;
+  orderUnit: 'piece' | 'sqm' | 'lm';
+  quantity: number;
+  bunjaEdgeStyle?: 'oštre' | 'lomljene';
 }
 
 export type ModalType = 'material' | 'finish' | 'profile' | null;
@@ -55,7 +57,8 @@ export interface ConstructionElement {
   defaultLength: number;
   defaultWidth: number;
   defaultHeight: number;
-  hasQuantityInput?: boolean;
+  orderUnit: 'piece' | 'sqm' | 'lm';
+  hasSpecialBunjaEdges?: boolean;
 }
 
 export type EditableItem = Material | SurfaceFinish | EdgeProfile;
@@ -67,6 +70,8 @@ export const TechnicalDrawingInputSchema = z.object({
   surfaceFinishName: z.string().describe('The name of the surface finish.'),
   processedEdges: z.array(z.string()).describe('A list of edges to be processed (e.g., "Prednja", "Lijeva").'),
   okapnikEdges: z.array(z.string()).describe('A list of edges with a drip edge (okapnik).'),
+  bunjaEdgeStyle: z.optional(z.enum(['oštre', 'lomljene'])).describe('The edge style for Bunja stone, if applicable.'),
+  isBunja: z.boolean().describe('A flag indicating if the item is Bunja stone, requiring a different drawing style.'),
 });
 export type TechnicalDrawingInput = z.infer<typeof TechnicalDrawingInputSchema>;
 

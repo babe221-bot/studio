@@ -19,6 +19,7 @@ import ProfileModal from '@/components/modals/ProfileModal';
 import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, EditableItem, ProcessedEdges, ConstructionElement } from '@/types';
 import { PlusIcon, Trash2, RefreshCw, FileDown, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { generateAndDownloadPdf } from '@/lib/pdf';
 import { generateTechnicalDrawing } from '@/ai/flows/imageGenerationFlow';
 
@@ -31,7 +32,8 @@ export function Lab() {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
 
   const [selectedElement, setSelectedElement] = useState<ConstructionElement | undefined>(constructionElements[0]);
-  const [orderedQuantity, setOrderedQuantity] = useState(10);
+  const [quantity, setQuantity] = useState(1);
+  const [bunjaEdgeStyle, setBunjaEdgeStyle] = useState<'oštre' | 'lomljene'>('lomljene');
 
   const [specimenId, setSpecimenId] = useState(`${constructionElements[0].name} 01`);
   const [length, setLength] = useState(constructionElements[0].defaultLength);
@@ -84,40 +86,86 @@ export function Lab() {
       return { surfaceArea: 0, weight: 0, materialCost: 0, processingCost: 0, totalCost: 0, okapnikCost: 0 };
     }
 
-    if (selectedElement?.hasQuantityInput) {
-        const materialCost = orderedQuantity * selectedMaterial.cost_sqm;
-        const processingCost = orderedQuantity * selectedFinish.cost_sqm;
-        const totalCost = materialCost + processingCost;
-        const weight_kg = orderedQuantity * height * selectedMaterial.density * 10;
-        
-        return { surfaceArea: orderedQuantity, weight: weight_kg, materialCost, processingCost, okapnikCost: 0, totalCost };
-    }
-
     const length_m = length / 100;
     const width_m = width / 100;
+    const height_m = height / 100;
     const OKAPNIK_COST_PER_M = 5;
+    const BUNJA_BROKEN_EDGE_UPCHARGE_SQM = 25;
+
+    let totalCost = 0;
+    let surfaceArea = 0;
+    let weight = 0;
+    let materialCost = 0;
+    let processingCost = 0;
+    let okapnikCost = 0;
+    
+    // --- Cost calculation per piece ---
+    const surfaceArea_m2_piece = length_m * width_m;
+    const weight_kg_piece = (length * width * height * selectedMaterial.density) / 1000;
+    const materialCost_piece = surfaceArea_m2_piece * selectedMaterial.cost_sqm;
     
     let processed_perimeter_m = 0;
     if (processedEdges.front) processed_perimeter_m += length_m;
     if (processedEdges.back) processed_perimeter_m += length_m;
     if (processedEdges.left) processed_perimeter_m += width_m;
     if (processedEdges.right) processed_perimeter_m += width_m;
+    const edgeProcessingCost_piece = processed_perimeter_m * selectedProfile.cost_m;
 
     let okapnik_perimeter_m = 0;
     if (okapnikEdges.front) okapnik_perimeter_m += length_m;
     if (okapnikEdges.back) okapnik_perimeter_m += length_m;
     if (okapnikEdges.left) okapnik_perimeter_m += width_m;
     if (okapnikEdges.right) okapnik_perimeter_m += width_m;
+    const okapnikCost_piece = okapnik_perimeter_m * OKAPNIK_COST_PER_M;
 
-    const surfaceArea_m2 = length_m * width_m;
-    const weight_kg = (length * width * height * selectedMaterial.density) / 1000;
-    const materialCost = surfaceArea_m2 * selectedMaterial.cost_sqm;
-    const processingCost = (surfaceArea_m2 * selectedFinish.cost_sqm) + (processed_perimeter_m * selectedProfile.cost_m);
-    const okapnikCost = okapnik_perimeter_m * OKAPNIK_COST_PER_M;
-    const totalCost = materialCost + processingCost + okapnikCost;
+    const surfaceProcessingCost_piece = surfaceArea_m2_piece * selectedFinish.cost_sqm;
+    const processingCost_piece = surfaceProcessingCost_piece + edgeProcessingCost_piece;
+    const totalCost_piece = materialCost_piece + processingCost_piece + okapnikCost_piece;
     
-    return { surfaceArea: surfaceArea_m2, weight: weight_kg, materialCost, processingCost, okapnikCost, totalCost };
-  }, [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnikEdges, selectedElement, orderedQuantity]);
+    switch (selectedElement?.orderUnit) {
+      case 'piece':
+        surfaceArea = surfaceArea_m2_piece * quantity;
+        weight = weight_kg_piece * quantity;
+        materialCost = materialCost_piece * quantity;
+        processingCost = processingCost_piece * quantity;
+        okapnikCost = okapnikCost_piece * quantity;
+        totalCost = totalCost_piece * quantity;
+        break;
+      
+      case 'sqm':
+        surfaceArea = quantity;
+        materialCost = selectedMaterial.cost_sqm * quantity;
+        processingCost = selectedFinish.cost_sqm * quantity;
+
+        if (selectedElement.hasSpecialBunjaEdges) {
+           if (bunjaEdgeStyle === 'lomljene') {
+              processingCost += BUNJA_BROKEN_EDGE_UPCHARGE_SQM * quantity;
+           }
+           // Weight for Bunja is based on its specific thickness.
+           weight = quantity * height_m * selectedMaterial.density * 1000;
+        } else {
+           weight = quantity * height_m * selectedMaterial.density * 1000;
+        }
+
+        totalCost = materialCost + processingCost;
+        break;
+        
+      case 'lm':
+        // Cokl calculation (width is height of the cokl, height is thickness)
+        const materialCost_lm = width_m * selectedMaterial.cost_sqm;
+        const finishCost_lm = width_m * selectedFinish.cost_sqm;
+        const profileCost_lm = selectedProfile.cost_m; // Assuming profile is on the top edge
+        
+        materialCost = materialCost_lm * quantity;
+        processingCost = (finishCost_lm + profileCost_lm) * quantity;
+        totalCost = materialCost + processingCost;
+        weight = width_m * height_m * selectedMaterial.density * 1000 * quantity;
+        surfaceArea = width_m * quantity; // Exposed surface area
+        break;
+    }
+
+    return { surfaceArea, weight, materialCost, processingCost, okapnikCost, totalCost };
+  }, [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnikEdges, selectedElement, quantity, bunjaEdgeStyle]);
 
   const visualizationState = useMemo(() => ({
     dims: { length, width, height },
@@ -136,12 +184,18 @@ export function Lab() {
       setWidth(element.defaultWidth);
       setHeight(element.defaultHeight);
       setSpecimenId(`${element.name} 01`);
+      setQuantity(1);
 
-      if (element.hasQuantityInput) {
+      // Default edges and okapnik
+      if (element.orderUnit === 'sqm' || element.orderUnit === 'lm') {
         setProcessedEdges({ front: false, back: false, left: false, right: false });
-        setOkapnikEdges({ front: false, back: false, left: false, right: false });
       } else {
         setProcessedEdges({ front: true, back: false, left: true, right: true });
+      }
+
+      if (element.id.includes('stepenica')) {
+        setOkapnikEdges({ front: false, back: false, left: false, right: false });
+      } else {
         setOkapnikEdges({ front: true, back: false, left: false, right: false });
       }
     }
@@ -155,7 +209,7 @@ export function Lab() {
   };
 
   const handleAddToOrder = async () => {
-    if (!selectedMaterial || !selectedFinish || !selectedProfile || !specimenId) {
+    if (!selectedMaterial || !selectedFinish || !selectedProfile || !specimenId || !selectedElement) {
       toast({ title: "Greška", description: "Molimo popunite sva polja.", variant: "destructive" });
       return;
     }
@@ -176,7 +230,9 @@ export function Lab() {
             profileName: selectedProfile.name,
             surfaceFinishName: selectedFinish.name,
             processedEdges: processedEdgesNames,
-            okapnikEdges: okapnikEdgesNames
+            okapnikEdges: okapnikEdgesNames,
+            isBunja: !!selectedElement.hasSpecialBunjaEdges,
+            bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges ? bunjaEdgeStyle : undefined,
         });
 
         if (!drawingResponse.imageDataUri) {
@@ -194,7 +250,9 @@ export function Lab() {
           okapnikEdges: okapnikEdges,
           totalCost: calculations.totalCost,
           planSnapshotDataUri: drawingResponse.imageDataUri,
-          quantity_sqm: selectedElement?.hasQuantityInput ? orderedQuantity : undefined,
+          orderUnit: selectedElement.orderUnit,
+          quantity: quantity,
+          bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges ? bunjaEdgeStyle : undefined,
         };
         setOrderItems([...orderItems, newOrderItem]);
         toast({ title: "Stavka dodana", description: `${specimenId} je dodan u radni nalog.` });
@@ -256,6 +314,28 @@ export function Lab() {
     toast({ title: "Spremljeno", description: "Stavka je uspješno spremljena." });
   };
   
+  const renderQuantityInput = () => {
+    if (!selectedElement) return null;
+    let label = '';
+    switch (selectedElement.orderUnit) {
+      case 'piece':
+        label = 'Broj komada';
+        break;
+      case 'sqm':
+        label = 'Količina (m²)';
+        break;
+      case 'lm':
+        label = 'Količina (m)';
+        break;
+    }
+    return (
+      <div className="space-y-2 pt-2">
+        <Label htmlFor="quantity">{label}</Label>
+        <Input id="quantity" type="number" value={quantity} onChange={e => setQuantity(parseFloat(e.target.value) || 0)} min="1" />
+      </div>
+    );
+  };
+
   return (
     <main className="container mx-auto p-4 md:p-6 lg:p-8">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 xl:grid-cols-4">
@@ -284,7 +364,7 @@ export function Lab() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="length">Dužina (cm)</Label>
-                  <Input id="length" type="number" value={length} onChange={e => setLength(parseFloat(e.target.value) || 0)} />
+                  <Input id="length" type="number" value={length} onChange={e => setLength(parseFloat(e.target.value) || 0)} disabled={selectedElement?.hasSpecialBunjaEdges} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="width">Širina (cm)</Label>
@@ -295,12 +375,7 @@ export function Lab() {
                   <Input id="height" type="number" value={height} onChange={e => setHeight(parseFloat(e.target.value) || 0)} />
                 </div>
               </div>
-               {selectedElement?.hasQuantityInput && (
-                <div className="space-y-2 pt-2">
-                  <Label htmlFor="quantity">Količina (m²)</Label>
-                  <Input id="quantity" type="number" value={orderedQuantity} onChange={e => setOrderedQuantity(parseFloat(e.target.value) || 0)} />
-                </div>
-              )}
+              {renderQuantityInput()}
             </CardContent>
           </Card>
 
@@ -336,7 +411,21 @@ export function Lab() {
                 </div>
               </div>
               
-              {!selectedElement?.hasQuantityInput && (
+              {selectedElement?.hasSpecialBunjaEdges ? (
+                <div className="space-y-3 pt-2">
+                  <Label className="text-base">Obrada ivica bunje</Label>
+                   <RadioGroup defaultValue="lomljene" value={bunjaEdgeStyle} onValueChange={(value) => setBunjaEdgeStyle(value as 'oštre' | 'lomljene')}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="lomljene" id="r-lomljene" />
+                      <Label htmlFor="r-lomljene" className="cursor-pointer">Lomljene ivice</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="oštre" id="r-ostre" />
+                      <Label htmlFor="r-ostre" className="cursor-pointer">Oštre ivice (pilano)</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              ) : (
                 <>
                   <div className="space-y-2">
                     <Label>Profil i obrada ivica</Label>
@@ -390,14 +479,14 @@ export function Lab() {
             <CardHeader><CardTitle>4. Kalkulacija</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{selectedElement?.hasQuantityInput ? 'Naručena Količina' : 'Površina'}</span>
+                <span className="text-muted-foreground">Površina</span>
                 <span className="font-medium font-code">{calculations.surfaceArea.toFixed(2)} m²</span>
               </div>
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Težina</span><span className="font-medium font-code">{calculations.weight.toFixed(1)} kg</span></div>
               <Separator />
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak materijala</span><span className="font-medium font-code">€{calculations.materialCost.toFixed(2)}</span></div>
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak obrade</span><span className="font-medium font-code">€{calculations.processingCost.toFixed(2)}</span></div>
-              {!selectedElement?.hasQuantityInput && (
+              {calculations.okapnikCost > 0 && (
                 <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak okapnika</span><span className="font-medium font-code">€{calculations.okapnikCost.toFixed(2)}</span></div>
               )}
               <Separator />
@@ -441,27 +530,36 @@ export function Lab() {
                         <p className="text-center text-muted-foreground py-8">Nema stavki u nalogu.</p>
                     ) : (
                         orderItems.map(item => {
-                          const processedEdgesString = (Object.entries(item.processedEdges)
-                                .filter(([, selected]) => selected)
-                                .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
-                                .join(', ') || 'Nijedna');
-                          
-                          const okapnikEdgesString = (Object.entries(item.okapnikEdges || {})
-                                .filter(([, selected]) => selected)
-                                .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
-                                .join(', ') || 'Nema');
+                          let quantityString = '';
+                          switch(item.orderUnit) {
+                            case 'piece': quantityString = `${item.quantity} kom`; break;
+                            case 'sqm': quantityString = `${item.quantity.toFixed(2)} m²`; break;
+                            case 'lm': quantityString = `${item.quantity.toFixed(2)} m`; break;
+                          }
+
+                          let description = `${item.material.name} | ${item.finish.name}`;
+                           if (item.orderUnit !== 'sqm' && item.orderUnit !== 'lm') {
+                                description += ` | ${item.profile.name}`;
+                           }
 
                           return (
                             <div key={item.orderId} className="flex items-center justify-between rounded-lg border p-3">
                                 <div className="flex-1">
-                                    <p className="font-semibold">{item.id}</p>
-                                    <p className="text-xs text-muted-foreground">{item.material.name} | {item.finish.name} | {item.profile.name}</p>
-                                    {item.quantity_sqm ? (
-                                      <p className="text-xs text-muted-foreground">Količina: {item.quantity_sqm} m² (ploča: {item.dims.length}x{item.dims.width}cm)</p>
+                                    <p className="font-semibold">{item.id} <span className="text-sm font-normal text-muted-foreground">({quantityString})</span></p>
+                                    <p className="text-xs text-muted-foreground">{description}</p>
+                                    
+                                    {item.bunjaEdgeStyle ? (
+                                      <p className="text-xs text-muted-foreground">Obrada ivica: {item.bunjaEdgeStyle === 'lomljene' ? 'Lomljene' : 'Oštre'}</p>
                                     ) : (
                                       <>
-                                        <p className="text-xs text-muted-foreground">Obrađene ivice: {processedEdgesString}</p>
-                                        <p className="text-xs text-muted-foreground">Okapnik: {okapnikEdgesString}</p>
+                                        <p className="text-xs text-muted-foreground">Obrađene ivice: {(Object.entries(item.processedEdges)
+                                              .filter(([, selected]) => selected)
+                                              .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
+                                              .join(', ') || 'Nijedna')}</p>
+                                        <p className="text-xs text-muted-foreground">Okapnik: {(Object.entries(item.okapnikEdges || {})
+                                              .filter(([, selected]) => selected)
+                                              .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
+                                              .join(', ') || 'Nema')}</p>
                                       </>
                                     )}
                                 </div>

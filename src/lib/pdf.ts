@@ -33,25 +33,23 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
     // --- Items Loop ---
     orderItems.forEach((item, index) => {
       totalCost += item.totalCost;
-      const processedEdgesString = Object.entries(item.processedEdges)
-        .filter(([, v]) => v)
-        .map(([k]) => edgeNames[k as keyof typeof edgeNames])
-        .join(', ') || 'Nema';
-
-      const okapnikEdgesString = Object.entries(item.okapnikEdges || {})
-        .filter(([, v]) => v)
-        .map(([k]) => edgeNames[k as keyof typeof edgeNames])
-        .join(', ') || 'Nema';
       
       const itemHeightEstimate = 120;
       if (cursorY + itemHeightEstimate > pageHeight - margin) {
         doc.addPage();
         cursorY = margin;
       }
+
+      let quantityString = '';
+      switch(item.orderUnit) {
+          case 'piece': quantityString = `${item.quantity} kom`; break;
+          case 'sqm': quantityString = `${item.quantity.toFixed(2)} m²`; break;
+          case 'lm': quantityString = `${item.quantity.toFixed(2)} m`; break;
+      }
       
       doc.setFontSize(14);
       doc.setFont('Helvetica', 'bold');
-      doc.text(`Stavka ${index + 1}: ${item.id}`, margin, cursorY);
+      doc.text(`Stavka ${index + 1}: ${item.id} (${quantityString})`, margin, cursorY);
       cursorY += 8;
 
       // --- AI-Generated Technical Drawing ---
@@ -61,7 +59,7 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
       const planImageX = margin;
       doc.setFont('Helvetica', 'normal');
       doc.setFontSize(8);
-      doc.text('Tehnički crtež', planImageX, imageBlockY);
+      doc.text('Tehnički crtež / Prikaz', planImageX, imageBlockY);
 
       if (item.planSnapshotDataUri) {
         try {
@@ -80,22 +78,34 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
 
       cursorY += imageBlockHeight + 10;
       
-      // Create the table with item details
+      // --- Table with item details ---
       const tableRows = [
         ['Materijal', item.material.name],
         ['Obrada lica', item.finish.name],
-        ['Profil ivice', item.profile.name],
-        item.quantity_sqm 
-          ? ['Naručena količina', `${item.quantity_sqm.toFixed(2)} m²`]
-          : ['Dimenzije (cm)', `${item.dims.length} x ${item.dims.width} x ${item.dims.height}`],
-        item.quantity_sqm 
-          ? ['Dimenzije ploče (cm)', `${item.dims.length} x ${item.dims.width} x ${item.dims.height}`]
-          : ['Obrada ivica', processedEdgesString],
-        item.quantity_sqm 
-          ? null
-          : ['Okapnik', okapnikEdgesString],
-        [{ content: 'Cijena stavke', styles: { fontStyle: 'bold' } }, { content: `€${item.totalCost.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } }]
-      ].filter(Boolean) as any[];
+        ['Dimenzije (cm)', `${item.dims.length} x ${item.dims.width} x ${item.dims.height}`],
+      ];
+
+      if (item.bunjaEdgeStyle) {
+        tableRows.push(['Obrada ivica', item.bunjaEdgeStyle === 'lomljene' ? 'Lomljene' : 'Oštre']);
+      } else {
+        const processedEdgesString = Object.entries(item.processedEdges)
+          .filter(([, v]) => v)
+          .map(([k]) => edgeNames[k as keyof typeof edgeNames])
+          .join(', ') || 'Nema';
+        
+        const okapnikEdgesString = Object.entries(item.okapnikEdges || {})
+          .filter(([, v]) => v)
+          .map(([k]) => edgeNames[k as keyof typeof edgeNames])
+          .join(', ') || 'Nema';
+          
+        tableRows.push(['Profil ivice', item.profile.name]);
+        tableRows.push(['Obrada ivica', processedEdgesString]);
+        if (okapnikEdgesString !== 'Nema') {
+          tableRows.push(['Okapnik', okapnikEdgesString]);
+        }
+      }
+
+      tableRows.push([{ content: 'Cijena stavke', styles: { fontStyle: 'bold' } }, { content: `€${item.totalCost.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } }]);
       
       autoTable(doc, {
         startY: cursorY,
