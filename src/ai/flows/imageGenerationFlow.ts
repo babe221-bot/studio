@@ -1,12 +1,13 @@
 
 'use server';
 /**
- * @fileOverview An AI flow for generating technical drawings of stone slabs.
+ * @fileOverview An AI flow for generating technical drawings of stone slabs and storing them.
  *
  * - generateTechnicalDrawing - A function that handles the drawing generation process.
  */
 
 import { ai } from '@/ai/genkit';
+import { Storage } from '@google-cloud/storage';
 import { 
   TechnicalDrawingInput, 
   TechnicalDrawingOutput, 
@@ -14,6 +15,46 @@ import {
   TechnicalDrawingOutputSchema
 } from '@/types';
 
+// Initialize Google Cloud Storage
+// This will use Application Default Credentials.
+// Ensure you've run `gcloud auth application-default login` for local development.
+const storage = new Storage({ projectId: 'stone-c4507' });
+const bucketName = 'radninalog'; // As requested: your cloud bucket
+
+async function uploadToGCS(dataUri: string): Promise<string> {
+  try {
+    const match = dataUri.match(/^data:(image\/png);base64,(.*)$/);
+    if (!match) {
+      throw new Error('Invalid data URI format.');
+    }
+
+    const contentType = match[1];
+    const base64Data = match[2];
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    const bucket = storage.bucket(bucketName);
+    const fileName = `technical-drawings/${Date.now()}-${Math.round(Math.random() * 1E9)}.png`;
+    const file = bucket.file(fileName);
+
+    await file.save(buffer, {
+      metadata: {
+        contentType: contentType,
+      },
+    });
+
+    // Make the file public so it can be accessed via URL
+    await file.makePublic();
+
+    // Return the public URL
+    return file.publicUrl();
+
+  } catch (error) {
+    console.error('Failed to upload image to GCS:', error);
+    // Return an empty string if upload fails, so the app doesn't crash.
+    // The image will still be available as a data URI.
+    return '';
+  }
+}
 
 export async function generateTechnicalDrawing(input: TechnicalDrawingInput): Promise<TechnicalDrawingOutput> {
   return await technicalDrawingFlow(input);
@@ -78,9 +119,13 @@ const technicalDrawingFlow = ai.defineFlow(
     });
 
     if (!media?.url) {
-        throw new Error('Image generation failed to return an image.');
+        throw new Error('Image generation failed to return a data URI.');
     }
 
-    return { imageDataUri: media.url };
+    const imageDataUri = media.url;
+    // Upload to GCS and get the public URL.
+    const imageUrl = await uploadToGCS(imageDataUri);
+
+    return { imageDataUri, imageUrl };
   }
 );

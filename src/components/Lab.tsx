@@ -247,6 +247,7 @@ export function Lab() {
           okapnikEdges: okapnikEdges,
           totalCost: calculations.totalCost,
           planSnapshotDataUri: drawingResponse.imageDataUri,
+          planSnapshotUrl: drawingResponse.imageUrl,
           orderUnit: selectedElement.orderUnit,
           quantity: quantity,
           bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges ? bunjaEdgeStyle : undefined,
