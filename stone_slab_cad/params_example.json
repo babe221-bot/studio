@@ -1,0 +1,32 @@
+{
+  "dims": {
+    "length": 2400,
+    "width": 600,
+    "height": 30
+  },
+  "material": {
+    "name": "Granite White",
+    "color": "#f5f5dc",
+    "texture": null
+  },
+  "finish": {
+    "name": "Poliran (Polished)",
+    "roughness": 0.1
+  },
+  "profile": {
+    "name": "Polu-zaobljena R5mm",
+    "radius": 5
+  },
+  "processedEdges": {
+    "front": true,
+    "back": true,
+    "left": true,
+    "right": false
+  },
+  "okapnikEdges": {
+    "front": true,
+    "back": false,
+    "left": false,
+    "right": false
+  }
+}
