@@ -1,46 +1,49 @@
+import os
+import tempfile
 from fastapi import APIRouter, UploadFile, File, HTTPException
+
 from app.models.schemas import CADResponse, ProcessingRequest
 from app.services import cad_service
-import os
 
 router = APIRouter()
+
 
 @router.post("/generate-drawing", response_model=CADResponse)
 async def generate_technical_drawing(request: ProcessingRequest):
     """
-    Generate technical drawing using CAD pipeline
+    Generate DXF + SVG from a full slab configuration.
+    Returns base64-encoded SVG for immediate preview.
     """
-    try:
-        result = await cad_service.generate_drawing(
-            dimensions=request.dimensions,
-            material=request.material,
-            style=request.style
-        )
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    config = request.model_dump()
+    result = await cad_service.generate_drawing(config)
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error", "CAD generation failed"))
+    return CADResponse(**result)
 
-@router.post("/process-slab")
+
+@router.post("/process-slab", response_model=CADResponse)
 async def process_slab(file: UploadFile = File(...)):
     """
-    Process uploaded slab design file
+    Accept a JSON params file and process it through the CAD pipeline.
     """
     contents = await file.read()
-    
-    # Save temporary file
-    temp_path = f"/tmp/{file.filename}"
-    with open(temp_path, "wb") as f:
-        f.write(contents)
-    
+
+    # Windows-safe temp file (avoid hardcoded /tmp/)
+    fd, tmp_path = tempfile.mkstemp(suffix=".json", prefix="slab_upload_")
     try:
-        result = await cad_service.process_slab_file(temp_path)
-        return result
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(contents)
+        result = await cad_service.process_slab_file(tmp_path)
     finally:
-        # Cleanup
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error", "Processing failed"))
+    return CADResponse(**result)
+
 
 @router.get("/materials")
 async def list_materials():
-    """Get available materials"""
+    """Get available stone materials."""
     return await cad_service.get_materials()

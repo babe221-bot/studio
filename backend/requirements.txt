@@ -13,17 +13,21 @@ alembic==1.13.1
 pandas==2.2.0
 numpy==1.26.3
 
-# AI/ML (optional)
-torch==2.1.2
-transformers==4.36.2
+# CAD Engine (stone_slab_cad dependencies)
+ezdxf>=1.3.0
+drawsvg>=2.3.0
+
+# AI/ML (optional, heavy — comment out if not needed locally)
+# torch==2.1.2
+# transformers==4.36.2
 pillow==10.2.0
 
 # PDF Generation
 reportlab==4.0.8
 weasyprint==60.1
 
-# CORS
-python-cors==1.0.0
+# Config
+python-dotenv==1.0.1
 pydantic==2.5.3
 pydantic-settings==2.1.0
 httpx==0.26.0
