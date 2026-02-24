@@ -3,35 +3,50 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.pool import NullPool
 import os
 
-DATABASE_URL = os.getenv(
+# Load .env if present (useful when running the backend standalone)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+_raw_url = os.getenv(
     "DATABASE_URL",
-    "postgresql+asyncpg://user:password@localhost:5432/studio"
+    "postgresql://user:password@localhost:5432/studio",
 )
 
-# SQLite for local dev if DATABASE_URL doesn't start with postgresql
-if not DATABASE_URL.startswith("postgresql"):
+# SQLAlchemy async driver requires the +asyncpg dialect prefix
+if _raw_url.startswith("postgresql://"):
+    DATABASE_URL = _raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+elif _raw_url.startswith("postgresql"):
+    DATABASE_URL = _raw_url
+else:
+    # Fallback to local SQLite for offline dev
     DATABASE_URL = "sqlite+aiosqlite:///./studio.db"
 
 engine = create_async_engine(
     DATABASE_URL,
-    echo=True,
+    echo=os.getenv("DB_ECHO", "false").lower() == "true",
     poolclass=NullPool if DATABASE_URL.startswith("postgresql") else None,
-    future=True
+    future=True,
 )
 
 AsyncSessionLocal = sessionmaker(
-    engine, 
-    class_=AsyncSession, 
-    expire_on_commit=False
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
 )
 
 Base = declarative_base()
 
+
 async def init_db():
-    """Initialize database tables"""
+    """Initialize database tables (no-op if tables already exist)."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
+
 async def get_db():
+    """FastAPI dependency — yields an async DB session."""
     async with AsyncSessionLocal() as session:
         yield session
