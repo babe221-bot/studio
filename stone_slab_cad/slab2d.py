@@ -229,16 +229,20 @@ def add_title_block(msp, origin, config):
     # Add text information
     text_attrs = {'layer': 'TEXT', 'height': 8}
     
-    msp.add_text(f"MATERIAL: {config['material']['name']}", 
-                dxfattribs=text_attrs).set_pos((x + 10, y + 120))
+    msp.add_text(f"MATERIAL: {config['material']['name']}",
+                dxfattribs={**text_attrs, 'insert': (x + 10, y + 120)})
+
     
-    msp.add_text(f"FINISH: {config['finish']['name']}", 
-                dxfattribs=text_attrs).set_pos((x + 10, y + 100))
+    msp.add_text(f"FINISH: {config['finish']['name']}",
+                dxfattribs={**text_attrs, 'insert': (x + 10, y + 100)})
+
     
-    msp.add_text(f"PROFILE: {config['profile']['name']}", 
-                dxfattribs=text_attrs).set_pos((x + 10, y + 80))
+    msp.add_text(f"PROFILE: {config['profile']['name']}",
+                dxfattribs={**text_attrs, 'insert': (x + 10, y + 80)})
+
     
     # Dimensions summary
     dims = config['dims']
     msp.add_text(f"DIMENSIONS: {dims['length']} × {dims['width']} × {dims['height']} mm",
-                dxfattribs={**text_attrs, 'height': 10}).set_pos((x + 10, y + 50))
+                dxfattribs={**text_attrs, 'height': 10, 'insert': (x + 10, y + 50)})
+
