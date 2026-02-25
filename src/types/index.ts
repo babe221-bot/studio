@@ -76,7 +76,7 @@ export const TechnicalDrawingInputSchema = z.object({
 export type TechnicalDrawingInput = z.infer<typeof TechnicalDrawingInputSchema>;
 
 export const TechnicalDrawingOutputSchema = z.object({
-    imageDataUri: z.string().describe("The generated technical drawing as a data URI. Expected format: 'data:image/png;base64,<encoded_data>'."),
-    imageUrl: z.string().describe("The public URL of the generated drawing stored in Google Cloud Storage."),
+  imageDataUri: z.string().describe("The generated technical drawing as a data URI. Expected format: 'data:image/png;base64,<encoded_data>'."),
+  imageUrl: z.string().describe("The public URL of the generated drawing stored in Supabase Storage."),
 });
 export type TechnicalDrawingOutput = z.infer<typeof TechnicalDrawingOutputSchema>;
