@@ -1,6 +1,6 @@
 'use client';
 
-import { useChat, type Message } from '@ai-sdk/react';
+import { useChat } from '@ai-sdk/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,15 +9,30 @@ import { useState, useRef, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function AIAssistant() {
-    const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat();
+    const { messages, sendMessage, status } = useChat();
+    const [input, setInput] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    const isLoading = status === 'submitted' || status === 'streaming';
 
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTo(0, scrollRef.current.scrollHeight);
         }
     }, [messages, isLoading]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!input.trim() || isLoading) return;
+
+        await sendMessage({ text: input });
+        setInput('');
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInput(e.target.value);
+    };
 
     if (!isOpen) {
         return (
@@ -65,7 +80,7 @@ export function AIAssistant() {
                         </div>
                     ) : (
                         <div className="space-y-4 flex flex-col pb-2">
-                            {messages.map((m: Message) => (
+                            {messages.map((m) => (
                                 <div
                                     key={m.id}
                                     className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -76,7 +91,12 @@ export function AIAssistant() {
                                             : 'bg-card border text-card-foreground rounded-bl-sm'
                                             }`}
                                     >
-                                        {m.content}
+                                        {m.parts?.map((part, i) => {
+                                            if (part.type === 'text') {
+                                                return <span key={i}>{part.text}</span>;
+                                            }
+                                            return null;
+                                        })}
                                     </div>
                                 </div>
                             ))}
