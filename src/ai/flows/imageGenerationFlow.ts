@@ -1,8 +1,10 @@
 'use server';
 /**
- * @fileOverview An AI flow for generating technical drawings of stone slabs and storing them.
+ * @fileOverview AI flow for generating technical drawings of stone slabs and
+ * persisting them to Supabase Storage.
  *
- * - generateTechnicalDrawing - A function that handles the drawing generation process.
+ * - generateTechnicalDrawing — calls the Python CAD backend, uploads the
+ *   resulting SVG/PNG to the `drawings` bucket, and returns the public URL.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -11,87 +13,115 @@ import {
   TechnicalDrawingOutput,
 } from '@/types';
 
-// Initialize Supabase Storage
+// ── Supabase Storage client (server-side, service-role key) ─────────────────
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  '';
 const supabase = createClient(supabaseUrl, supabaseKey);
-const bucketName = 'drawings';
+const BUCKET = 'drawings';
 
+// ── helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Upload a base64 data URI (image/png or image/svg+xml) to Supabase Storage.
+ * Returns the public URL, or an empty string if the upload fails.
+ */
 async function uploadToSupabase(dataUri: string): Promise<string> {
   try {
-    const match = dataUri.match(/^data:(image\/png);base64,(.*)$/);
+    // Support both PNG data URIs (from Python) and raw base64 SVG strings
+    const match = dataUri.match(/^data:(image\/(?:png|svg\+xml));base64,(.*)$/);
     if (!match) {
-      throw new Error('Invalid data URI format.');
+      throw new Error(`Invalid data URI format — expected data:image/png or data:image/svg+xml. Got: ${dataUri.slice(0, 40)}…`);
     }
 
     const contentType = match[1];
+    const ext = contentType === 'image/svg+xml' ? 'svg' : 'png';
     const base64Data = match[2];
     const buffer = Buffer.from(base64Data, 'base64');
+    const fileName = `technical-drawings/${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`;
 
-    const fileName = `technical-drawings/${Date.now()}-${Math.round(Math.random() * 1E9)}.png`;
+    const { error } = await supabase.storage
+      .from(BUCKET)
+      .upload(fileName, buffer, { contentType, upsert: false });
 
-    const { data: uploadData, error } = await supabase.storage
-      .from(bucketName)
-      .upload(fileName, buffer, {
-        contentType: contentType,
-        upsert: false
-      });
+    if (error) throw error;
 
-    if (error) {
-      throw error;
-    }
-
-    // Get the public URL
     const { data: publicUrlData } = supabase.storage
-      .from(bucketName)
+      .from(BUCKET)
       .getPublicUrl(fileName);
 
     return publicUrlData.publicUrl;
-
   } catch (error) {
-    console.error('Failed to upload image to Supabase:', error);
-    // Return an empty string if upload fails, so the app doesn't crash.
+    console.error('Failed to upload drawing to Supabase Storage:', error);
     return '';
   }
 }
 
-export async function generateTechnicalDrawing(input: TechnicalDrawingInput): Promise<TechnicalDrawingOutput> {
-  try {
-    // Call Python backend for CAD generation instead of Genkit
-    const PYTHON_API_URL = process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:8000';
+/**
+ * Encode a plain base64 string (SVG bytes from Python) into a data URI so it
+ * can be passed to uploadToSupabase().
+ */
+function toSvgDataUri(base64: string): string {
+  return `data:image/svg+xml;base64,${base64}`;
+}
 
+// ── main export ──────────────────────────────────────────────────────────────
+
+export async function generateTechnicalDrawing(
+  input: TechnicalDrawingInput,
+): Promise<TechnicalDrawingOutput> {
+  const PYTHON_API_URL =
+    process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:8000';
+
+  try {
     const response = await fetch(`${PYTHON_API_URL}/api/cad/generate-drawing`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        dimensions: {
+        dims: {
+          length: input.length || input.width,
           width: input.width,
-          height: input.length || input.width, // Map length to height for the 2D plane
-          thickness: 2, // arbitrary default thickness
+          height: 2, // default slab thickness (cm)
         },
-        material: input.surfaceFinishName || 'standard',
-        style: input.isBunja ? 'bunja' : 'technical'
+        material: { name: input.surfaceFinishName || 'standard' },
+        finish: { name: input.surfaceFinishName || 'Bez obrade' },
+        profile: { name: input.profileName || 'Ravni rez (Pilan)' },
+        processedEdges: {
+          front: input.processedEdges.includes('Prednja'),
+          back: input.processedEdges.includes('Zadnja'),
+          left: input.processedEdges.includes('Lijeva'),
+          right: input.processedEdges.includes('Desna'),
+        },
+        okapnikEdges: {
+          front: input.okapnikEdges.includes('Prednja'),
+          back: input.okapnikEdges.includes('Zadnja'),
+          left: input.okapnikEdges.includes('Lijeva'),
+          right: input.okapnikEdges.includes('Desna'),
+        },
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Python API error: ${response.statusText}`);
+      throw new Error(`Python API error: ${response.status} ${response.statusText}`);
     }
 
     const result = await response.json();
 
-    // In actual implementation, if Python returns a base64 Data URI, we can upload it:
-    // const imageUrl = await uploadToSupabase(result.url);
+    // Python returns { success, svg (base64 SVG), dxf_filename, data }
+    // Upload the SVG to Supabase Storage and expose a stable public URL.
+    let imageUrl = '';
+    let imageDataUri = '';
 
-    return {
-      imageDataUri: result.url || '',
-      imageUrl: result.url || ''
-    };
+    if (result.svg) {
+      imageDataUri = toSvgDataUri(result.svg);
+      imageUrl = await uploadToSupabase(imageDataUri);
+    }
+
+    return { imageDataUri, imageUrl };
   } catch (error) {
     console.error('Error generating drawing via Python API:', error);
     return { imageDataUri: '', imageUrl: '' };
   }
 }
-
