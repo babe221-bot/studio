@@ -11,11 +11,11 @@
 
 | # | Goal | Status | Notes |
 |---|------|--------|-------|
-| 1 | Finish `migrate_seed.sql` & run on Supabase | [ ] | SQL script in progress |
-| 2 | Wire `warehouseService.ts` to Supabase client | [ ] | Replace BigQuery calls |
-| 3 | Enable Supabase Storage upload in `imageGenerationFlow.ts` | [ ] | Upload + return URL |
-| 4 | Write `warehouseService.test.ts` with mocked Supabase | [ ] | Tests needed |
-| 5 | Fix stale Google Cloud JSDoc in `types/index.ts` | [ ] | Quick cleanup |
+| 1 | ~~Finish `migrate_seed.sql` & run on Supabase~~ | [x] | Done ✅ |
+| 2 | ~~Wire `warehouseService.ts` to Supabase client~~ | [x] | Done ✅ |
+| 3 | ~~Enable Supabase Storage upload in `imageGenerationFlow.ts`~~ | [x] | Done ✅ |
+| 4 | ~~Write `warehouseService.test.ts` with mocked Supabase~~ | [x] | 8/8 tests pass ✅ |
+| 5 | ~~Fix stale Google Cloud JSDoc in `types/index.ts`~~ | [x] | Already clean ✅ |
 
 **Daily Reflection:**
 - What went well today?
@@ -30,33 +30,21 @@
 
 ### Critical — Sprint 2: Data & Storage Migration
 
-- [ ] **Task:** Finish `scripts/migrate_seed.sql` — all DB tables + seed data
-  - **Priority:** 🔴 Critical
-  - **Urgency:** Immediate (partially done)
-  - **Estimated Time:** 1–2 hours
-  - **Deadline:** This week
-  - **Dependencies:** Supabase project already provisioned
+- [x] **Task:** ~~Finish `scripts/migrate_seed.sql` — all DB tables + seed data~~ ✅
+  - **Priority:** 🔴 Critical → DONE
+  - **Actual Time:** ~1 hour
 
-- [ ] **Task:** Create `scripts/create_storage_bucket.sql` — `drawings` bucket
-  - **Priority:** 🔴 Critical
-  - **Urgency:** Immediate
-  - **Estimated Time:** 30 minutes
-  - **Deadline:** This week
-  - **Dependencies:** `migrate_seed.sql` must run first
+- [x] **Task:** ~~Create `scripts/create_storage_bucket.sql` — `drawings` bucket~~ ✅
+  - **Priority:** 🔴 Critical → DONE
+  - **Actual Time:** ~20 minutes
 
-- [ ] **Task:** Replace BigQuery client in `src/services/warehouseService.ts` with Supabase
-  - **Priority:** 🔴 Critical
-  - **Urgency:** Immediate — app won't work without this
-  - **Estimated Time:** 2–3 hours
-  - **Deadline:** This week
-  - **Dependencies:** Supabase tables must exist, service-role key in `.env`
+- [x] **Task:** ~~Replace BigQuery client in `src/services/warehouseService.ts` with Supabase~~ ✅
+  - **Priority:** 🔴 Critical → DONE
+  - **Notes:** `getMaterials()`, `getSurfaceFinishes()`, `getEdgeProfiles()` — all typed, service-role key
 
-- [ ] **Task:** Enable `uploadToSupabase()` in `src/ai/flows/imageGenerationFlow.ts`
-  - **Priority:** 🔴 Critical
-  - **Urgency:** Immediate — images not persisting without this
-  - **Estimated Time:** 1 hour
-  - **Deadline:** This week
-  - **Dependencies:** Storage bucket created, Python backend running
+- [x] **Task:** ~~Enable `uploadToSupabase()` in `src/ai/flows/imageGenerationFlow.ts`~~ ✅
+  - **Priority:** 🔴 Critical → DONE
+  - **Notes:** Uploads SVG to `drawings` bucket, returns public URL
 
 ---
 
@@ -80,18 +68,13 @@
   - **Scheduled Date:** ____________
   - **Notes:** Use `ai` + `@ai-sdk/openai`; integrate Python backend for CAD-specific AI
 
-- [ ] **Task:** Write `src/tests/warehouseService.test.ts` with mocked Supabase client
-  - **Priority:** 🟠 High
-  - **Urgency:** This week
-  - **Estimated Time:** 1–2 hours
-  - **Scheduled Date:** ____________
-  - **Notes:** Unit tests for `getMaterials()`, `getSurfaceFinishes()`, `getEdgeProfiles()`
+- [x] **Task:** ~~Write `src/tests/warehouseService.test.ts` with mocked Supabase client~~ ✅
+  - **Priority:** 🟠 High → DONE
+  - **Result:** 8/8 tests pass — success + error paths for all 3 functions + deprecated alias
+  - **Notes:** `npm test` runs jest; jest.config.js updated with ts-jest + @/ alias
 
-- [ ] **Task:** Fix stale JSDoc comment in `types/index.ts` (says "Google Cloud Storage")
-  - **Priority:** 🟠 High
-  - **Urgency:** Quick win — do alongside warehouseService edits
-  - **Estimated Time:** 5 minutes
-  - **Scheduled Date:** ____________
+- [x] **Task:** ~~Fix stale JSDoc comment in `types/index.ts`~~ ✅
+  - **Priority:** 🟠 High → Already clean (says "Supabase Storage" correctly)
 
 ### This Month
 
@@ -319,7 +302,7 @@
 
 ```
 Sprint 1: Foundation & Python Backend   ████████████████████  100% ✅
-Sprint 2: Data & Storage Migration      ████░░░░░░░░░░░░░░░░   20% 🔄
+Sprint 2: Data & Storage Migration      ████████████████████  100% ✅
 Sprint 3: Auth & AI                     ░░░░░░░░░░░░░░░░░░░░    0% ⏳
 Sprint 4: Deploy & Test                 ░░░░░░░░░░░░░░░░░░░░    0% ⏳
 ```
