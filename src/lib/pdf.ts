@@ -27,13 +27,13 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
     cursorY += 7;
     doc.text(`${new Date().toLocaleDateString('hr-HR')}`, margin, cursorY);
     cursorY += 15;
-    
+
     let totalCost = 0;
 
     // --- Items Loop ---
     orderItems.forEach((item, index) => {
       totalCost += item.totalCost;
-      
+
       const itemHeightEstimate = 120;
       if (cursorY + itemHeightEstimate > pageHeight - margin) {
         doc.addPage();
@@ -41,12 +41,12 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
       }
 
       let quantityString = '';
-      switch(item.orderUnit) {
-          case 'piece': quantityString = `${item.quantity} kom`; break;
-          case 'sqm': quantityString = `${item.quantity.toFixed(2)} m²`; break;
-          case 'lm': quantityString = `${item.quantity.toFixed(2)} m`; break;
+      switch (item.orderUnit) {
+        case 'piece': quantityString = `${item.quantity} kom`; break;
+        case 'sqm': quantityString = `${item.quantity.toFixed(2)} m²`; break;
+        case 'lm': quantityString = `${item.quantity.toFixed(2)} m`; break;
       }
-      
+
       doc.setFontSize(14);
       doc.setFont('Helvetica', 'bold');
       doc.text(`Stavka ${index + 1}: ${item.id} (${quantityString})`, margin, cursorY);
@@ -72,12 +72,12 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
           doc.text("Tehnički crtež nije dostupan", planImageX, imageBlockY + 20);
         }
       } else {
-         doc.text("Tehnički crtež nije generiran", planImageX, imageBlockY + 20);
-         imageBlockHeight = 20;
+        doc.text("Tehnički crtež nije generiran", planImageX, imageBlockY + 20);
+        imageBlockHeight = 20;
       }
 
       cursorY += imageBlockHeight + 10;
-      
+
       // --- Table with item details ---
       const tableRows = [
         ['Materijal', item.material.name],
@@ -92,12 +92,12 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
           .filter(([, v]) => v)
           .map(([k]) => edgeNames[k as keyof typeof edgeNames])
           .join(', ') || 'Nema';
-        
+
         const okapnikEdgesString = Object.entries(item.okapnikEdges || {})
           .filter(([, v]) => v)
           .map(([k]) => edgeNames[k as keyof typeof edgeNames])
           .join(', ') || 'Nema';
-          
+
         tableRows.push(['Profil ivice', item.profile.name]);
         tableRows.push(['Obrada ivica', processedEdgesString]);
         if (okapnikEdgesString !== 'Nema') {
@@ -105,8 +105,8 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
         }
       }
 
-      tableRows.push([{ content: 'Cijena stavke', styles: { fontStyle: 'bold' } }, { content: `€${item.totalCost.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } }]);
-      
+      tableRows.push([{ content: 'Cijena stavke', styles: { fontStyle: 'bold' } }, { content: `€${item.totalCost.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } }] as any);
+
       autoTable(doc, {
         startY: cursorY,
         head: [],
@@ -116,8 +116,8 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
         margin: { left: margin },
         styles: { font: 'Helvetica', fontSize: 9, cellPadding: 1.5 },
         columnStyles: {
-            0: { fontStyle: 'bold', cellWidth: 40 },
-            1: { cellWidth: 'auto' },
+          0: { fontStyle: 'bold', cellWidth: 40 },
+          1: { cellWidth: 'auto' },
         },
       });
 
@@ -126,9 +126,9 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
 
       // Add a separator line
       if (index < orderItems.length - 1) {
-          doc.setDrawColor(200, 200, 200); // light grey
-          doc.line(margin, cursorY, pageWidth - margin, cursorY);
-          cursorY += 10;
+        doc.setDrawColor(200, 200, 200); // light grey
+        doc.line(margin, cursorY, pageWidth - margin, cursorY);
+        cursorY += 10;
       }
     });
 
@@ -137,7 +137,7 @@ export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeN
       doc.addPage();
       cursorY = margin;
     }
-    
+
     doc.setFontSize(16);
     doc.setFont('Helvetica', 'bold');
     const totalString = `UKUPNO: €${totalCost.toFixed(2)}`;
