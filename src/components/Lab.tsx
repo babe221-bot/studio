@@ -12,7 +12,20 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { initialMaterials, initialSurfaceFinishes, initialEdgeProfiles } from '@/lib/data';
 import { constructionElements } from '@/lib/constructionElements';
-import { VisualizationCanvasLazy } from '@/components/VisualizationCanvasLazy';
+import dynamic from 'next/dynamic';
+const VisualizationCanvas = dynamic(
+  () => import('@/components/VisualizationCanvas'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-full flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">
+          Učitavam 3D prikaz...
+        </div>
+      </div>
+    ),
+  }
+);
 import MaterialModal from '@/components/modals/MaterialModal';
 import FinishModal from '@/components/modals/FinishModal';
 import ProfileModal from '@/components/modals/ProfileModal';
@@ -502,7 +515,7 @@ export function Lab() {
               </Button>
             </CardHeader>
             <CardContent className="h-full pb-0">
-              <VisualizationCanvasLazy key={refreshKey} {...visualizationState} />
+              <VisualizationCanvas key={refreshKey} {...visualizationState} />
             </CardContent>
           </Card>
         </div>
