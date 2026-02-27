@@ -339,11 +339,51 @@ Closes #45
 
 All changes must go through pull requests before merging to main. Establish the following requirements:
 
+#### PR Requirements
+
 - Minimum one reviewer for non-hotfix changes
 - Two reviewers for infrastructure or security-related changes
 - All CI checks must pass (tests, linting, type checking)
 - No merge commits in PR history (rebase required)
 - PR description must include testing steps performed
+
+#### PR Template
+
+```markdown
+## Description
+<!-- What changes were made? -->
+
+## Type of Change
+<!-- Mark with x -->
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Testing
+<!-- What testing was performed? -->
+
+- [ ] Unit tests passed
+- [ ] Integration tests passed
+- [ ] Manual testing performed
+
+## Checklist
+<!-- Ensure all are checked -->
+- [ ] Code follows project standards
+- [ ] Documentation updated
+- [ ] No security vulnerabilities
+```
+
+#### PR Review Checklist
+
+For reviewers:
+
+- [ ] Code follows style guidelines
+- [ ] Tests are adequate
+- [ ] No security issues
+- [ ] Documentation updated
+- [ ] Performance acceptable
+- [ ] Edge cases handled
 
 ---
 
