@@ -41,7 +41,7 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
                         <Button
                             variant="secondary"
                             className="w-full"
-                            formAction={joinAsGuest}
+                            formAction={joinAsGuestAction}
                         >
                             Nastavi kao gost
                         </Button>
