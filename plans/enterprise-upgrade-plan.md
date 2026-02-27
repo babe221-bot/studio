@@ -126,6 +126,44 @@ Create a living document (technical-debt.md in the docs directory) that catalogs
 - Risk level (Low, Medium, High, Critical)
 - Recommended approach for resolution
 
+#### Technical Debt Tracking Template
+
+Create docs/technical-debt.md with the following structure:
+
+```markdown
+# Technical Debt Inventory
+
+## Overview
+Total Items: X | Critical: X | High: X | Medium: X | Low: X
+
+## Critical Priority
+
+### [DEBT-001] Description
+- **Component:** 
+- **Effort:** 
+- **Business Impact:** 
+- **Risk Level:** Critical
+- **Resolution:** 
+- **Date Identified:** 
+
+## High Priority
+
+## Medium Priority
+
+## Low Priority
+```
+
+#### Debt Categories
+
+Organize technical debt into these categories:
+
+- **Code Quality:** Complex logic, duplication, poor naming
+- **Architecture:** Tight coupling, missing abstractions
+- **Testing:** Low coverage, missing test types
+- **Documentation:** Missing or outdated docs
+- **Dependencies:** Outdated libraries, security vulnerabilities
+- **Infrastructure:** Configuration issues, deployment problems
+
 The next.config.ts file already shows some technical debt (ignoreBuildErrors flags for TypeScript and ESLint), which should be addressed systematically.
 
 ---
@@ -135,6 +173,23 @@ The next.config.ts file already shows some technical debt (ignoreBuildErrors fla
 ### 2.1 Branching Strategy
 
 Adopt a trunk-based development approach with short-lived feature branches. This strategy minimizes merge conflicts and enables faster iteration cycles.
+
+#### Branching Models Comparison
+
+| Model | Pros | Cons | Best For |
+|-------|------|------|----------|
+| Trunk-Based | Fast integration, less merge pain | Requires good CI/CD | Modern agile teams |
+| GitFlow | Clear structure, good releases | Complex, merge hell | Release-focused teams |
+| GitHub Flow | Simple, deployable | Less control | Continuous deployment |
+| Forking | Complete isolation | Complexity | Open source projects |
+
+#### Recommended Approach: Trunk-Based Development
+
+- Main branch (main/master) always deployable
+- Feature branches live < 1 week
+- Integrate daily with main
+- Use feature flags for incomplete features
+- Small, frequent commits preferred
 
 #### Branch Naming Conventions
 
@@ -153,6 +208,7 @@ Examples:
 - feature/CAD-123-add-3d-rotation-controls
 - bugfix/CAD-456-fix-pdf-export-blank-pages
 - upgrade/CAD-789-update-nextjs-to-15-3-4
+- refactor/CAD-101-simplify-calculation-logic
 
 #### Branch Lifecycle
 
@@ -161,6 +217,78 @@ All branches should be short-lived, with a maximum age of one week. Daily integr
 ### 2.2 Commit Message Standards
 
 Enforce conventional commits format for all commit messages. This enables automated changelog generation and semantic version determination.
+
+#### Conventional Commits Specification
+
+The Conventional Commits specification defines a lightweight convention for commit messages. Format:
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+#### Type Definitions
+
+- **feat**: New feature implementation
+- **fix**: Bug resolution
+- **docs**: Documentation changes only
+- **style**: Code style changes (formatting, no logic change)
+- **refactor**: Code restructuring without behavior change
+- **test**: Test additions or modifications
+- **chore**: Build process, dependencies, or tooling
+- **perf**: Performance improvements
+- **ci**: CI/CD configuration changes
+- **build**: Changes to build system or dependencies
+
+#### Subject Line Rules
+
+- Use imperative mood (add, fix, update rather than added, fixed, updated)
+- Maximum 50 characters
+- No period at the end
+- Capitalize the first letter only
+- Lowercase scope
+
+#### Body and Footer Guidelines
+
+Body should explain what and why, not how. Footer should reference issue numbers and breaking changes using BREAKING CHANGE: prefix.
+
+Example commit message:
+
+```
+fix(cad-service): resolve dimension calculation error for non-rectangular slabs
+
+The previous implementation incorrectly calculated surface area for L-shaped
+configurations by treating them as simple rectangles.
+
+Fixes CAD-234
+Closes #45
+```
+
+#### Git Hooks for Validation
+
+Set up commit-msg hook to validate commit messages:
+
+```bash
+#!/bin/bash
+# .git/hooks/commit-msg
+
+COMMIT_MSG_FILE=$1
+COMMIT_MSG=$(cat $COMMIT_MSG_FILE)
+
+# Pattern for conventional commits
+PATTERN="^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)(\\(.+\\))?: .{1,50}"
+
+if ! grep -qE "$PATTERN" "$COMMIT_MSG_FILE"; then
+    echo "Commit message does not follow conventional commits format"
+    echo "Format: <type>(<scope>): <subject>"
+    exit 1
+fi
+```
+
+Enable with: chmod +x .git/hooks/commit-msg
 
 #### Commit Message Structure
 
