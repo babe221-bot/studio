@@ -1,4 +1,5 @@
-import { login, signup, joinAsGuest } from './actions'
+import { login, signup } from './actions'
+import { joinAsGuestAction } from '../actions'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
