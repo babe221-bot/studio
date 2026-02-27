@@ -1,1 +1,1 @@
-{"mcpServers":{"playwright":{"command":"npx","args":["-y","@playwright/mcp@0.0.38"],"alwaysAllow":["browser_navigate","browser_network_requests","browser_click"]},"sequentialthinking":{"command":"npx","args":["-y","@modelcontextprotocol/server-sequential-thinking"]}}}
+{"mcpServers":{"playwright":{"command":"npx","args":["-y","@playwright/mcp@0.0.38"],"alwaysAllow":["browser_navigate","browser_network_requests","browser_click","browser_snapshot"]},"sequentialthinking":{"command":"npx","args":["-y","@modelcontextprotocol/server-sequential-thinking"]}}}
