@@ -14,7 +14,10 @@ export default async function Home(props: { searchParams: Promise<{ guest?: stri
     try {
       const guestUser = deserializeGuestUser(decodeURIComponent(searchParams.guest));
       if (guestUser) {
-        cookieStore.set(GUEST_COOKIE_NAME, serializeGuestUser(guestUser), {
+        // Set the cookie properly using the cookies API
+        cookieStore.set({
+          name: GUEST_COOKIE_NAME,
+          value: serializeGuestUser(guestUser),
           httpOnly: false, // Allow client-side access
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
@@ -25,6 +28,7 @@ export default async function Home(props: { searchParams: Promise<{ guest?: stri
         redirect('/');
       }
     } catch (e) {
+      console.error('Guest login error:', e);
       // Invalid guest data, redirect to login
       redirect('/login');
     }
