@@ -23,6 +23,16 @@ For the TypeScript/JavaScript stack, utilize npm outdated and npm audit commands
 
 For the Python stack, employ pip list --outdated to identify packages requiring updates. Tools like pip-audit can scan requirements.txt files for known vulnerabilities. The backend/requirements.txt file should be regularly audited against the Python Packaging Index security advisories.
 
+#### Dependency Update Automation Scripts
+
+Create a dedicated script to automate the dependency audit process across both stacks:
+
+#### Automated Dependency Scanning
+
+For the TypeScript/JavaScript stack, utilize npm outdated and npm audit commands to identify outdated packages and security vulnerabilities. Create a script that runs during the CI/CD pipeline to flag dependencies that have known security issues or are more than two minor versions behind the current release. The project already includes a test script in package.json, which should be extended to include dependency auditing.
+
+For the Python stack, employ pip list --outdated to identify packages requiring updates. Tools like pip-audit can scan requirements.txt files for known vulnerabilities. The backend/requirements.txt file should be regularly audited against the Python Packaging Index security advisories.
+
 #### Manual Dependency Review
 
 Beyond automated scanning, conduct quarterly manual reviews of critical dependencies. Focus on packages that:
