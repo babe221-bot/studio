@@ -71,18 +71,6 @@ These scripts should be integrated into the CI/CD pipeline to run on a scheduled
 
 Beyond automated scanning, conduct quarterly manual reviews of critical dependencies. Focus on packages that:
 
-#### Manual Dependency Review
-
-#### Automated Dependency Scanning
-
-For the TypeScript/JavaScript stack, utilize npm outdated and npm audit commands to identify outdated packages and security vulnerabilities. Create a script that runs during the CI/CD pipeline to flag dependencies that have known security issues or are more than two minor versions behind the current release. The project already includes a test script in package.json, which should be extended to include dependency auditing.
-
-For the Python stack, employ pip list --outdated to identify packages requiring updates. Tools like pip-audit can scan requirements.txt files for known vulnerabilities. The backend/requirements.txt file should be regularly audited against the Python Packaging Index security advisories.
-
-#### Manual Dependency Review
-
-Beyond automated scanning, conduct quarterly manual reviews of critical dependencies. Focus on packages that:
-
 - Have no active maintenance (last update > 12 months ago)
 - Show declining community adoption or support
 - Introduce significant changes in newer versions that may affect compatibility
@@ -105,12 +93,28 @@ Based on the project analysis, the following dependencies warrant immediate atte
 
 Establish baseline metrics for code quality using static analysis tools. For TypeScript, employ ESLint with strict configuration and TypeScript's built-in type checking. For Python, use pylint or ruff for linting and mypy for type checking. Track these metrics over time to identify degradation patterns.
 
+#### Recommended Tools by Language
+
+**TypeScript/Next.js:**
+- ESLint with strict TypeScript configuration
+- TypeScript compiler (tsc --strict)
+- Prettier for code formatting consistency
+- SonarQube or CodeClimate for quality tracking
+
+**Python/FastAPI:**
+- Ruff for fast linting (recommended over pylint for performance)
+- Mypy for static type checking
+- Black for code formatting
+- Bandit for security scanning
+
 Key metrics to monitor include:
 
 - Cyclomatic complexity thresholds (maximum 10 per function)
 - Code duplication percentage (target < 5%)
 - Test coverage percentage (minimum 70% for core business logic)
 - Static analysis violations per 1000 lines of code
+- Mean Time to Detect (MTTD) for production issues
+- Code review turnaround time
 
 ### 1.3 Technical Debt Inventory
 
