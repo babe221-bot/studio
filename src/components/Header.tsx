@@ -1,10 +1,20 @@
 import { ThemeToggle } from "./ThemeToggle";
 import { createClient } from "@/utils/supabase/server";
 import { SignOutButton } from "./SignOutButton";
+import type { GuestUser } from "@/lib/guest-session";
 
-export async function Header() {
+interface HeaderProps {
+  guestUser?: GuestUser | null;
+}
+
+export async function Header(props: HeaderProps) {
+  const { guestUser } = props;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Determine if we have any user (authenticated or guest)
+  const isGuest = guestUser && guestUser.isGuest;
+  const displayUser = user || (isGuest ? { email: 'Gost' } : null);
 
   return (
     <header className="border-b bg-card shadow-sm">
@@ -18,12 +28,19 @@ export async function Header() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          {user && (
+          {displayUser && (
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground hidden md:inline-block">
-                {user.email}
+                {isGuest ? (
+                  <span className="inline-flex items-center gap-1">
+                    <span className="inline-block h-2 w-2 rounded-full bg-yellow-500" />
+                    Gost
+                  </span>
+                ) : (
+                  displayUser.email
+                )}
               </span>
-              <SignOutButton />
+              <SignOutButton isGuest={isGuest} />
             </div>
           )}
           <ThemeToggle />

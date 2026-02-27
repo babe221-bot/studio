@@ -1,8 +1,9 @@
-import { login, signup } from './actions'
+import { login, signup, joinAsGuest } from './actions'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 export default async function LoginPage(props: { searchParams: Promise<{ error?: string }> }) {
     const searchParams = await props.searchParams;
@@ -32,6 +33,21 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
                     <CardFooter className="flex flex-col gap-3">
                         <Button className="w-full" formAction={login}>Prijavi se</Button>
                         <Button variant="outline" className="w-full" formAction={signup}>Registriraj se</Button>
+                        <Separator className="my-2" />
+                        <div className="text-center text-sm text-muted-foreground">
+                            ili
+                        </div>
+                        <Button
+                            variant="secondary"
+                            className="w-full"
+                            formAction={joinAsGuest}
+                            type="submit"
+                        >
+                            Nastavi kao gost
+                        </Button>
+                        <p className="text-xs text-muted-foreground text-center">
+                            Gost ima pristup svim funkcijama. Podaci se ne čuvaju.
+                        </p>
                     </CardFooter>
                 </form>
             </Card>
