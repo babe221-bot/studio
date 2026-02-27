@@ -42,10 +42,11 @@ export async function updateSession(request: NextRequest) {
     // Allow access if:
     // 1. User is authenticated, OR
     // 2. User has a valid guest session cookie, OR
-    // 3. Path starts with /login or /auth, OR
+    // 3. Path starts with /login or /auth or /api/guest-login, OR
     // 4. Has guest parameter in URL (for guest login flow)
     const isAuthPage = request.nextUrl.pathname.startsWith('/login') ||
-        request.nextUrl.pathname.startsWith('/auth');
+        request.nextUrl.pathname.startsWith('/auth') ||
+        request.nextUrl.pathname.startsWith('/api/guest-login');
 
     if (!user && !isGuest && !isAuthPage && !hasGuestParam) {
         const url = request.nextUrl.clone()

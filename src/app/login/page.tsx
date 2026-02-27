@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import Link from 'next/link';
 
 export default async function LoginPage(props: { searchParams: Promise<{ error?: string }> }) {
     const searchParams = await props.searchParams;
@@ -38,13 +39,15 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
                         <div className="text-center text-sm text-muted-foreground">
                             ili
                         </div>
-                        <Button
-                            variant="secondary"
-                            className="w-full"
-                            formAction={joinAsGuestAction}
-                        >
-                            Nastavi kao gost
-                        </Button>
+                        <Link href="/api/guest-login" className="w-full">
+                            <Button
+                                variant="secondary"
+                                className="w-full"
+                                type="button"
+                            >
+                                Nastavi kao gost
+                            </Button>
+                        </Link>
                         <p className="text-xs text-muted-foreground text-center">
                             Gost ima pristup svim funkcijama. Podaci se ne čuvaju.
                         </p>
