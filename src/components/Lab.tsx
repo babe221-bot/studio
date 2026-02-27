@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { initialMaterials, initialSurfaceFinishes, initialEdgeProfiles } from '@/lib/data';
 import { constructionElements } from '@/lib/constructionElements';
-import VisualizationCanvas from '@/components/VisualizationCanvas';
+import { VisualizationCanvasLazy } from '@/components/VisualizationCanvasLazy';
 import MaterialModal from '@/components/modals/MaterialModal';
 import FinishModal from '@/components/modals/FinishModal';
 import ProfileModal from '@/components/modals/ProfileModal';
@@ -57,7 +57,7 @@ export function Lab() {
     left: false,
     right: false,
   });
-  
+
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -98,12 +98,12 @@ export function Lab() {
     let materialCost = 0;
     let processingCost = 0;
     let okapnikCost = 0;
-    
+
     // --- Cost calculation per piece ---
     const surfaceArea_m2_piece = length_m * width_m;
     const weight_kg_piece = (length * width * height * selectedMaterial.density) / 1000;
     const materialCost_piece = surfaceArea_m2_piece * selectedMaterial.cost_sqm;
-    
+
     let processed_perimeter_m = 0;
     if (processedEdges.front) processed_perimeter_m += length_m;
     if (processedEdges.back) processed_perimeter_m += length_m;
@@ -121,7 +121,7 @@ export function Lab() {
     const surfaceProcessingCost_piece = surfaceArea_m2_piece * selectedFinish.cost_sqm;
     const processingCost_piece = surfaceProcessingCost_piece + edgeProcessingCost_piece;
     const totalCost_piece = materialCost_piece + processingCost_piece + okapnikCost_piece;
-    
+
     switch (selectedElement?.orderUnit) {
       case 'piece':
         surfaceArea = surfaceArea_m2_piece * quantity;
@@ -131,31 +131,31 @@ export function Lab() {
         okapnikCost = okapnikCost_piece * quantity;
         totalCost = totalCost_piece * quantity;
         break;
-      
+
       case 'sqm':
         surfaceArea = quantity;
         materialCost = selectedMaterial.cost_sqm * quantity;
         processingCost = selectedFinish.cost_sqm * quantity;
 
         if (selectedElement.hasSpecialBunjaEdges) {
-           if (bunjaEdgeStyle === 'lomljene') {
-              processingCost += BUNJA_BROKEN_EDGE_UPCHARGE_SQM * quantity;
-           }
-           // Weight for Bunja is based on its specific thickness.
-           weight = quantity * height_m * selectedMaterial.density * 1000;
+          if (bunjaEdgeStyle === 'lomljene') {
+            processingCost += BUNJA_BROKEN_EDGE_UPCHARGE_SQM * quantity;
+          }
+          // Weight for Bunja is based on its specific thickness.
+          weight = quantity * height_m * selectedMaterial.density * 1000;
         } else {
-           weight = quantity * height_m * selectedMaterial.density * 1000;
+          weight = quantity * height_m * selectedMaterial.density * 1000;
         }
 
         totalCost = materialCost + processingCost;
         break;
-        
+
       case 'lm':
         // Cokl calculation (width is height of the cokl, height is thickness)
         const materialCost_lm = width_m * selectedMaterial.cost_sqm;
         const finishCost_lm = width_m * selectedFinish.cost_sqm;
         const profileCost_lm = selectedProfile.cost_m; // Assuming profile is on the top edge
-        
+
         materialCost = materialCost_lm * quantity;
         processingCost = (finishCost_lm + profileCost_lm) * quantity;
         totalCost = materialCost + processingCost;
@@ -197,7 +197,7 @@ export function Lab() {
       setOkapnikEdges({ front: false, back: false, left: false, right: false });
     }
   };
-  
+
   const edgeNames = {
     front: 'Prednja',
     back: 'Zadnja',
@@ -213,56 +213,56 @@ export function Lab() {
 
     setIsAddingItem(true);
     try {
-        const processedEdgesNames = (Object.entries(processedEdges)
-            .filter(([, selected]) => selected)
-            .map(([edge]) => edgeNames[edge as keyof typeof edgeNames]));
-        
-        const okapnikEdgesNames = (Object.entries(okapnikEdges)
-            .filter(([, selected]) => selected)
-            .map(([edge]) => edgeNames[edge as keyof typeof edgeNames]));
+      const processedEdgesNames = (Object.entries(processedEdges)
+        .filter(([, selected]) => selected)
+        .map(([edge]) => edgeNames[edge as keyof typeof edgeNames]));
 
-        const drawingResponse = await generateTechnicalDrawing({
-            length,
-            width,
-            profileName: selectedProfile.name,
-            surfaceFinishName: selectedFinish.name,
-            processedEdges: processedEdgesNames,
-            okapnikEdges: okapnikEdgesNames,
-            isBunja: !!selectedElement.hasSpecialBunjaEdges,
-            bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges ? bunjaEdgeStyle : undefined,
-        });
+      const okapnikEdgesNames = (Object.entries(okapnikEdges)
+        .filter(([, selected]) => selected)
+        .map(([edge]) => edgeNames[edge as keyof typeof edgeNames]));
 
-        if (!drawingResponse.imageDataUri) {
-             throw new Error("AI nije uspio generirati sliku.");
-        }
+      const drawingResponse = await generateTechnicalDrawing({
+        length,
+        width,
+        profileName: selectedProfile.name,
+        surfaceFinishName: selectedFinish.name,
+        processedEdges: processedEdgesNames,
+        okapnikEdges: okapnikEdgesNames,
+        isBunja: !!selectedElement.hasSpecialBunjaEdges,
+        bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges ? bunjaEdgeStyle : undefined,
+      });
 
-        const newOrderItem: OrderItem = {
-          orderId: Date.now(),
-          id: specimenId,
-          dims: { length, width, height },
-          material: selectedMaterial,
-          finish: selectedFinish,
-          profile: selectedProfile,
-          processedEdges: processedEdges,
-          okapnikEdges: okapnikEdges,
-          totalCost: calculations.totalCost,
-          planSnapshotDataUri: drawingResponse.imageDataUri,
-          planSnapshotUrl: drawingResponse.imageUrl,
-          orderUnit: selectedElement.orderUnit,
-          quantity: quantity,
-          bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges ? bunjaEdgeStyle : undefined,
-        };
-        setOrderItems([...orderItems, newOrderItem]);
-        toast({ title: "Stavka dodana", description: `${specimenId} je dodan u radni nalog.` });
+      if (!drawingResponse.imageDataUri) {
+        throw new Error("AI nije uspio generirati sliku.");
+      }
+
+      const newOrderItem: OrderItem = {
+        orderId: Date.now(),
+        id: specimenId,
+        dims: { length, width, height },
+        material: selectedMaterial,
+        finish: selectedFinish,
+        profile: selectedProfile,
+        processedEdges: processedEdges,
+        okapnikEdges: okapnikEdges,
+        totalCost: calculations.totalCost,
+        planSnapshotDataUri: drawingResponse.imageDataUri,
+        planSnapshotUrl: drawingResponse.imageUrl,
+        orderUnit: selectedElement.orderUnit,
+        quantity: quantity,
+        bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges ? bunjaEdgeStyle : undefined,
+      };
+      setOrderItems([...orderItems, newOrderItem]);
+      toast({ title: "Stavka dodana", description: `${specimenId} je dodan u radni nalog.` });
     } catch (error) {
-        console.error("Error generating technical drawing:", error);
-        toast({
-            title: "Greška pri generiranju crteža",
-            description: "AI model nije uspio generirati tehnički crtež. Molimo pokušajte ponovno.",
-            variant: "destructive",
-        });
+      console.error("Error generating technical drawing:", error);
+      toast({
+        title: "Greška pri generiranju crteža",
+        description: "AI model nije uspio generirati tehnički crtež. Molimo pokušajte ponovno.",
+        variant: "destructive",
+      });
     } finally {
-        setIsAddingItem(false);
+      setIsAddingItem(false);
     }
   };
 
@@ -290,28 +290,28 @@ export function Lab() {
 
   const handleSaveItem = (item: EditableItem, type: ModalType) => {
     if (type === 'material') {
-        const newMaterials = [...materials];
-        const index = newMaterials.findIndex(m => m.id === item.id);
-        if (index > -1) newMaterials[index] = item as Material;
-        else newMaterials.push({ ...item, id: Date.now() } as Material);
-        setMaterials(newMaterials);
+      const newMaterials = [...materials];
+      const index = newMaterials.findIndex(m => m.id === item.id);
+      if (index > -1) newMaterials[index] = item as Material;
+      else newMaterials.push({ ...item, id: Date.now() } as Material);
+      setMaterials(newMaterials);
     } else if (type === 'finish') {
-        const newFinishes = [...finishes];
-        const index = newFinishes.findIndex(f => f.id === item.id);
-        if (index > -1) newFinishes[index] = item as SurfaceFinish;
-        else newFinishes.push({ ...item, id: Date.now() } as SurfaceFinish);
-        setFinishes(newFinishes);
+      const newFinishes = [...finishes];
+      const index = newFinishes.findIndex(f => f.id === item.id);
+      if (index > -1) newFinishes[index] = item as SurfaceFinish;
+      else newFinishes.push({ ...item, id: Date.now() } as SurfaceFinish);
+      setFinishes(newFinishes);
     } else if (type === 'profile') {
-        const newProfiles = [...profiles];
-        const index = newProfiles.findIndex(p => p.id === item.id);
-        if (index > -1) newProfiles[index] = item as EdgeProfile;
-        else newProfiles.push({ ...item, id: Date.now() } as EdgeProfile);
-        setProfiles(newProfiles);
+      const newProfiles = [...profiles];
+      const index = newProfiles.findIndex(p => p.id === item.id);
+      if (index > -1) newProfiles[index] = item as EdgeProfile;
+      else newProfiles.push({ ...item, id: Date.now() } as EdgeProfile);
+      setProfiles(newProfiles);
     }
     setModalOpen(null);
     toast({ title: "Spremljeno", description: "Stavka je uspješno spremljena." });
   };
-  
+
   const renderQuantityInput = () => {
     if (!selectedElement) return null;
     let label = '';
@@ -337,12 +337,12 @@ export function Lab() {
   return (
     <main className="container mx-auto p-4 md:p-6 lg:p-8">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 xl:grid-cols-4">
-        
+
         <div className="flex flex-col gap-6 lg:col-span-1 xl:col-span-1">
           <Card>
             <CardHeader><CardTitle>1. Unos naloga</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-               <div className="space-y-2">
+              <div className="space-y-2">
                 <Label htmlFor="element-type-select">Tip elementa</Label>
                 <Select onValueChange={handleElementTypeChange} defaultValue={constructionElements[0].id}>
                   <SelectTrigger id="element-type-select">
@@ -379,17 +379,17 @@ export function Lab() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>2. Odabir materijala</CardTitle>
-                <Button variant="ghost" size="icon" onClick={() => handleOpenModal('material')}><PlusIcon className="h-4 w-4" /></Button>
+              <CardTitle>2. Odabir materijala</CardTitle>
+              <Button variant="ghost" size="icon" onClick={() => handleOpenModal('material')}><PlusIcon className="h-4 w-4" /></Button>
             </CardHeader>
             <CardContent>
-                <Label htmlFor="material-select">Vrsta kamena</Label>
-                <Select value={selectedMaterialId} onValueChange={setSelectedMaterialId}>
-                    <SelectTrigger id="material-select"><SelectValue placeholder="Odaberite materijal" /></SelectTrigger>
-                    <SelectContent>
-                        {materials.map(m => <SelectItem key={m.id} value={m.id.toString()}>{m.name}</SelectItem>)}
-                    </SelectContent>
-                </Select>
+              <Label htmlFor="material-select">Vrsta kamena</Label>
+              <Select value={selectedMaterialId} onValueChange={setSelectedMaterialId}>
+                <SelectTrigger id="material-select"><SelectValue placeholder="Odaberite materijal" /></SelectTrigger>
+                <SelectContent>
+                  {materials.map(m => <SelectItem key={m.id} value={m.id.toString()}>{m.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </CardContent>
           </Card>
 
@@ -400,19 +400,19 @@ export function Lab() {
                 <Label htmlFor="surface-finish-select">Obrada lica</Label>
                 <div className="flex items-center gap-2">
                   <Select value={selectedFinishId} onValueChange={setSelectedFinishId}>
-                      <SelectTrigger id="surface-finish-select"><SelectValue placeholder="Odaberite obradu" /></SelectTrigger>
-                      <SelectContent>
-                          {finishes.map(f => <SelectItem key={f.id} value={f.id.toString()}>{f.name}</SelectItem>)}
-                      </SelectContent>
+                    <SelectTrigger id="surface-finish-select"><SelectValue placeholder="Odaberite obradu" /></SelectTrigger>
+                    <SelectContent>
+                      {finishes.map(f => <SelectItem key={f.id} value={f.id.toString()}>{f.name}</SelectItem>)}
+                    </SelectContent>
                   </Select>
                   <Button variant="ghost" size="icon" onClick={() => handleOpenModal('finish')}><PlusIcon className="h-4 w-4" /></Button>
                 </div>
               </div>
-              
+
               {selectedElement?.hasSpecialBunjaEdges ? (
                 <div className="space-y-3 pt-2">
                   <Label className="text-base">Obrada ivica bunje</Label>
-                   <RadioGroup defaultValue="lomljene" value={bunjaEdgeStyle} onValueChange={(value) => setBunjaEdgeStyle(value as 'oštre' | 'lomljene')}>
+                  <RadioGroup defaultValue="lomljene" value={bunjaEdgeStyle} onValueChange={(value) => setBunjaEdgeStyle(value as 'oštre' | 'lomljene')}>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="lomljene" id="r-lomljene" />
                       <Label htmlFor="r-lomljene" className="cursor-pointer">Lomljene ivice</Label>
@@ -429,51 +429,51 @@ export function Lab() {
                     <Label>Profil i obrada ivica</Label>
                     <div className="flex items-center gap-2">
                       <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
-                            <SelectTrigger id="edge-profile-select"><SelectValue placeholder="Odaberite profil" /></SelectTrigger>
-                            <SelectContent>
-                                {profiles.map(p => <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                        <SelectTrigger id="edge-profile-select"><SelectValue placeholder="Odaberite profil" /></SelectTrigger>
+                        <SelectContent>
+                          {profiles.map(p => <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                       <Button variant="ghost" size="icon" onClick={() => handleOpenModal('profile')}><PlusIcon className="h-4 w-4" /></Button>
                     </div>
                   </div>
                   <div className="space-y-2 pt-2">
-                      <Label className="text-sm">Primijeni obradu na ivicama:</Label>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
-                        {Object.keys(edgeNames).map((edge) => (
-                            <div className="flex items-center space-x-2" key={edge}>
-                              <Checkbox 
-                                  id={`edge-${edge}`} 
-                                  checked={processedEdges[edge as keyof ProcessedEdges]} 
-                                  onCheckedChange={(checked) => setProcessedEdges(prev => ({...prev, [edge]: !!checked}))}
-                              />
-                              <Label htmlFor={`edge-${edge}`} className="font-normal cursor-pointer">{edgeNames[edge as keyof typeof edgeNames]}</Label>
-                          </div>
-                        ))}
-                      </div>
+                    <Label className="text-sm">Primijeni obradu na ivicama:</Label>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
+                      {Object.keys(edgeNames).map((edge) => (
+                        <div className="flex items-center space-x-2" key={edge}>
+                          <Checkbox
+                            id={`edge-${edge}`}
+                            checked={processedEdges[edge as keyof ProcessedEdges]}
+                            onCheckedChange={(checked) => setProcessedEdges(prev => ({ ...prev, [edge]: !!checked }))}
+                          />
+                          <Label htmlFor={`edge-${edge}`} className="font-normal cursor-pointer">{edgeNames[edge as keyof typeof edgeNames]}</Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <div className="space-y-2 pt-2">
-                      <Label className="text-sm">Dodaj okapnik na ivicama:</Label>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
-                        {Object.keys(edgeNames).map((edge) => (
-                            <div className="flex items-center space-x-2" key={`okapnik-${edge}`}>
-                              <Checkbox 
-                                  id={`okapnik-${edge}`} 
-                                  checked={okapnikEdges[edge as keyof ProcessedEdges]} 
-                                  onCheckedChange={(checked) => setOkapnikEdges(prev => ({...prev, [edge]: !!checked}))}
-                                  disabled={!processedEdges[edge as keyof ProcessedEdges]}
-                              />
-                              <Label htmlFor={`okapnik-${edge}`} className={`font-normal cursor-pointer ${!processedEdges[edge as keyof ProcessedEdges] ? 'text-muted-foreground' : ''}`}>{edgeNames[edge as keyof typeof edgeNames]}</Label>
-                          </div>
-                        ))}
-                      </div>
+                    <Label className="text-sm">Dodaj okapnik na ivicama:</Label>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
+                      {Object.keys(edgeNames).map((edge) => (
+                        <div className="flex items-center space-x-2" key={`okapnik-${edge}`}>
+                          <Checkbox
+                            id={`okapnik-${edge}`}
+                            checked={okapnikEdges[edge as keyof ProcessedEdges]}
+                            onCheckedChange={(checked) => setOkapnikEdges(prev => ({ ...prev, [edge]: !!checked }))}
+                            disabled={!processedEdges[edge as keyof ProcessedEdges]}
+                          />
+                          <Label htmlFor={`okapnik-${edge}`} className={`font-normal cursor-pointer ${!processedEdges[edge as keyof ProcessedEdges] ? 'text-muted-foreground' : ''}`}>{edgeNames[edge as keyof typeof edgeNames]}</Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </>
               )}
             </CardContent>
           </Card>
 
-           <Card>
+          <Card>
             <CardHeader><CardTitle>4. Kalkulacija</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between text-sm">
@@ -502,7 +502,7 @@ export function Lab() {
               </Button>
             </CardHeader>
             <CardContent className="h-full pb-0">
-               <VisualizationCanvas key={refreshKey} {...visualizationState} />
+              <VisualizationCanvasLazy key={refreshKey} {...visualizationState} />
             </CardContent>
           </Card>
         </div>
@@ -511,89 +511,90 @@ export function Lab() {
           <Card>
             <CardHeader><CardTitle>5. Radni nalog</CardTitle></CardHeader>
             <CardContent>
-                <div className="flex flex-col gap-4 md:flex-row md:items-center">
-                    <Button onClick={handleAddToOrder} className="w-full md:w-auto flex-1" disabled={isAddingItem}>
-                      {isAddingItem && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      {isAddingItem ? 'Generiram crtež...' : 'Dodaj stavku u nalog'}
-                    </Button>
-                     <Button onClick={handleDownloadPdf} variant="outline" className="w-full md:w-auto flex-1" disabled={orderItems.length === 0}>
-                        <FileDown className="mr-2 h-4 w-4" />
-                        Preuzmi Nalog (PDF)
-                    </Button>
+              <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                <Button onClick={handleAddToOrder} className="w-full md:w-auto flex-1" disabled={isAddingItem}>
+                  {isAddingItem && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isAddingItem ? 'Generiram crtež...' : 'Dodaj stavku u nalog'}
+                </Button>
+                <Button onClick={handleDownloadPdf} variant="outline" className="w-full md:w-auto flex-1" disabled={orderItems.length === 0}>
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Preuzmi Nalog (PDF)
+                </Button>
+              </div>
+              <Separator className="my-4" />
+              <ScrollArea className="h-64">
+                <div className="space-y-3 pr-4">
+                  {orderItems.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">Nema stavki u nalogu.</p>
+                  ) : (
+                    orderItems.map(item => {
+                      let quantityString = '';
+                      switch (item.orderUnit) {
+                        case 'piece': quantityString = `${item.quantity} kom`; break;
+                        case 'sqm': quantityString = `${item.quantity.toFixed(2)} m²`; break;
+                        case 'lm': quantityString = `${item.quantity.toFixed(2)} m`; break;
+                      }
+
+                      let description = `${item.material.name} | ${item.finish.name}`;
+                      if (item.orderUnit !== 'sqm' && item.orderUnit !== 'lm') {
+                        description += ` | ${item.profile.name}`;
+                      }
+
+                      return (
+                        <div key={item.orderId} className="flex items-center justify-between rounded-lg border p-3">
+                          <div className="flex-1">
+                            <p className="font-semibold">{item.id} <span className="text-sm font-normal text-muted-foreground">({quantityString})</span></p>
+                            <p className="text-xs text-muted-foreground">{description}</p>
+
+                            {item.bunjaEdgeStyle ? (
+                              <p className="text-xs text-muted-foreground">Obrada ivica: {item.bunjaEdgeStyle === 'lomljene' ? 'Lomljene' : 'Oštre'}</p>
+                            ) : (
+                              <>
+                                <p className="text-xs text-muted-foreground">Obrađene ivice: {(Object.entries(item.processedEdges)
+                                  .filter(([, selected]) => selected)
+                                  .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
+                                  .join(', ') || 'Nijedna')}</p>
+                                <p className="text-xs text-muted-foreground">Okapnik: {(Object.entries(item.okapnikEdges || {})
+                                  .filter(([, selected]) => selected)
+                                  .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
+                                  .join(', ') || 'Nema')}</p>
+                              </>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold">€{item.totalCost.toFixed(2)}</p>
+                          </div>
+                          <Button variant="ghost" size="icon" className="ml-2" onClick={() => handleRemoveOrderItem(item.orderId)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      )
+                    })
+                  )}
                 </div>
-                <Separator className="my-4" />
-                <ScrollArea className="h-64">
-                    <div className="space-y-3 pr-4">
-                    {orderItems.length === 0 ? (
-                        <p className="text-center text-muted-foreground py-8">Nema stavki u nalogu.</p>
-                    ) : (
-                        orderItems.map(item => {
-                          let quantityString = '';
-                          switch(item.orderUnit) {
-                            case 'piece': quantityString = `${item.quantity} kom`; break;
-                            case 'sqm': quantityString = `${item.quantity.toFixed(2)} m²`; break;
-                            case 'lm': quantityString = `${item.quantity.toFixed(2)} m`; break;
-                          }
-
-                          let description = `${item.material.name} | ${item.finish.name}`;
-                           if (item.orderUnit !== 'sqm' && item.orderUnit !== 'lm') {
-                                description += ` | ${item.profile.name}`;
-                           }
-
-                          return (
-                            <div key={item.orderId} className="flex items-center justify-between rounded-lg border p-3">
-                                <div className="flex-1">
-                                    <p className="font-semibold">{item.id} <span className="text-sm font-normal text-muted-foreground">({quantityString})</span></p>
-                                    <p className="text-xs text-muted-foreground">{description}</p>
-                                    
-                                    {item.bunjaEdgeStyle ? (
-                                      <p className="text-xs text-muted-foreground">Obrada ivica: {item.bunjaEdgeStyle === 'lomljene' ? 'Lomljene' : 'Oštre'}</p>
-                                    ) : (
-                                      <>
-                                        <p className="text-xs text-muted-foreground">Obrađene ivice: {(Object.entries(item.processedEdges)
-                                              .filter(([, selected]) => selected)
-                                              .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
-                                              .join(', ') || 'Nijedna')}</p>
-                                        <p className="text-xs text-muted-foreground">Okapnik: {(Object.entries(item.okapnikEdges || {})
-                                              .filter(([, selected]) => selected)
-                                              .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
-                                              .join(', ') || 'Nema')}</p>
-                                      </>
-                                    )}
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-semibold">€{item.totalCost.toFixed(2)}</p>
-                                </div>
-                                <Button variant="ghost" size="icon" className="ml-2" onClick={() => handleRemoveOrderItem(item.orderId)}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </div>
-                        )})
-                    )}
-                    </div>
-                </ScrollArea>
+              </ScrollArea>
             </CardContent>
           </Card>
         </div>
       </div>
-      
-      <MaterialModal 
-        isOpen={modalOpen === 'material'} 
-        onClose={() => setModalOpen(null)} 
+
+      <MaterialModal
+        isOpen={modalOpen === 'material'}
+        onClose={() => setModalOpen(null)}
         onSave={(item) => handleSaveItem(item, 'material')}
-        item={editingItem as Material | null} 
+        item={editingItem as Material | null}
       />
-       <FinishModal 
-        isOpen={modalOpen === 'finish'} 
-        onClose={() => setModalOpen(null)} 
+      <FinishModal
+        isOpen={modalOpen === 'finish'}
+        onClose={() => setModalOpen(null)}
         onSave={(item) => handleSaveItem(item, 'finish')}
-        item={editingItem as SurfaceFinish | null} 
+        item={editingItem as SurfaceFinish | null}
       />
-       <ProfileModal 
-        isOpen={modalOpen === 'profile'} 
-        onClose={() => setModalOpen(null)} 
+      <ProfileModal
+        isOpen={modalOpen === 'profile'}
+        onClose={() => setModalOpen(null)}
         onSave={(item) => handleSaveItem(item, 'profile')}
-        item={editingItem as EdgeProfile | null} 
+        item={editingItem as EdgeProfile | null}
       />
     </main>
   );
