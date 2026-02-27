@@ -27,6 +27,52 @@ For the Python stack, employ pip list --outdated to identify packages requiring 
 
 Create a dedicated script to automate the dependency audit process across both stacks:
 
+**JavaScript/TypeScript Audit Script:**
+
+```bash
+#!/bin/bash
+# scripts/audit-js-deps.sh
+
+echo "=== Checking outdated npm packages ==="
+npm outdated --json > reports/npm-outdated.json || true
+
+echo "=== Running security audit ==="
+npm audit --json > reports/npm-audit.json || true
+
+echo "=== Checking for major version updates ==="
+cat package.json | jq '.dependencies, .devDependencies | to_entries | .[] | select(.value | test("^[~\^]?([5-9]|[1-9][0-9])\."))' 
+
+echo "=== Generating dependency report ==="
+node scripts/generate-dep-report.js
+```
+
+**Python Audit Script:**
+
+```bash
+#!/bin/bash
+# scripts/audit-python-deps.sh
+
+echo "=== Checking outdated pip packages ==="
+pip list --outdated --format=json > reports/pip-outdated.json || true
+
+echo "=== Running security audit ==="
+pip-audit --format=json > reports/pip-audit.json || true
+
+echo "=== Checking for major version updates ==="
+pip-compile requirements.in --dry-run --upgrade 2>/dev/null | head -50
+
+echo "=== Generating dependency report ==="
+python scripts/generate-python-dep-report.py
+```
+
+These scripts should be integrated into the CI/CD pipeline to run on a scheduled basis and generate reports that can be reviewed during weekly sprint planning.
+
+#### Manual Dependency Review
+
+Beyond automated scanning, conduct quarterly manual reviews of critical dependencies. Focus on packages that:
+
+#### Manual Dependency Review
+
 #### Automated Dependency Scanning
 
 For the TypeScript/JavaScript stack, utilize npm outdated and npm audit commands to identify outdated packages and security vulnerabilities. Create a script that runs during the CI/CD pipeline to flag dependencies that have known security issues or are more than two minor versions behind the current release. The project already includes a test script in package.json, which should be extended to include dependency auditing.
