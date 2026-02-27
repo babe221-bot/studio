@@ -47,6 +47,5 @@ export async function joinAsGuest() {
 
     // Serialize and redirect with the guest session
     // We'll set the cookie via client-side after redirect
-    revalidatePath('/', 'layout')
     redirect(`/?guest=${encodeURIComponent(serializeGuestUser(guestUser))}`)
 }
