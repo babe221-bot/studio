@@ -41,7 +41,7 @@ test.describe('Lab Component Interactions', () => {
         };
         const initialPriceText = await getPrice();
 
-        const frontEdgeToggle = page.getByLabel(/Prednja/i);
+        const frontEdgeToggle = page.locator('#edge-front');
         if (await frontEdgeToggle.isVisible()) {
             await frontEdgeToggle.click({ force: true });
             await page.waitForTimeout(500);

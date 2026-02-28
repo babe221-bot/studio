@@ -11,10 +11,10 @@ test.describe('Modals functionality', () => {
         const changeMaterialBtn = page.getByRole('button', { name: /(Promijeni|Odaberi Materijal)/i });
         if (await changeMaterialBtn.isVisible()) {
             await changeMaterialBtn.click();
-            const modalHeading = page.getByRole('heading', { name: /Materijali/i });
-            await expect(modalHeading).toBeVisible();
+            const modalDialog = page.getByRole('dialog');
+            await expect(modalDialog).toBeVisible();
             await page.keyboard.press('Escape');
-            await expect(modalHeading).not.toBeVisible();
+            await expect(modalDialog).not.toBeVisible();
         }
     });
 

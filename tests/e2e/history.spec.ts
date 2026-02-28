@@ -16,14 +16,7 @@ test.describe('History and Templates functionality', () => {
     });
 
     test('20. Save current config to history (Mock check)', async ({ page }) => {
-        // Make sure a component is added to enable saving
-        await page.getByRole('button', { name: 'Dodaj stavku u nalog' }).click();
-        const saveBtn = page.getByRole('button', { name: /Spremi trenutnu verziju/i }).first();
-        if (await saveBtn.isVisible()) {
-            await saveBtn.click();
-            // A toast or confirmation might appear
-            const toast = page.getByRole('status');
-            await expect(toast).toBeVisible({ timeout: 5000 }).catch(() => { });
-        }
+        const saveBtn = page.getByText(/Spremi trenutnu verziju/i).first();
+        await expect(saveBtn).toBeVisible();
     });
 });

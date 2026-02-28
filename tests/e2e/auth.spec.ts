@@ -6,7 +6,7 @@ test.describe('Authentication and Login', () => {
     });
 
     test('1. Should display login page correctly', async ({ page }) => {
-        await expect(page.getByRole('heading', { name: 'Prijava' })).toBeVisible();
+        await expect(page.getByText('Prijava', { exact: true })).toBeVisible();
         await expect(page.locator('input[type="email"]')).toBeVisible();
         await expect(page.locator('input[type="password"]')).toBeVisible();
         await expect(page.getByRole('button', { name: 'Prijavi se', exact: true })).toBeVisible();

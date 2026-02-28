@@ -26,7 +26,7 @@ test.describe('Home Page and General UI', () => {
     });
 
     test('8. Should format price correctly', async ({ page }) => {
-        await expect(page.locator('text=/Ukupni trošak/i')).toBeVisible();
+        await expect(page.getByText('Ukupni trošak')).toBeVisible();
         await expect(page.getByText(/€/).first()).toBeVisible();
     });
 });
