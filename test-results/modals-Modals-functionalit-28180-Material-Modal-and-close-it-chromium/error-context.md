@@ -1,7 +1,7 @@
 # Page snapshot
 
 ```yaml
-- generic [active] [ref=e1]:
+- generic [ref=e1]:
   - generic [ref=e2]:
     - banner [ref=e3]:
       - generic [ref=e4]:
@@ -13,7 +13,7 @@
             - generic [ref=e11]: Gost
             - button "Napusti gost mode" [ref=e13] [cursor=pointer]:
               - img
-          - button "Promijeni temu" [ref=e14] [cursor=pointer]:
+          - button "Promijeni temu" [active] [ref=e14] [cursor=pointer]:
             - img
             - generic [ref=e15]: Promijeni temu
     - main [ref=e16]:
@@ -148,19 +148,17 @@
                 - text: Povijest verzija
           - generic [ref=e128]:
             - generic [ref=e129]:
-              - button "Generiram crtež..." [disabled]:
-                - img
-                - text: Generiram crtež...
+              - button "Dodaj stavku u nalog" [ref=e130] [cursor=pointer]
               - button "Preuzmi Nalog (PDF)" [disabled]:
                 - img
                 - text: Preuzmi Nalog (PDF)
               - button "Spremi trenutnu verziju" [disabled]
-            - paragraph [ref=e134]: Nema stavki u nalogu.
-    - button "Otvori AI Pomoćnika" [ref=e135] [cursor=pointer]:
+            - paragraph [ref=e135]: Nema stavki u nalogu.
+    - button "Otvori AI Pomoćnika" [ref=e136] [cursor=pointer]:
       - img
   - region "Notifications (F8)":
     - list
-  - button "Open Next.js Dev Tools" [ref=e141] [cursor=pointer]:
-    - img [ref=e142]
-  - alert [ref=e145]
+  - button "Open Next.js Dev Tools" [ref=e142] [cursor=pointer]:
+    - img [ref=e143]
+  - alert [ref=e146]
 ```
