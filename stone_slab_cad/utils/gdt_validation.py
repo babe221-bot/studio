@@ -616,7 +616,12 @@ class GDnTValidationEngine:
             for orientation, results in report.chamfer_results.items():
                 lines.append(f"  {orientation.value.upper()}:")
                 for r in results:
-                    status_icon = "✓" if r.status == ValidationStatus.PASS else "⚠" if r.status == ValidationStatus.WARN else "✗"
+                    if r.status == ValidationStatus.PASS:
+                        status_icon = "[PASS]"
+                    elif r.status == ValidationStatus.WARN:
+                        status_icon = "[WARN]"
+                    else:
+                        status_icon = "[FAIL]"
                     lines.append(f"    {status_icon} {r.check_name}: {r.message}")
                     if r.recommendations:
                         for rec in r.recommendations:
@@ -628,7 +633,12 @@ class GDnTValidationEngine:
         if report.squareness_results:
             lines.append("EDGE SQUARENESS VALIDATION:")
             for orientation, result in report.squareness_results.items():
-                status_icon = "✓" if result.status == ValidationStatus.PASS else "⚠" if result.status == ValidationStatus.WARN else "✗"
+                if result.status == ValidationStatus.PASS:
+                    status_icon = "[PASS]"
+                elif result.status == ValidationStatus.WARN:
+                    status_icon = "[WARN]"
+                else:
+                    status_icon = "[FAIL]"
                 lines.append(f"  {status_icon} {result.check_name}: {result.message}")
             lines.append("")
         
@@ -638,7 +648,12 @@ class GDnTValidationEngine:
             for orientation, results in report.drip_edge_results.items():
                 lines.append(f"  {orientation.value.upper()}:")
                 for r in results:
-                    status_icon = "✓" if r.status == ValidationStatus.PASS else "⚠" if r.status == ValidationStatus.WARN else "✗"
+                    if r.status == ValidationStatus.PASS:
+                        status_icon = "[PASS]"
+                    elif r.status == ValidationStatus.WARN:
+                        status_icon = "[WARN]"
+                    else:
+                        status_icon = "[FAIL]"
                     lines.append(f"    {status_icon} {r.check_name}: {r.message}")
             lines.append("")
         
