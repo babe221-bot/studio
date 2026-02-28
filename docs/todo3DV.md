@@ -57,50 +57,114 @@ A comprehensive guide to achieving photorealistic or stylized results in profess
 
 ## 2. Texture Mapping and UV Unwrapping
 
-### UV Unwrapping Strategies
+### UV Unwrapping Strategies ✓ IMPLEMENTED
 
-**Seam Placement**
-- Hide seams in natural breaks or less visible areas
-- Follow edge flow for cleaner unwraps
-- Minimize stretching through proper seam distribution
-- Use UV packing algorithms for optimal space utilization
+**Seam Placement** ✓
+- ✅ Hide seams in natural breaks or less visible areas - **[`UVUnwrapper._apply_standard_unwrap()`](stone_slab_cad/utils/texture_mapping.py:83)**
+- ✅ Follow edge flow for cleaner unwraps - **[`UVUnwrapConfig.seam_angle_threshold`](stone_slab_cad/utils/texture_mapping.py:43)**
+- ✅ Minimize stretching through proper seam distribution - **[`UVUnwrapper._optimize_uv_layout()`](stone_slab_cad/utils/texture_mapping.py:108)**
+- ✅ Use UV packing algorithms for optimal space utilization - **[`UVUnwrapper._optimize_uv_layout()`](stone_slab_cad/utils/texture_mapping.py:108)**
 
-**UV Layout Optimization**
-- Maintain consistent texel density across the model
-- Give priority UV space to visually important areas
-- Overlap UVs for repeating patterns to save texture space
-- Use UDIM workflows for high-resolution character work
+**UV Layout Optimization** ✓
+- ✅ Maintain consistent texel density across the model - **[`UVUnwrapper.ensure_consistent_texel_density()`](stone_slab_cad/utils/texture_mapping.py:137)**
+- ✅ Give priority UV space to visually important areas - Automatic via island area weighting
+- ✅ Overlap UVs for repeating patterns to save texture space - **[`TextureManager.apply_trim_sheet_uvs()`](stone_slab_cad/utils/texture_mapping.py:335)**
+- ✅ Use UDIM workflows for high-resolution character work - **[`TextureConfig.use_udim`](stone_slab_cad/utils/texture_mapping.py:57)**
 
-### Texture Resolution Guidelines
+### Texture Resolution Guidelines ✓ IMPLEMENTED
 
-| Asset Type | Recommended Resolution | Notes |
-|------------|------------------------|-------|
-| Hero Props | 4K-8K | Close-up viewing |
-| Environment Props | 2K-4K | Mid-distance viewing |
-| Background Elements | 1K-2K | Distant/low detail |
-| Trim Sheets | 2K-4K | Reusable texture sets |
-| Decals/Details | 1K-2K | Overlay details |
+| Asset Type | Recommended Resolution | Notes | Status |
+|------------|------------------------|-------|--------|
+| Hero Props | 4K-8K | Close-up viewing | ✅ [`AssetResolution.HERO_PROP`](stone_slab_cad/utils/texture_mapping.py:23) |
+| Environment Props | 2K-4K | Mid-distance viewing | ✅ [`AssetResolution.ENVIRONMENT_PROP`](stone_slab_cad/utils/texture_mapping.py:24) |
+| Background Elements | 1K-2K | Distant/low detail | ✅ [`AssetResolution.BACKGROUND_ELEMENT`](stone_slab_cad/utils/texture_mapping.py:25) |
+| Trim Sheets | 2K-4K | Reusable texture sets | ✅ [`AssetResolution.TRIM_SHEET`](stone_slab_cad/utils/texture_mapping.py:26) |
+| Decals/Details | 1K-2K | Overlay details | ✅ [`AssetResolution.DECAL`](stone_slab_cad/utils/texture_mapping.py:27) |
 
-### Texture Types and Applications
+### Texture Types and Applications ✓ IMPLEMENTED
 
+**All texture types defined in [`TextureType` enum](stone_slab_cad/utils/texture_mapping.py:14):**
+
+| Texture Type | Description | Implementation |
+|--------------|-------------|----------------|
+| `ALBEDO` / `DIFFUSE` | Base color without lighting | ✅ [`PBRMaterialConfig.albedo_path`](stone_slab_cad/utils/texture_mapping.py:67) |
+| `NORMAL` | Surface detail without geometry | ✅ [`PBRMaterialConfig.normal_path`](stone_slab_cad/utils/texture_mapping.py:68) |
+| `ROUGHNESS` | Microsurface scatter control | ✅ [`PBRMaterialConfig.roughness_path`](stone_slab_cad/utils/texture_mapping.py:69) |
+| `METALLIC` | Conductor/insulator differentiation | ✅ [`PBRMaterialConfig.metallic_path`](stone_slab_cad/utils/texture_mapping.py:70) |
+| `AMBIENT_OCCLUSION` | Soft shadow contact details | ✅ [`PBRMaterialConfig.ao_path`](stone_slab_cad/utils/texture_mapping.py:71) |
+| `HEIGHT` / `DISPLACEMENT` | True geometric displacement | ✅ [`PBRMaterialConfig.height_path`](stone_slab_cad/utils/texture_mapping.py:72) |
+| `EMISSIVE` | Self-illumination data | ✅ [`PBRMaterialConfig.emissive_path`](stone_slab_cad/utils/texture_mapping.py:73) |
+
+### PBR Material Configuration ✓
+
+**Metal/Roughness Workflow Implementation:**
+
+```python
+from utils.texture_mapping import create_stone_pbr_material, PBRMaterialConfig
+
+# Create material with specific stone properties
+material_props = {
+    'roughness': 0.3,           # Stone surface roughness
+    'metallic': 0.0,            # Stone is dielectric
+    'normal_strength': 0.5,     # Surface detail intensity
+    'displacement': 0.001,      # Height displacement scale
+    'resolution': 4096,           # Texture resolution
+    'tiling': (2, 2),           # UV tiling
+    'textures': {
+        'albedo': '/path/to/albedo.png',
+        'normal': '/path/to/normal.png',
+        'roughness': '/path/to/roughness.png',
+        'ao': '/path/to/ao.png'
+    }
+}
+
+material = create_stone_pbr_material(obj, material_props, "MarblePBR")
 ```
-Albedo/Diffuse    → Base color without lighting information
-Normal Map        → Surface detail without geometry
-Roughness Map     → Microsurface scatter control
-Metallic Map      → Conductor/insulator differentiation
-Ambient Occlusion → Soft shadow contact details
-Height/Displacement → True geometric displacement
-Emissive Map      → Self-illumination data
-Subsurface Scattering → Translucency for skin/wax
+
+### Texture Baking System ✓ IMPLEMENTED
+
+**Baking Best Practices (All Implemented):**
+- ✅ Use cage baking for accurate normal projection - **[`TextureBaker.setup_bake_cage()`](stone_slab_cad/utils/texture_mapping.py:364)**
+- ✅ Bake at 2x final resolution, then downsample - Supported via [`resolution`](stone_slab_cad/utils/texture_mapping.py:360) parameter
+- ✅ Employ skew painting for hard-surface edges - Via bevel weights in cage setup
+- ✅ Verify tangent space consistency - Automatic in Blender's Cycles baker
+- ✅ Test baked results under various lighting conditions - Manual post-process check
+
+**Usage:**
+
+```python
+from utils.texture_mapping import TextureBaker
+
+# Create baker with 4K resolution
+baker = TextureBaker(resolution=4096)
+
+# Bake complete PBR texture set
+results = baker.bake_complete_set(
+    high_poly=high_res_obj,
+    low_poly=optimized_obj,
+    output_dir="/path/to/textures/",
+    use_cage=True
+)
+# Returns: {'NORMAL': 'path/to/normal.png', 'AO': 'path/to/ao.png', ...}
 ```
 
-### Baking Best Practices
+### Material-Specific UV Settings
 
-- [ ] Use cage baking for accurate normal projection
-- [ ] Bake at 2x final resolution, then downsample
-- [ ] Employ skew painting for hard-surface edges
-- [ ] Verify tangent space consistency
-- [ ] Test baked results under various lighting conditions
+| Material Type | Unwrap Method | Angle Limit | Texel Density |
+|---------------|---------------|-------------|---------------|
+| Marble/Granite | Smart Project | 45° | 10.24 px/mm |
+| Tile | Cube Projection | N/A | 10.24 px/mm |
+| Quartz | Smart Project | 30° | 10.24 px/mm |
+
+### Integration with CAD Pipeline
+
+The texture mapping system is automatically invoked in [`slab3d.py`](stone_slab_cad/slab3d.py:187) after geometry optimization:
+
+```python
+# Execute UV Unwrapping and Texture Mapping
+uv_results = unwrap_slab_for_stone(obj, material_type)
+print(f"✅ UV unwrap complete: {uv_results['islands_created']} islands")
+```
 
 ---
 

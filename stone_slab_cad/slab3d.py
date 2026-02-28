@@ -1,6 +1,7 @@
 """
 3D Stone Slab Geometry Generation using Blender
 With Comprehensive 3D Asset Optimization Protocol
+And Texture Mapping & UV Unwrapping System
 """
 import bpy
 import bmesh
@@ -10,6 +11,10 @@ from typing import Dict, Any
 from utils.materials import create_material
 from utils.profiles import get_profile_settings
 from utils.mesh_optimizer import optimize_slab_geometry, MeshHierarchyBuilder, OptimizationConfig
+from utils.texture_mapping import (
+    unwrap_slab_for_stone, create_stone_pbr_material,
+    UVUnwrapper, UVUnwrapConfig, UnwrapMethod
+)
 
 def clear_scene():
     """Clear all objects from the current scene"""
@@ -176,6 +181,11 @@ def generate_3d_model(config: Dict[Any, Any], output_path: str) -> None:
     material_type = config.get('material', {}).get('type', 'stone')
     optimization_results = optimize_slab_geometry(obj, material_type)
     print(f"✅ Optimization complete: {optimization_results['new_name']}")
+    
+    # Execute UV Unwrapping and Texture Mapping
+    print("\n🎨 Executing UV Unwrapping & Texture Mapping...")
+    uv_results = unwrap_slab_for_stone(obj, material_type)
+    print(f"✅ UV unwrap complete: {uv_results['islands_created']} islands, {uv_results['pack_efficiency']:.1f}% efficiency")
     
     # Export to GLB
     print(f"📦 Exporting to: {output_path}")
