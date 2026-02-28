@@ -557,7 +557,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
         tex.repeat.set(vizL / tileSizeM, vizW / tileSizeM);
         tex.needsUpdate = true;
         mainMat.map = tex;
-        mainMat.needsUpdate = true;
+        // needsUpdate is called at line 571 after this function
       };
 
       if (textureUrl) {
@@ -610,6 +610,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
 
       const worker = new Worker(new URL('@/workers/geometryWorker.ts', import.meta.url));
       workerRef.current = worker;
+      let workerTerminated = false;
 
       worker.postMessage({ L: vizL, W: vizW, H: h, profile, processedEdges, okapnikEdges });
 
@@ -654,8 +655,22 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
         pendingGeometryRef.current = null; // Geometry now attached to mesh, mesh will handle disposal
 
         // Terminate worker after successful completion
-        if (workerRef.current === worker) {
-          workerRef.current.terminate();
+        if (workerRef.current === worker && !workerTerminated) {
+          workerTerminated = true;
+          worker.terminate();
+          workerRef.current = null;
+        }
+      };
+
+      worker.onerror = (err) => {
+        console.error('Geometry worker error:', err);
+        if (pendingGeometryRef.current) {
+          pendingGeometryRef.current.dispose();
+          pendingGeometryRef.current = null;
+        }
+        if (workerRef.current === worker && !workerTerminated) {
+          workerTerminated = true;
+          worker.terminate();
           workerRef.current = null;
         }
       };
@@ -668,8 +683,9 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
         }
 
         // Terminate worker only if it's still this one
-        if (workerRef.current === worker) {
-          workerRef.current.terminate();
+        if (workerRef.current === worker && !workerTerminated) {
+          workerTerminated = true;
+          worker.terminate();
           workerRef.current = null;
         }
       };
