@@ -10,19 +10,34 @@ Run from backend/:
     pytest tests/test_api_endpoints.py -v
 """
 import json
+import sys
 import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock, patch, MagicMock
-from httpx import AsyncClient, ASGITransport
 
 
 # ---------------------------------------------------------------------------
-# App fixture — isolate the lifespan so we never hit a real DB
+# Patch DB engine creation *before* any app import happens.
+# `app.services.database` sets up a SQLAlchemy engine at module level;
+# we swap it for a MagicMock to avoid connection errors in tests.
+# ---------------------------------------------------------------------------
+
+def _stub_database_module():
+    """Replace database module attributes with test stubs."""
+    import app.services.database as _db
+    _db.engine = MagicMock()
+    _db.AsyncSessionLocal = MagicMock()
+    _db.init_db = AsyncMock(return_value=None)
+
+
+# ---------------------------------------------------------------------------
+# App fixture
 # ---------------------------------------------------------------------------
 
 @pytest_asyncio.fixture
 async def client():
     """Return an async test client with DB lifespan stubbed out."""
+    _stub_database_module()
     with patch("app.services.database.init_db", new_callable=AsyncMock):
         from app.main import app
         async with AsyncClient(

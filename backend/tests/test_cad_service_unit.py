@@ -105,10 +105,18 @@ async def test_generate_drawing_temp_dir_is_cleaned_up():
 
 @pytest.mark.asyncio
 async def test_generate_drawing_cad_unavailable():
-    with patch("app.services.cad_service._CAD_AVAILABLE", False), \
-         patch("app.services.cad_service._CAD_IMPORT_ERROR", "No module named 'ezdxf'"):
-        from app.services.cad_service import generate_drawing
-        result = await generate_drawing(_MINIMAL_CONFIG)
+    import app.services.cad_service as _svc
+    orig_available = _svc._CAD_AVAILABLE
+    import_err_existed = hasattr(_svc, "_CAD_IMPORT_ERROR")
+    # Set the module attributes directly so the guard branch is exercised
+    _svc._CAD_AVAILABLE = False
+    _svc._CAD_IMPORT_ERROR = "No module named 'ezdxf'"
+    try:
+        result = await _svc.generate_drawing(_MINIMAL_CONFIG)
+    finally:
+        _svc._CAD_AVAILABLE = orig_available
+        if not import_err_existed and hasattr(_svc, "_CAD_IMPORT_ERROR"):
+            del _svc._CAD_IMPORT_ERROR
 
     assert result["success"] is False
     assert "error" in result
