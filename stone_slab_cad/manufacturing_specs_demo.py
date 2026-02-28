@@ -68,10 +68,10 @@ def demo_c8_chamfer_spec():
     
     print("\nC8 Chamfer Parameters:")
     print(f"  Depth: {spec.c8_chamfer.depth_mm}mm")
-    print(f"  Angle: {spec.c8_chamfer.angle_degrees}°")
+    print(f"  Angle: {spec.c8_chamfer.angle_degrees} deg")
     print(f"  Width: {spec.c8_chamfer.width_mm:.2f}mm")
     print(f"  Tolerance: ±{spec.c8_chamfer.tolerance_mm}mm")
-    print(f"  Surface Roughness Ra: {spec.c8_chamfer.surface_roughness_ra}μm")
+    print(f"  Surface Roughness Ra: {spec.c8_chamfer.surface_roughness_ra}um")
     
     print("\nEdge Treatments (All Four Orientations):")
     for orientation, profile in spec.edge_treatments.items():
