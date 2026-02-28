@@ -220,7 +220,7 @@ export function Lab() {
   };
 
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     if (orderItems.length === 0) {
       toast({
         title: "Nalog je prazan",
@@ -229,7 +229,44 @@ export function Lab() {
       });
       return;
     }
-    generateAndDownloadPdf(orderItems, edgeNames);
+
+    try {
+      // Capture 3D images from all canvases
+      const images3D: (string | null)[] = [];
+
+      // For each item, we would capture the 3D view
+      // Since we don't have live canvas refs for all items (they're in the order list),
+      // we'll use the current visualization for preview or placeholder
+      if (canvasRef.current) {
+        const currentImage = canvasRef.current.captureImage();
+        // For now, use the same image for all items or the item's stored snapshot
+        for (let i = 0; i < orderItems.length; i++) {
+          images3D.push(orderItems[i].planSnapshotDataUri || currentImage);
+        }
+      } else {
+        // Fallback to existing snapshots
+        for (let i = 0; i < orderItems.length; i++) {
+          images3D.push(orderItems[i].planSnapshotDataUri || null);
+        }
+      }
+
+      await generateEnhancedPdf(orderItems, edgeNames, images3D, {
+        companyName: 'Kamena Galanterija',
+        orderNumber: `RN-${new Date().toISOString().split('T')[0].replace(/-/g, '')}`,
+      });
+
+      toast({
+        title: "PDF generiran",
+        description: "Radni nalog je uspješno preuzet.",
+      });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast({
+        title: "Greška",
+        description: "Došlo je do greške pri generiranju PDF-a.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleRemoveOrderItem = (orderId: number) => {
