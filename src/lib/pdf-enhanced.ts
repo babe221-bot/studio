@@ -282,7 +282,7 @@ export async function generateEnhancedPdf(
 
                     // Detect image format from data URI
                     const imageData = images3D[i]!;
-                    let format = 'PNG' as any; // Default to PNG
+                    let format: 'PNG' | 'JPEG' | 'SVG' | 'WEBP' = 'PNG'; // Default to PNG
 
                     if (imageData.startsWith('data:image/')) {
                         // Extract format from data URI (e.g., "data:image/svg+xml;base64,...")
