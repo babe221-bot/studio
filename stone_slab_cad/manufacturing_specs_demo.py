@@ -240,7 +240,7 @@ def main():
     print("  4. technical_drawings.py - Manufacturing drawings generator")
     print("  5. profiles.py - Extended profile library")
     print("\nAll modules support:")
-    print("  - C8 Chamfer (8.0mm depth at 45°)")
+    print("  - C8 Chamfer (8.0mm depth at 45 deg)")
     print("  - Multiple profile types (Round, Ogee, Cove, etc.)")
     print("  - Four-edge orientation (Front, Rear, Left, Right)")
     print("  - Drip edge overhang flashing")
