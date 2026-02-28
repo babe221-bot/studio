@@ -1,10 +1,23 @@
-"use client";
+/**
+ * VisualizationCanvas - Three.js stone slab visualization component
+ * 
+ * Architecture Improvements Applied:
+ * - Uses centralized ResourceManager with reference counting for textures/materials
+ * - Uses Worker Pool for geometry generation (persistent 2-4 workers)
+ * - LRU cache with configurable size limits to prevent memory leaks
+ * - Automatic disposal management when components unmount
+ * - All resource lifecycle managed through ResourceManager
+ */
 
-import React, { useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
+import React, { useRef, useEffect, useImperativeHandle, forwardRef, useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { Material as MaterialType, SurfaceFinish, EdgeProfile, ProcessedEdges } from '@/types';
+
+// Import new architecture components
+import { resourceManager } from '@/lib/ResourceManager';
+import { getGeometryWorkerPool, type GeometryJobOutput } from '@/lib/WorkerPool';
 
 export interface VisualizationProps {
   dims: { length: number; width: number; height: number };
@@ -20,79 +33,6 @@ export interface VisualizationProps {
 export type CanvasHandle = {
   captureImage: () => string | null;
 };
-
-// --------------------------------------------------------------------------
-// LRU Texture Cache Implementation
-// --------------------------------------------------------------------------
-interface LRUCacheEntry<T> {
-  value: T;
-  timestamp: number;
-}
-
-class LRUTextureCache {
-  private cache: Map<string, LRUCacheEntry<THREE.Texture>>;
-  private maxSize: number;
-
-  constructor(maxSize: number = 10) {
-    this.cache = new Map();
-    this.maxSize = maxSize;
-  }
-
-  get(key: string): THREE.Texture | undefined {
-    const entry = this.cache.get(key);
-    if (entry) {
-      // Update timestamp on access
-      entry.timestamp = Date.now();
-      return entry.value;
-    }
-    return undefined;
-  }
-
-  set(key: string, value: THREE.Texture): void {
-    // If at capacity, remove oldest entry
-    if (this.cache.size >= this.maxSize && !this.cache.has(key)) {
-      this.evictLRU();
-    }
-
-    // If key exists, update it; otherwise add new
-    this.cache.set(key, { value, timestamp: Date.now() });
-  }
-
-  private evictLRU(): void {
-    let oldestKey: string | null = null;
-    let oldestTime = Infinity;
-
-    for (const [key, entry] of this.cache.entries()) {
-      if (entry.timestamp < oldestTime) {
-        oldestTime = entry.timestamp;
-        oldestKey = key;
-      }
-    }
-
-    if (oldestKey) {
-      const entry = this.cache.get(oldestKey);
-      if (entry) {
-        entry.value.dispose();
-      }
-      this.cache.delete(oldestKey);
-    }
-  }
-
-  disposeAll(): void {
-    for (const entry of this.cache.values()) {
-      entry.value.dispose();
-    }
-    this.cache.clear();
-  }
-
-  disposeKey(key: string): void {
-    const entry = this.cache.get(key);
-    if (entry) {
-      entry.value.dispose();
-      this.cache.delete(key);
-    }
-  }
-}
 
 // --------------------------------------------------------------------------
 // Dimension label sprites
@@ -226,25 +166,28 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
     const controlsRef = useRef<OrbitControls | null>(null);
     const mainGroupRef = useRef<THREE.Group | null>(null);
     const dimensionGroupRef = useRef<THREE.Group | null>(null);
-    const textureCache = useRef<LRUTextureCache>(new LRUTextureCache(10));
-    const normalMapCache = useRef<LRUTextureCache>(new LRUTextureCache(10));
 
-    // Worker ref for tracking worker state to prevent race conditions
-    const workerRef = useRef<Worker | null>(null);
+    // Get Worker Pool singleton
+    const workerPoolRef = useRef(getGeometryWorkerPool());
 
     // Pending geometry ref for cleanup if component unmounts before worker completes
     const pendingGeometryRef = useRef<THREE.BufferGeometry | null>(null);
 
-    // Materials as refs since they are mutated in effects
-    const mainMatRef = useRef<THREE.MeshPhysicalMaterial>(
-      new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.05, roughness: 0.6 })
-    );
-    const sideMatRef = useRef<THREE.MeshPhysicalMaterial>(
-      new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.05, roughness: 0.75 })
-    );
-    const profileMatRef = useRef<THREE.MeshPhysicalMaterial>(
-      new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.05, roughness: 0.65 })
-    );
+    // Materials refs for resource tracking
+    const mainMatRef = useRef<THREE.MeshPhysicalMaterial | null>(null);
+    const sideMatRef = useRef<THREE.MeshPhysicalMaterial | null>(null);
+    const profileMatRef = useRef<THREE.MeshPhysicalMaterial | null>(null);
+
+    // Resource keys for cleanup
+    const resourceKeysRef = useRef<{
+      texture: string | null;
+      normalMap: string | null;
+      materials: string[];
+    }>({
+      texture: null,
+      normalMap: null,
+      materials: [],
+    });
 
     // Visibility tracking refs
     const isVisibleRef = useRef<boolean>(true);
@@ -257,6 +200,9 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
     // Dimension label refs for proper disposal
     const dimensionLabelsRef = useRef<DimensionLabelResult[]>([]);
 
+    // Track if component is mounted
+    const isMountedRef = useRef(true);
+
     // Expose capture method
     useImperativeHandle(ref, () => ({
       captureImage: () => {
@@ -268,10 +214,37 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       },
     }));
 
+    // Cleanup function for materials
+    const cleanupMaterials = useCallback(() => {
+      // Release texture
+      if (resourceKeysRef.current.texture) {
+        resourceManager.releaseTexture(resourceKeysRef.current.texture);
+        resourceKeysRef.current.texture = null;
+      }
+
+      // Release normal map
+      if (resourceKeysRef.current.normalMap) {
+        resourceManager.releaseTexture(resourceKeysRef.current.normalMap);
+        resourceKeysRef.current.normalMap = null;
+      }
+
+      // Release materials
+      resourceKeysRef.current.materials.forEach((key) => {
+        resourceManager.releaseMaterial(key);
+      });
+      resourceKeysRef.current.materials = [];
+
+      mainMatRef.current = null;
+      sideMatRef.current = null;
+      profileMatRef.current = null;
+    }, []);
+
     // ── Scene Initialisation ────────────────────────────────────────────────
     useEffect(() => {
       const currentMount = mountRef.current;
       if (!currentMount) return;
+
+      isMountedRef.current = true;
 
       const scene = new THREE.Scene();
       sceneRef.current = scene;
@@ -439,6 +412,8 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       handleResize();
 
       return () => {
+        isMountedRef.current = false;
+
         // Cleanup intersection observer
         intersectionObserver.disconnect();
 
@@ -458,39 +433,63 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
           animIdRef.current = null;
         }
 
+        // Dispose pending geometry
+        if (pendingGeometryRef.current) {
+          pendingGeometryRef.current.dispose();
+          pendingGeometryRef.current = null;
+        }
+
+        // Cleanup materials via ResourceManager
+        cleanupMaterials();
+
+        // Dispose dimension labels
+        dimensionLabelsRef.current.forEach(({ texture, material }) => {
+          texture.dispose();
+          material.dispose();
+        });
+        dimensionLabelsRef.current = [];
+
+        // Remove renderer from DOM
         if (currentMount && renderer.domElement.parentNode === currentMount) {
           currentMount.removeChild(renderer.domElement);
         }
+
+        // Dispose scene resources
         envTexture.dispose();
-        textureCache.current.disposeAll();
-        normalMapCache.current.disposeAll();
-        mainMatRef.current.dispose();
-        sideMatRef.current.dispose();
-        profileMatRef.current.dispose();
+        bgTex.dispose();
         renderer.dispose();
       };
-    }, []);
+    }, [cleanupMaterials]);
 
-    // ── Normal Map Generation Effect (separate from materials) ──────────────
+    // ── Normal Map Generation Effect ─────────────────────────────────────────
     useEffect(() => {
       if (!material || !finish) return;
 
       const preset = getFinishPreset(finish.name);
-      const nmKey = `${material.id}-${finish.id}`;
+      const nmKey = `normal-${material.id}-${finish.id}`;
 
       // Only generate if strength is significant
       if (preset.normalStrength > 0.05) {
-        let nm = normalMapCache.current.get(nmKey);
+        let nm = resourceManager.getTexture(nmKey);
         if (!nm) {
           nm = generateProceduralNormalMap(preset.normalStrength, material.id);
-          normalMapCache.current.set(nmKey, nm);
+          resourceManager.addTexture(nmKey, nm, 1);
+        } else {
+          resourceManager.acquireTexture(nmKey);
         }
-        mainMatRef.current.normalMap = nm;
-        mainMatRef.current.normalScale.set(preset.normalStrength, preset.normalStrength);
+        resourceKeysRef.current.normalMap = nmKey;
+
+        if (mainMatRef.current) {
+          mainMatRef.current.normalMap = nm;
+          mainMatRef.current.normalScale.set(preset.normalStrength, preset.normalStrength);
+          mainMatRef.current.needsUpdate = true;
+        }
       } else {
-        mainMatRef.current.normalMap = null;
+        if (mainMatRef.current) {
+          mainMatRef.current.normalMap = null;
+          mainMatRef.current.needsUpdate = true;
+        }
       }
-      mainMatRef.current.needsUpdate = true;
     }, [material?.id, finish?.id]);
 
     // ── Slab Geometry & Materials ───────────────────────────────────────────
@@ -502,41 +501,42 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       const vizW = width / 100;
       const h = height / 100;
 
-      const mainMat = mainMatRef.current;
-      const sideMat = sideMatRef.current;
-      const profileMat = profileMatRef.current;
+      // Cleanup previous materials
+      cleanupMaterials();
 
+      const preset = getFinishPreset(finish.name);
       const baseColor = new THREE.Color(material.color || '#CCCCCC');
       const darkerColor = baseColor.clone().lerp(new THREE.Color(0x000000), 0.18);
       const lighterColor = baseColor.clone().lerp(new THREE.Color(0xffffff), 0.25);
 
-      mainMat.color = baseColor;
-      sideMat.color = darkerColor;
-      profileMat.color = lighterColor;
+      // Create materials via ResourceManager
+      const mainMatKey = `slab-${material.id}-${finish.id}-main-${Date.now()}`;
+      const sideMatKey = `slab-${material.id}-${finish.id}-side-${Date.now()}`;
+      const profileMatKey = `slab-${material.id}-${finish.id}-profile-${Date.now()}`;
 
-      // Apply PBR finish preset to main face
-      const preset = getFinishPreset(finish.name);
-      mainMat.roughness = preset.roughness;
-      mainMat.metalness = preset.metalness;
-      mainMat.clearcoat = preset.clearcoat;
-      mainMat.clearcoatRoughness = preset.clearcoatRoughness;
-      mainMat.sheen = preset.sheen;
-      mainMat.sheenRoughness = preset.sheenRoughness;
+      const mainMat = resourceManager.getPBRMaterial(mainMatKey, {
+        color: baseColor,
+        roughness: preset.roughness,
+        metalness: preset.metalness,
+        clearcoat: preset.clearcoat,
+        clearcoatRoughness: preset.clearcoatRoughness,
+        sheen: preset.sheen,
+        sheenRoughness: preset.sheenRoughness,
+      });
 
-      // Side and profile share a modified preset (slightly rougher than top)
-      const sideRoughness = Math.min(preset.roughness + 0.12, 1.0);
-      sideMat.roughness = sideRoughness;
-      sideMat.metalness = preset.metalness * 0.5;
-      sideMat.clearcoat = preset.clearcoat * 0.4;
-      sideMat.clearcoatRoughness = preset.clearcoatRoughness;
-      profileMat.roughness = Math.max(preset.roughness - 0.05, 0.05);
-      profileMat.metalness = preset.metalness;
-      profileMat.clearcoat = preset.clearcoat * 0.8;
-      profileMat.clearcoatRoughness = preset.clearcoatRoughness;
+      const sideMat = resourceManager.getPBRMaterial(sideMatKey, {
+        color: darkerColor,
+        roughness: Math.min(preset.roughness + 0.12, 1.0),
+        metalness: preset.metalness * 0.5,
+        clearcoat: preset.clearcoat * 0.4,
+        clearcoatRoughness: preset.clearcoatRoughness,
+      });
 
-      // Load or reuse colour texture
-      const textureUrl = material.texture;
-      const loadTexture = (url: string) => {
+      const profileMat = resourceManager.getPBRMaterial(profileMatKey, {
+        color: lighterColor,
+        roughness: Math.max(preset.roughness - 0.05, 0.05),
+        metalness: preset.metalness,
+        clearcoat: preset.clearcoat * 0.8,
         const cached = textureCache.current.get(url);
         if (cached) {
           applyTexture(cached);
