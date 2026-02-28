@@ -398,7 +398,39 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       }
       mainMat.userData.url = textureUrl;
 
+      // ── Fit camera to stone immediately (synchronous, before worker) ──
+      // This ensures the camera is correctly positioned from the first render frame,
+      // not delayed until the async geometry worker finishes.
+      if (cameraRef.current && controlsRef.current) {
+        const camera = cameraRef.current;
+        const controls = controlsRef.current;
+
+        // Centre of the stone
+        const target = new THREE.Vector3(0, h / 2, 0);
+        controls.target.copy(target);
+
+        // Drive distance from the DIAGONAL of the stone's top face + height contribution
+        // This ensures both long thin slabs and short thick blocks get a good framing.
+        const diagonal = Math.sqrt(vizL * vizL + vizW * vizW);
+        const fitDist = Math.max(diagonal, h * 10) * 1.0 + 0.8;
+
+        // 38° elevation, 40° azimuth gives a classic 3/4 product-shot perspective
+        const elev = THREE.MathUtils.degToRad(38);
+        const azim = THREE.MathUtils.degToRad(40);
+
+        camera.position.set(
+          fitDist * Math.cos(elev) * Math.sin(azim),
+          h / 2 + fitDist * Math.sin(elev),
+          fitDist * Math.cos(elev) * Math.cos(azim)
+        );
+        camera.lookAt(target);
+        controls.minDistance = fitDist * 0.08;
+        controls.maxDistance = fitDist * 6;
+        controls.update();
+      }
+
       // ── Spawn geometry worker ──
+
       const worker = new Worker(new URL('@/workers/geometryWorker.ts', import.meta.url));
       worker.postMessage({ L: vizL, W: vizW, H: h, profile, processedEdges, okapnikEdges });
 
@@ -432,40 +464,8 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
         mesh.position.y = 0; // bottom sits at y=0
 
         mainGroupRef.current.add(mesh);
-
-        // ── Auto-fit camera to stone bounding box ──────────────────
-        // Compute a camera distance that ensures the full stone is visible
-        // regardless of its dimensions (thin window sill vs. large slab).
-        if (cameraRef.current && controlsRef.current) {
-          const camera = cameraRef.current;
-          const controls = controlsRef.current;
-
-          // Stone bounding box centre and size
-          const cx = 0, cy = h / 2, cz = 0;
-          controls.target.set(cx, cy, cz);
-
-          // Largest horizontal extent — use this to drive camera distance
-          const maxExtent = Math.max(vizL, vizW, h);
-          // Fitting formula: at 42° FOV, visible half-width at distance d = d * tan(21°) ≈ 0.384 * d
-          // We want visible half-width ≥ maxExtent * 0.8 (some padding), so d = maxExtent * 2.2
-          const fitDist = maxExtent * 2.2 + 0.5;
-
-          // Camera elevation: 40° above the slab centre — gives a nice product-shot view
-          const elevAngle = THREE.MathUtils.degToRad(38);
-          const azimAngle = THREE.MathUtils.degToRad(40); // slight left-turn
-
-          camera.position.set(
-            cx + fitDist * Math.cos(elevAngle) * Math.sin(azimAngle),
-            cy + fitDist * Math.sin(elevAngle),
-            cz + fitDist * Math.cos(elevAngle) * Math.cos(azimAngle)
-          );
-
-          controls.minDistance = fitDist * 0.15;
-          controls.maxDistance = fitDist * 6;
-          controls.update();
-        }
-
         worker.terminate();
+
       };
 
       return () => worker.terminate();
