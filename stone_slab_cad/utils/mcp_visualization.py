@@ -422,40 +422,13 @@ class MCPVisualizationEngine:
                 x_pos = x_min if orientation == EdgeOrientation.PORT else x_max
                 
                 tool.location = (x_pos, y_level + 0.02, z_min)
-        
-        tool.data.materials.append(tool_mat)
-        
-        # Animate tool movement along edge
-        if self.slab_object:
-            # Get edge bounds
-            x_min = min(v.co.x for v in self.slab_object.data.vertices)
-            x_max = max(v.co.x for v in self.slab_object.data.vertices)
-            z_min = min(v.co.z for v in self.slab_object.data.vertices)
-            z_max = max(v.co.z for v in self.slab_object.data.vertices)
-            y_level = max(v.co.y for v in self.slab_object.data.vertices)
-            
-            # Set up keyframes based on orientation
-            if orientation in [EdgeOrientation.ANTERIOR, EdgeOrientation.POSTERIOR]:
-                # Move along X axis
-                z_pos = z_max if orientation == EdgeOrientation.ANTERIOR else z_min
-                
-                tool.location = (x_min, y_level + 0.02, z_pos)
-                tool.keyframe_insert(data_path="location", frame=1)
-                
-                tool.location = (x_max, y_level + 0.02, z_pos)
-                tool.keyframe_insert(data_path="location", frame=config.animation_duration_frames)
-            else:
-                # Move along Z axis
-                x_pos = x_min if orientation == EdgeOrientation.PORT else x_max
-                
-                tool.location = (x_pos, y_level + 0.02, z_min)
                 tool.keyframe_insert(data_path="location", frame=1)
                 
                 tool.location = (x_pos, y_level + 0.02, z_max)
                 tool.keyframe_insert(data_path="location", frame=config.animation_duration_frames)
         
         self.tool_object = tool
-        print(f"✓ Created CNC toolpath animation for {orientation.value} edge")
+        print(f"Created CNC toolpath animation for {orientation.value} edge")
         
         return tool
     
@@ -493,7 +466,7 @@ class MCPVisualizationEngine:
         bg.inputs['Color'].default_value = (*config.background_color, 1.0)
         bg.inputs['Strength'].default_value = 1.0
         
-        print("✓ Studio lighting configured")
+        print("Studio lighting configured")
     
     def setup_camera(self, config: CameraSetup):
         """Set up camera for rendering"""
@@ -514,7 +487,7 @@ class MCPVisualizationEngine:
         # Set as active camera
         bpy.context.scene.camera = camera
         
-        print("✓ Camera configured")
+        print("Camera configured")
     
     def configure_render_settings(self, config: RenderSettings):
         """Configure rendering engine and quality settings"""
@@ -525,7 +498,6 @@ class MCPVisualizationEngine:
         scene.render.engine = config.engine
         
         if config.engine == "CYCLES":
-            # Cycles-specific settings
             scene.cycles.device = config.device
             scene.cycles.samples = config.samples
             scene.cycles.use_denoising = config.denoising_enabled
@@ -540,7 +512,7 @@ class MCPVisualizationEngine:
         scene.render.image_settings.color_mode = 'RGBA'
         scene.render.image_settings.color_depth = '16'
         
-        print(f"✓ Render settings configured: {config.resolution_x}×{config.resolution_y}, {config.samples} samples")
+        print(f"Render settings configured: {config.resolution_x}x{config.resolution_y}, {config.samples} samples")
     
     def render_image(self, 
                      output_path: str,
@@ -553,16 +525,12 @@ class MCPVisualizationEngine:
         # Render
         bpy.ops.render.render(write_still=True)
         
-        print(f"✓ Render saved to: {output_path}")
+        print(f"Render saved to: {output_path}")
     
     def generate_composite_dashboard(self,
                                       output_dir: str,
                                       views: List[str] = None):
-        """
-        Generate composite visualization dashboard with multiple views
-        
-        Creates renders from multiple angles plus cross-sections
-        """
+        """Generate composite visualization dashboard with multiple views"""
         if views is None:
             views = [
                 "isometric",
@@ -623,18 +591,14 @@ class MCPVisualizationEngine:
                 self.render_image(output_path)
                 rendered_files.append(output_path)
         
-        print(f"✓ Generated {len(rendered_files)} dashboard views")
+        print(f"Generated {len(rendered_files)} dashboard views")
         return rendered_files
 
 
 def create_standard_visualization(spec: ManufacturingProcessSpec,
                                    output_dir: str,
                                    slab_dims: Tuple[float, float, float] = (1000, 600, 30)):
-    """
-    Create a standard complete visualization for a manufacturing specification
-    
-    This is a convenience function that sets up the entire visualization pipeline
-    """
+    """Create a standard complete visualization for a manufacturing specification"""
     engine = MCPVisualizationEngine()
     
     # Initialize
@@ -665,7 +629,6 @@ def create_standard_visualization(spec: ManufacturingProcessSpec,
     return rendered_files
 
 
-# Export all classes and functions
 __all__ = [
     'RenderMode',
     'CrossSectionPlane',
