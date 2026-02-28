@@ -433,10 +433,36 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
 
         mainGroupRef.current.add(mesh);
 
-        // Reposition camera target to the centre of the slab
-        if (controlsRef.current) {
-          controlsRef.current.target.set(0, h / 2, 0);
-          controlsRef.current.update();
+        // ── Auto-fit camera to stone bounding box ──────────────────
+        // Compute a camera distance that ensures the full stone is visible
+        // regardless of its dimensions (thin window sill vs. large slab).
+        if (cameraRef.current && controlsRef.current) {
+          const camera = cameraRef.current;
+          const controls = controlsRef.current;
+
+          // Stone bounding box centre and size
+          const cx = 0, cy = h / 2, cz = 0;
+          controls.target.set(cx, cy, cz);
+
+          // Largest horizontal extent — use this to drive camera distance
+          const maxExtent = Math.max(vizL, vizW, h);
+          // Fitting formula: at 42° FOV, visible half-width at distance d = d * tan(21°) ≈ 0.384 * d
+          // We want visible half-width ≥ maxExtent * 0.8 (some padding), so d = maxExtent * 2.2
+          const fitDist = maxExtent * 2.2 + 0.5;
+
+          // Camera elevation: 40° above the slab centre — gives a nice product-shot view
+          const elevAngle = THREE.MathUtils.degToRad(38);
+          const azimAngle = THREE.MathUtils.degToRad(40); // slight left-turn
+
+          camera.position.set(
+            cx + fitDist * Math.cos(elevAngle) * Math.sin(azimAngle),
+            cy + fitDist * Math.sin(elevAngle),
+            cz + fitDist * Math.cos(elevAngle) * Math.cos(azimAngle)
+          );
+
+          controls.minDistance = fitDist * 0.15;
+          controls.maxDistance = fitDist * 6;
+          controls.update();
         }
 
         worker.terminate();
