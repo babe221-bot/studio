@@ -191,6 +191,17 @@ def generate_3d_model(config: Dict[Any, Any], output_path: str) -> None:
     uv_results = unwrap_slab_for_stone(obj, material_type)
     print(f"✅ UV unwrap complete: {uv_results['islands_created']} islands, {uv_results['pack_efficiency']:.1f}% efficiency")
     
+    # Setup Advanced Lighting and Global Illumination
+    print("\n💡 Setting up Advanced Lighting System...")
+    lighting_results = setup_studio_lighting(
+        target=obj,
+        style="product" if material_type in ["marble", "granite"] else "studio",
+        resolution=(1920, 1080)
+    )
+    print(f"✅ Lighting setup: {lighting_results['style']}")
+    print(f"   Lights: {', '.join(lighting_results['lights_created'])}")
+    print(f"   GI Method: {lighting_results['render_settings']['gi_method']}")
+    
     # Export to GLB
     print(f"📦 Exporting to: {output_path}")
     bpy.ops.export_scene.gltf(
