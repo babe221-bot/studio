@@ -135,12 +135,12 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
     // Track resources for cleanup
     const resourcesRef = useRef<{
         geometry: THREE.BufferGeometry | null;
-        materials: THREE.Material[];
+        materialKeys: string[];
         textureKey: string | null;
         normalMapKey: string | null;
     }>({
         geometry: null,
-        materials: [],
+        materialKeys: [],
         textureKey: null,
         normalMapKey: null,
     });
@@ -235,11 +235,11 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
         const darkerColor = baseColor.clone().lerp(new THREE.Color(0x000000), 0.18);
         const lighterColor = baseColor.clone().lerp(new THREE.Color(0xffffff), 0.25);
 
-        // Release old materials
-        resourcesRef.current.materials.forEach((mat, i) => {
-            const matKey = `slab-${material.id}-${finish.id}-${i}`;
+        // Release old materials using the tracked keys
+        resourcesRef.current.materialKeys.forEach((matKey) => {
             resourceManager.releaseMaterial(matKey);
         });
+        resourcesRef.current.materialKeys = [];
 
         // Main face material (index 0)
         const mainMatKey = `slab-${material.id}-${finish.id}-0`;
@@ -291,7 +291,7 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
         });
 
         const mats = [mainMat, sideMat, profileMat];
-        resourcesRef.current.materials = mats;
+        resourcesRef.current.materialKeys = [mainMatKey, sideMatKey, profileMatKey];
 
         // Load texture if available
         if (material.texture) {
@@ -325,11 +325,6 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
     const geometry = useMemo(() => {
         if (!geometryData) return null;
 
-        // Dispose old geometry
-        if (resourcesRef.current.geometry) {
-            resourcesRef.current.geometry.dispose();
-        }
-
         const geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.BufferAttribute(geometryData.positions, 3));
         if (geometryData.uvs) {
@@ -343,9 +338,19 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
 
         geo.computeVertexNormals();
 
-        resourcesRef.current.geometry = geo;
         return geo;
     }, [geometryData]);
+
+    // Handle geometry disposal safely in an effect
+    useEffect(() => {
+        if (geometry) {
+            // Clean up old geometry if replacing
+            if (resourcesRef.current.geometry && resourcesRef.current.geometry !== geometry) {
+                resourcesRef.current.geometry.dispose();
+            }
+            resourcesRef.current.geometry = geometry;
+        }
+    }, [geometry]);
 
     // ============================================================================
     // Cleanup on Unmount
@@ -353,13 +358,11 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
 
     useEffect(() => {
         return () => {
-            // Release materials
-            resourcesRef.current.materials.forEach((mat, i) => {
-                if (material && finish) {
-                    const matKey = `slab-${material.id}-${finish.id}-${i}`;
-                    resourceManager.releaseMaterial(matKey);
-                }
+            // Release materials using tracked keys
+            resourcesRef.current.materialKeys.forEach((matKey) => {
+                resourceManager.releaseMaterial(matKey);
             });
+            resourcesRef.current.materialKeys = [];
 
             // Release normal map
             if (resourcesRef.current.normalMapKey) {

@@ -51,50 +51,59 @@ const createDimensionTexture = (text: string): { texture: THREE.CanvasTexture; a
 };
 
 export const DimensionLabels: React.FC<DimensionLabelsProps> = ({ dims, visible }) => {
-    const texturesRef = useRef<THREE.CanvasTexture[]>([]);
+    const [labelTextures, setLabelTextures] = React.useState<{ texture: THREE.CanvasTexture, aspectRatio: number, position: [number, number, number], key: string }[]>([]);
 
     const { length, width, height } = dims;
-    const vizL = length / 100;
-    const vizW = width / 100;
-    const h = height / 100;
 
-    // Clean up old textures
     useEffect(() => {
-        return () => {
-            texturesRef.current.forEach(texture => texture.dispose());
-            texturesRef.current = [];
-        };
-    }, []);
+        if (!visible) {
+            setLabelTextures([]);
+            return;
+        }
 
-    const labels = useMemo((): LabelData[] => {
-        if (!visible) return [];
+        const vizL = length / 100;
+        const vizW = width / 100;
+        const h = height / 100;
 
-        return [
-            { text: `${length} cm`, position: [0, h + 0.35, vizW / 2 + 0.35] },
-            { text: `${width} cm`, position: [-vizL / 2 - 0.35, h + 0.35, 0] },
-            { text: `${height} cm`, position: [vizL / 2 + 0.35, h / 2, -vizW / 2 - 0.35] },
+        const newLabels = [
+            { text: `${length} cm`, position: [0, h + 0.35, vizW / 2 + 0.35] as [number, number, number] },
+            { text: `${width} cm`, position: [-vizL / 2 - 0.35, h + 0.35, 0] as [number, number, number] },
+            { text: `${height} cm`, position: [vizL / 2 + 0.35, h / 2, -vizW / 2 - 0.35] as [number, number, number] },
         ];
-    }, [length, width, height, vizL, vizW, h, visible]);
 
-    if (!visible || labels.length === 0) return null;
+        const generated = newLabels.map(label => {
+            const { texture, aspectRatio } = createDimensionTexture(label.text);
+            return {
+                texture,
+                aspectRatio,
+                position: label.position,
+                key: label.text
+            };
+        });
+
+        setLabelTextures(generated);
+
+        return () => {
+            generated.forEach(l => l.texture.dispose());
+        };
+    }, [length, width, height, visible]);
+
+    if (!visible || labelTextures.length === 0) return null;
 
     return (
         <group>
-            {labels.map((label, index) => {
-                const { texture, aspectRatio } = createDimensionTexture(label.text);
-                texturesRef.current.push(texture);
-
+            {labelTextures.map((label, index) => {
                 const height = 0.8; // World units
-                const width = height * aspectRatio;
+                const width = height * label.aspectRatio;
 
                 return (
                     <sprite
-                        key={index}
+                        key={label.key}
                         position={label.position}
                         scale={[width, height, 1]}
                     >
                         <spriteMaterial
-                            map={texture}
+                            map={label.texture}
                             transparent
                             depthTest={false}
                             sizeAttenuation
