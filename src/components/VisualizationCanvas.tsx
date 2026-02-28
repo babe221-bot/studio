@@ -1,7 +1,6 @@
 "use client";
 
-
-import React, { useRef, useEffect, useImperativeHandle, forwardRef, useMemo } from 'react';
+import React, { useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -23,9 +22,88 @@ export type CanvasHandle = {
 };
 
 // --------------------------------------------------------------------------
+// LRU Texture Cache Implementation
+// --------------------------------------------------------------------------
+interface LRUCacheEntry<T> {
+  value: T;
+  timestamp: number;
+}
+
+class LRUTextureCache {
+  private cache: Map<string, LRUCacheEntry<THREE.Texture>>;
+  private maxSize: number;
+
+  constructor(maxSize: number = 10) {
+    this.cache = new Map();
+    this.maxSize = maxSize;
+  }
+
+  get(key: string): THREE.Texture | undefined {
+    const entry = this.cache.get(key);
+    if (entry) {
+      // Update timestamp on access
+      entry.timestamp = Date.now();
+      return entry.value;
+    }
+    return undefined;
+  }
+
+  set(key: string, value: THREE.Texture): void {
+    // If at capacity, remove oldest entry
+    if (this.cache.size >= this.maxSize && !this.cache.has(key)) {
+      this.evictLRU();
+    }
+
+    // If key exists, update it; otherwise add new
+    this.cache.set(key, { value, timestamp: Date.now() });
+  }
+
+  private evictLRU(): void {
+    let oldestKey: string | null = null;
+    let oldestTime = Infinity;
+
+    for (const [key, entry] of this.cache.entries()) {
+      if (entry.timestamp < oldestTime) {
+        oldestTime = entry.timestamp;
+        oldestKey = key;
+      }
+    }
+
+    if (oldestKey) {
+      const entry = this.cache.get(oldestKey);
+      if (entry) {
+        entry.value.dispose();
+      }
+      this.cache.delete(oldestKey);
+    }
+  }
+
+  disposeAll(): void {
+    for (const entry of this.cache.values()) {
+      entry.value.dispose();
+    }
+    this.cache.clear();
+  }
+
+  disposeKey(key: string): void {
+    const entry = this.cache.get(key);
+    if (entry) {
+      entry.value.dispose();
+      this.cache.delete(key);
+    }
+  }
+}
+
+// --------------------------------------------------------------------------
 // Dimension label sprites
 // --------------------------------------------------------------------------
-const createDimensionLabel = (text: string, size: number = 32) => {
+interface DimensionLabelResult {
+  sprite: THREE.Sprite;
+  texture: THREE.CanvasTexture;
+  material: THREE.SpriteMaterial;
+}
+
+const createDimensionLabel = (text: string, size: number = 32): DimensionLabelResult => {
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d')!;
   canvas.width = 256;
@@ -50,7 +128,7 @@ const createDimensionLabel = (text: string, size: number = 32) => {
   const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
   const sprite = new THREE.Sprite(material);
   sprite.scale.set(size * 4, size, 1);
-  return sprite;
+  return { sprite, texture, material };
 };
 
 // --------------------------------------------------------------------------
@@ -148,15 +226,36 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
     const controlsRef = useRef<OrbitControls | null>(null);
     const mainGroupRef = useRef<THREE.Group | null>(null);
     const dimensionGroupRef = useRef<THREE.Group | null>(null);
-    const textureCache = useRef<{ [key: string]: THREE.Texture }>({});
-    const normalMapCache = useRef<{ [key: string]: THREE.CanvasTexture }>({});
+    const textureCache = useRef<LRUTextureCache>(new LRUTextureCache(10));
+    const normalMapCache = useRef<LRUTextureCache>(new LRUTextureCache(10));
 
-    // Three base materials — shared, updated in place
-    const materials = useMemo(() => [
-      new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.05, roughness: 0.6 }),   // 0: Main (top)
-      new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.05, roughness: 0.75 }),   // 1: Sides
-      new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.05, roughness: 0.65 }),   // 2: Profile
-    ], []);
+    // Worker ref for tracking worker state to prevent race conditions
+    const workerRef = useRef<Worker | null>(null);
+
+    // Pending geometry ref for cleanup if component unmounts before worker completes
+    const pendingGeometryRef = useRef<THREE.BufferGeometry | null>(null);
+
+    // Materials as refs since they are mutated in effects
+    const mainMatRef = useRef<THREE.MeshPhysicalMaterial>(
+      new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.05, roughness: 0.6 })
+    );
+    const sideMatRef = useRef<THREE.MeshPhysicalMaterial>(
+      new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.05, roughness: 0.75 })
+    );
+    const profileMatRef = useRef<THREE.MeshPhysicalMaterial>(
+      new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.05, roughness: 0.65 })
+    );
+
+    // Visibility tracking refs
+    const isVisibleRef = useRef<boolean>(true);
+    const isTabActiveRef = useRef<boolean>(true);
+    const animIdRef = useRef<number | null>(null);
+
+    // Resize observer debounce ref
+    const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Dimension label refs for proper disposal
+    const dimensionLabelsRef = useRef<DimensionLabelResult[]>([]);
 
     // Expose capture method
     useImperativeHandle(ref, () => ({
@@ -197,8 +296,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       // Camera
       const camera = new THREE.PerspectiveCamera(42, currentMount.clientWidth / currentMount.clientHeight, 0.05, 500);
       camera.position.set(4.5, 3.0, 4.5);
-
-
       cameraRef.current = camera;
 
       // Renderer
@@ -219,7 +316,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       const envTexture = pmremGenerator.fromScene(new RoomEnvironment()).texture;
       scene.environment = envTexture;
       pmremGenerator.dispose();
-
 
       // OrbitControls
       const controls = new OrbitControls(camera, renderer.domElement);
@@ -282,14 +378,42 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       dimensionGroupRef.current = dimensionGroup;
       scene.add(dimensionGroup);
 
-      // Animation loop
-      let animId: number;
+      // Visibility-aware animation loop
       const animate = () => {
-        animId = requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
+        // Only request next frame if visible and tab is active
+        if (isVisibleRef.current && isTabActiveRef.current) {
+          animIdRef.current = requestAnimationFrame(animate);
+          controls.update();
+          renderer.render(scene, camera);
+        }
       };
+
+      // Start animation
       animate();
+
+      // IntersectionObserver for visibility detection
+      const intersectionObserver = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          isVisibleRef.current = entry.isIntersecting;
+          if (entry.isIntersecting && isTabActiveRef.current && !animIdRef.current) {
+            // Resume animation
+            animate();
+          }
+        },
+        { threshold: 0.1 }
+      );
+      intersectionObserver.observe(currentMount);
+
+      // Document visibility change handler
+      const handleVisibilityChange = () => {
+        isTabActiveRef.current = document.visibilityState === 'visible';
+        if (isTabActiveRef.current && isVisibleRef.current && !animIdRef.current) {
+          // Resume animation
+          animate();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
 
       const handleResize = () => {
         if (!currentMount || !cameraRef.current || !rendererRef.current) return;
@@ -302,8 +426,12 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
         rendererRef.current.setSize(width, height);
       };
 
+      // Debounced resize observer
       const resizeObserver = new ResizeObserver(() => {
-        handleResize();
+        if (resizeTimeoutRef.current) {
+          clearTimeout(resizeTimeoutRef.current);
+        }
+        resizeTimeoutRef.current = setTimeout(handleResize, 100);
       });
       resizeObserver.observe(currentMount);
 
@@ -311,19 +439,59 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       handleResize();
 
       return () => {
+        // Cleanup intersection observer
+        intersectionObserver.disconnect();
+
+        // Cleanup visibility listener
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+        // Clear resize timeout
+        if (resizeTimeoutRef.current) {
+          clearTimeout(resizeTimeoutRef.current);
+        }
+
         resizeObserver.disconnect();
-        cancelAnimationFrame(animId);
+
+        // Cancel animation frame
+        if (animIdRef.current) {
+          cancelAnimationFrame(animIdRef.current);
+          animIdRef.current = null;
+        }
 
         if (currentMount && renderer.domElement.parentNode === currentMount) {
           currentMount.removeChild(renderer.domElement);
         }
         envTexture.dispose();
-        Object.values(textureCache.current).forEach(t => t.dispose());
-        Object.values(normalMapCache.current).forEach(t => t.dispose());
-        materials.forEach(m => m.dispose());
+        textureCache.current.disposeAll();
+        normalMapCache.current.disposeAll();
+        mainMatRef.current.dispose();
+        sideMatRef.current.dispose();
+        profileMatRef.current.dispose();
         renderer.dispose();
       };
-    }, [materials]);
+    }, []);
+
+    // ── Normal Map Generation Effect (separate from materials) ──────────────
+    useEffect(() => {
+      if (!material || !finish) return;
+
+      const preset = getFinishPreset(finish.name);
+      const nmKey = `${material.id}-${finish.id}`;
+
+      // Only generate if strength is significant
+      if (preset.normalStrength > 0.05) {
+        let nm = normalMapCache.current.get(nmKey);
+        if (!nm) {
+          nm = generateProceduralNormalMap(preset.normalStrength, material.id);
+          normalMapCache.current.set(nmKey, nm);
+        }
+        mainMatRef.current.normalMap = nm;
+        mainMatRef.current.normalScale.set(preset.normalStrength, preset.normalStrength);
+      } else {
+        mainMatRef.current.normalMap = null;
+      }
+      mainMatRef.current.needsUpdate = true;
+    }, [material?.id, finish?.id]);
 
     // ── Slab Geometry & Materials ───────────────────────────────────────────
     useEffect(() => {
@@ -334,7 +502,10 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       const vizW = width / 100;
       const h = height / 100;
 
-      const [mainMat, sideMat, profileMat] = materials;
+      const mainMat = mainMatRef.current;
+      const sideMat = sideMatRef.current;
+      const profileMat = profileMatRef.current;
+
       const baseColor = new THREE.Color(material.color || '#CCCCCC');
       const darkerColor = baseColor.clone().lerp(new THREE.Color(0x000000), 0.18);
       const lighterColor = baseColor.clone().lerp(new THREE.Color(0xffffff), 0.25);
@@ -363,31 +534,18 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       profileMat.clearcoat = preset.clearcoat * 0.8;
       profileMat.clearcoatRoughness = preset.clearcoatRoughness;
 
-      // Normal map for surface microdetail (only for rough finishes)
-      if (preset.normalStrength > 0.05) {
-        const nmKey = `${material.id}-${finish.id}`;
-        if (!normalMapCache.current[nmKey]) {
-          normalMapCache.current[nmKey] = generateProceduralNormalMap(preset.normalStrength, material.id);
-        }
-        const nm = normalMapCache.current[nmKey];
-        mainMat.normalMap = nm;
-        mainMat.normalScale.set(preset.normalStrength, preset.normalStrength);
-      } else {
-        mainMat.normalMap = null;
-      }
-      mainMat.needsUpdate = true;
-
       // Load or reuse colour texture
       const textureUrl = material.texture;
       const loadTexture = (url: string) => {
-        if (textureCache.current[url]) {
-          applyTexture(textureCache.current[url]);
+        const cached = textureCache.current.get(url);
+        if (cached) {
+          applyTexture(cached);
         } else {
           new THREE.TextureLoader().load(url, (tex) => {
             tex.colorSpace = THREE.SRGBColorSpace;
             tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
             tex.anisotropy = rendererRef.current?.capabilities.getMaxAnisotropy() ?? 4;
-            textureCache.current[url] = tex;
+            textureCache.current.set(url, tex);
             applyTexture(tex);
           });
         }
@@ -406,9 +564,11 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
         loadTexture(textureUrl);
       } else {
         mainMat.map = null;
-        mainMat.needsUpdate = true;
       }
       mainMat.userData.url = textureUrl;
+
+      // Consolidated needsUpdate call
+      mainMat.needsUpdate = true;
 
       // ── Fit camera to stone immediately (synchronous, before worker) ──
       // This ensures the camera is correctly positioned from the first render frame,
@@ -442,15 +602,27 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       }
 
       // ── Spawn geometry worker ──
+      // Terminate any existing worker first
+      if (workerRef.current) {
+        workerRef.current.terminate();
+        workerRef.current = null;
+      }
 
       const worker = new Worker(new URL('@/workers/geometryWorker.ts', import.meta.url));
+      workerRef.current = worker;
+
       worker.postMessage({ L: vizL, W: vizW, H: h, profile, processedEdges, okapnikEdges });
 
       worker.onmessage = (e) => {
         const { positions, uvs, indices, groups } = e.data;
         if (!mainGroupRef.current) return;
 
-        // Clear old meshes
+        // Clear old meshes and dispose pending geometry
+        if (pendingGeometryRef.current) {
+          pendingGeometryRef.current.dispose();
+          pendingGeometryRef.current = null;
+        }
+
         while (mainGroupRef.current.children.length > 0) {
           const obj = mainGroupRef.current.children[0];
           mainGroupRef.current.remove(obj);
@@ -462,6 +634,8 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
         }
 
         const geometry = new THREE.BufferGeometry();
+        pendingGeometryRef.current = geometry; // Track for cleanup
+
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         if (uvs) geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
         geometry.setIndex(new THREE.BufferAttribute(indices, 1));
@@ -470,42 +644,72 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
         );
         geometry.computeVertexNormals();
 
+        const materials = [mainMat, sideMat, profileMat];
         const mesh = new THREE.Mesh(geometry, materials);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         mesh.position.y = 0; // bottom sits at y=0
 
         mainGroupRef.current.add(mesh);
-        worker.terminate();
+        pendingGeometryRef.current = null; // Geometry now attached to mesh, mesh will handle disposal
 
+        // Terminate worker after successful completion
+        if (workerRef.current === worker) {
+          workerRef.current.terminate();
+          workerRef.current = null;
+        }
       };
 
-      return () => worker.terminate();
+      return () => {
+        // Dispose pending geometry if effect cleans up before worker completes
+        if (pendingGeometryRef.current) {
+          pendingGeometryRef.current.dispose();
+          pendingGeometryRef.current = null;
+        }
 
-    }, [dims, material, finish, profile, processedEdges, okapnikEdges, materials]);
+        // Terminate worker only if it's still this one
+        if (workerRef.current === worker) {
+          workerRef.current.terminate();
+          workerRef.current = null;
+        }
+      };
+    }, [dims, material, finish, profile, processedEdges, okapnikEdges]);
 
     // ── Dimension Labels ────────────────────────────────────────────────────
     useEffect(() => {
       if (!dimensionGroupRef.current) return;
+
+      // Dispose existing dimension labels and their textures
+      dimensionLabelsRef.current.forEach(({ texture, material }) => {
+        texture.dispose();
+        material.dispose();
+      });
+      dimensionLabelsRef.current = [];
+
+      // Clear dimension group
       while (dimensionGroupRef.current.children.length > 0) {
         dimensionGroupRef.current.remove(dimensionGroupRef.current.children[0]);
       }
+
       if (!showDimensions) return;
 
       const { length, width, height } = dims;
       const vizL = length / 100, vizW = width / 100, h = height / 100;
 
       const lengthLabel = createDimensionLabel(`${length} cm`);
-      lengthLabel.position.set(0, h + 0.35, vizW / 2 + 0.35);
-      dimensionGroupRef.current.add(lengthLabel);
+      lengthLabel.sprite.position.set(0, h + 0.35, vizW / 2 + 0.35);
+      dimensionGroupRef.current.add(lengthLabel.sprite);
+      dimensionLabelsRef.current.push(lengthLabel);
 
       const widthLabel = createDimensionLabel(`${width} cm`);
-      widthLabel.position.set(-vizL / 2 - 0.35, h + 0.35, 0);
-      dimensionGroupRef.current.add(widthLabel);
+      widthLabel.sprite.position.set(-vizL / 2 - 0.35, h + 0.35, 0);
+      dimensionGroupRef.current.add(widthLabel.sprite);
+      dimensionLabelsRef.current.push(widthLabel);
 
       const heightLabel = createDimensionLabel(`${height} cm`);
-      heightLabel.position.set(vizL / 2 + 0.35, h / 2, -vizW / 2 - 0.35);
-      dimensionGroupRef.current.add(heightLabel);
+      heightLabel.sprite.position.set(vizL / 2 + 0.35, h / 2, -vizW / 2 - 0.35);
+      dimensionGroupRef.current.add(heightLabel.sprite);
+      dimensionLabelsRef.current.push(heightLabel);
     }, [dims, showDimensions]);
 
     return (
