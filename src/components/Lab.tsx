@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { initialMaterials, initialSurfaceFinishes, initialEdgeProfiles } from '@/lib/data';
 import { constructionElements } from '@/lib/constructionElements';
@@ -18,9 +19,12 @@ const VisualizationCanvas = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-full flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">
-          Učitavam 3D prikaz...
+      <div className="h-full w-full flex flex-col gap-4 p-4">
+        <Skeleton className="h-8 w-1/3" />
+        <Skeleton className="flex-1 w-full rounded-xl" />
+        <div className="flex gap-2">
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-24" />
         </div>
       </div>
     ),
@@ -126,19 +130,36 @@ export function Lab() {
         .filter(([, selected]) => selected)
         .map(([edge]) => edgeNames[edge as keyof typeof edgeNames]));
 
-      const drawingResponse = await generateTechnicalDrawing({
-        length,
-        width,
-        profileName: selectedProfile.name,
-        surfaceFinishName: selectedFinish.name,
-        processedEdges: processedEdgesNames,
-        okapnikEdges: okapnikEdgesNames,
-        isBunja: !!selectedElement.hasSpecialBunjaEdges,
-        bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges ? bunjaEdgeStyle : undefined,
-      });
+      let drawingResponse;
+      let retries = 0;
+      const MAX_RETRIES = 2;
 
-      if (!drawingResponse.imageDataUri) {
-        throw new Error("AI nije uspio generirati sliku.");
+      while (retries <= MAX_RETRIES) {
+        try {
+          drawingResponse = await generateTechnicalDrawing({
+            length,
+            width,
+            profileName: selectedProfile.name,
+            surfaceFinishName: selectedFinish.name,
+            processedEdges: processedEdgesNames,
+            okapnikEdges: okapnikEdgesNames,
+            isBunja: !!selectedElement.hasSpecialBunjaEdges,
+            bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges ? bunjaEdgeStyle : undefined,
+          });
+
+          if (drawingResponse.imageDataUri) break;
+        } catch (err) {
+          console.error(`Attempt ${retries + 1} failed:`, err);
+        }
+
+        retries++;
+        if (retries <= MAX_RETRIES) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+        }
+      }
+
+      if (!drawingResponse?.imageDataUri) {
+        throw new Error("AI nije uspio generirati sliku nakon više pokušaja.");
       }
 
       const newOrderItem: OrderItem = {
@@ -157,14 +178,24 @@ export function Lab() {
         quantity: quantity,
         bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges ? bunjaEdgeStyle : undefined,
       };
-      setOrderItems([...orderItems, newOrderItem]);
-      toast({ title: "Stavka dodana", description: `${specimenId} je dodan u radni nalog.` });
-    } catch (error) {
-      console.error("Error generating technical drawing:", error);
+      setOrderItems(prev => [...prev, newOrderItem]);
+
       toast({
-        title: "Greška pri generiranju crteža",
-        description: "AI model nije uspio generirati tehnički crtež. Molimo pokušajte ponovno.",
-        variant: "destructive",
+        title: "Stavka dodana",
+        description: `${selectedElement.name} je uspješno dodan u nalog.`,
+      });
+
+      // Increment specimen ID for next item
+      const currentNumber = parseInt(specimenId.split(' ').pop() || '0');
+      const nextNumber = (currentNumber + 1).toString().padStart(2, '0');
+      setSpecimenId(`${selectedElement.name} ${nextNumber}`);
+
+    } catch (error) {
+      console.error("Order error:", error);
+      toast({
+        title: "Greška",
+        description: error instanceof Error ? error.message : "Neuspjelo dodavanje u nalog.",
+        variant: "destructive"
       });
     } finally {
       setIsAddingItem(false);

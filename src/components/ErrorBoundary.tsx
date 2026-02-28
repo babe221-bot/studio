@@ -50,7 +50,7 @@ export class ErrorBoundary extends Component<Props, State> {
                         Došlo je do pogreške prilikom prikazivanja ove komponente.
                         Možete pokušati osvježiti prikaz ili se vratiti kasnije.
                     </p>
-                    <Button onClick={handleReset} variant="outline" className="gap-2">
+                    <Button onClick={this.handleReset} variant="outline" className="gap-2">
                         <RefreshCw className="h-4 w-4" />
                         Pokušaj ponovno
                     </Button>
