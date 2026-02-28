@@ -4,6 +4,7 @@ With Comprehensive 3D Asset Optimization Protocol
 And Texture Mapping & UV Unwrapping System
 And Real-Time Engine Optimization
 And Post-Processing Techniques
+And Viewport Performance Tuning
 """
 import bpy
 import bmesh
@@ -34,6 +35,12 @@ from utils.post_processing import (
     setup_post_processing, apply_color_grading,
     validate_render, PostProcessingConfig,
     ColorGradingConfig, POST_RENDER_CHECKLIST
+)
+from utils.viewport_performance import (
+    setup_performance_viewport, create_profiling_overlay,
+    ViewportOptimizer, SceneDisplayManager,
+    GPUAccelerator, PerformanceBudgetManager,
+    ViewportConfig, optimize_for_texturing
 )
 
 def clear_scene():

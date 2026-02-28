@@ -850,38 +850,139 @@ The post-processing preset can be configured via `post_processing_preset` in the
 
 ---
 
-## 8. Viewport Performance Tuning
+## 8. Viewport Performance Tuning ✓ IMPLEMENTED
 
-### Display Optimization
+### Display Optimization ✓ IMPLEMENTED
 
-**Viewport Settings**
-- Disable textures in viewport for modeling
-- Use simplified shaders (matcap, wireframe)
-- Enable backface culling
-- Reduce subdivision preview levels
+**Viewport Settings** - [`ViewportOptimizer` class](stone_slab_cad/utils/viewport_performance.py:75)
 
-**Scene Management**
-- Use display layers/groups
-- Isolate objects during detailed work
-- Hide unnecessary geometry
-- Use bounding box display for distant objects
+| Setting | Purpose | Implementation |
+|---------|---------|----------------|
+| Disable textures | Better viewport responsiveness | ✅ [`_disable_viewport_textures()`](stone_slab_cad/utils/viewport_performance.py:152) |
+| Matcap shading | Simplified material preview | ✅ [`_enable_matcap_shading()`](stone_slab_cad/utils/viewport_performance.py:163) |
+| Backface culling | Reduce overdraw | ✅ [`_enable_backface_culling()`](stone_slab_cad/utils/viewport_performance.py:177) |
+| Subdivision levels | Control geometry density | ✅ [`_reduce_subdivision_levels()`](stone_slab_cad/utils/viewport_performance.py:186) |
 
-### GPU Acceleration
+**Viewport Display Modes** - [`ViewportDisplayMode` enum](stone_slab_cad/utils/viewport_performance.py:20):
+```python
+WIREFRAME, BOUNDBOX, SOLID, MATERIAL, RENDERED
+```
 
-- Enable hardware shading when available
-- Use viewport denoising for preview renders
-- Configure texture cache appropriately
-- Adjust viewport resolution scaling
+**Matcap Presets** - [`MatcapPreset` enum](stone_slab_cad/utils/viewport_performance.py:34):
+```python
+CLAY, CERAMIC_WHITE, METAL, CHROME, CHECKER, PEARL, SKIN
+```
 
-### Profiling Tools
+**Scene Management** ✓ IMPLEMENTED - [`SceneDisplayManager` class](stone_slab_cad/utils/viewport_performance.py:234)
 
-| Software | Tool | Purpose |
-|----------|------|---------|
-| Blender | Statistics Overlay | Scene metrics |
-| Maya | HUD | Performance data |
-| 3ds Max | Viewport Statistics | Object counts |
-| Unreal Engine | Stat commands | Real-time metrics |
-| Unity | Profiler | Performance analysis |
+| Feature | Description | Implementation |
+|---------|-------------|----------------|
+| Display Layers | Organize objects into groups | ✅ [`create_display_layer()`](stone_slab_cad/utils/viewport_performance.py:246) |
+| Object Isolation | Focus on selected objects | ✅ [`isolate_objects()`](stone_slab_cad/utils/viewport_performance.py:278) |
+| Distant Object Optimization | Hide or show as bounds | ✅ [`hide_distant_objects()`](stone_slab_cad/utils/viewport_performance.py:306) |
+| Bounding Box Display | Low-overhead distant preview | ✅ `display_type = 'BOUNDS'` |
+
+### GPU Acceleration ✓ IMPLEMENTED
+
+**GPU Configuration** - [`GPUAccelerator` class](stone_slab_cad/utils/viewport_performance.py:355):
+
+| Feature | Description | Implementation |
+|---------|-------------|----------------|
+| Hardware Shading | GPU-accelerated viewport | ✅ [`_setup_hardware_shading()`](stone_slab_cad/utils/viewport_performance.py:387) |
+| Viewport Denoising | Real-time noise reduction | ✅ [`enable_viewport_denoising()`](stone_slab_cad/utils/viewport_performance.py:419) |
+| Texture Cache | Memory management | ✅ [`_configure_texture_cache()`](stone_slab_cad/utils/viewport_performance.py:403) |
+| Resolution Scale | Performance scaling | ✅ [`_set_resolution_scale()`](stone_slab_cad/utils/viewport_performance.py:412) |
+
+**Configuration Example:**
+```python
+from utils.viewport_performance import GPUAccelerator, ViewportConfig
+
+config = ViewportConfig(
+    enable_hardware_shading=True,
+    texture_cache_size_mb=1024,
+    viewport_resolution_scale=1.0
+)
+
+accelerator = GPUAccelerator(config)
+results = accelerator.configure_gpu_acceleration()
+```
+
+### Profiling Tools ✓ IMPLEMENTED
+
+**Real-Time Statistics** - [`ViewportProfiler` class](stone_slab_cad/utils/viewport_performance.py:441):
+
+| Metric | Description | Implementation |
+|--------|-------------|----------------|
+| FPS | Frames per second | ✅ [`fps`](stone_slab_cad/utils/viewport_performance.py:60) calculation |
+| Frame Time | Milliseconds per frame | ✅ [`frame_time_ms`](stone_slab_cad/utils/viewport_performance.py:61) |
+| Triangle Count | Scene complexity | ✅ [`_count_triangles()`](stone_slab_cad/utils/viewport_performance.py:474) |
+| Memory Usage | RAM consumption | ✅ [`_get_memory_usage()`](stone_slab_cad/utils/viewport_performance.py:492) |
+| Texture Memory | VRAM usage | ✅ [`_get_texture_memory()`](stone_slab_cad/utils/viewport_performance.py:499) |
+
+**Performance Budget Management** - [`PerformanceBudgetManager` class](stone_slab_cad/utils/viewport_performance.py:556):
+
+```python
+from utils.viewport_performance import PerformanceBudgetManager
+
+# Set performance budgets
+budget = PerformanceBudgetManager(
+    max_triangles=1000000,
+    max_memory_mb=2048,
+    target_fps=30
+)
+
+# Check against budgets
+status = budget.check_budget()
+if not status['within_budget']:
+    print("Alerts:", status['alerts'])
+    
+# Get optimization suggestions
+suggestions = budget.get_optimization_suggestions()
+```
+
+**Software-Specific Profiling Tools Reference:**
+
+| Software | Tool | Purpose | Reference |
+|----------|------|---------|-----------|
+| Blender | Statistics Overlay | Scene metrics | ✅ [`PROFILING_TOOLS_REFERENCE`](stone_slab_cad/utils/viewport_performance.py:948) |
+| Maya | HUD | Performance data | ✅ Documented |
+| 3ds Max | Viewport Statistics | Object counts | ✅ Documented |
+| Unreal Engine | Stat commands | Real-time metrics | ✅ Documented |
+| Unity | Profiler | Performance analysis | ✅ Documented |
+
+**Convenience Functions:**
+
+```python
+from utils.viewport_performance import (
+    setup_performance_viewport,
+    optimize_for_sculpting,
+    optimize_for_layout,
+    optimize_for_texturing
+)
+
+# Quick performance setup
+results = setup_performance_viewport()
+
+# Preset configurations
+sculpting_setup = optimize_for_sculpting()      # Matcap, backface culling
+layout_setup = optimize_for_layout()            # Wireframe, hide distant
+texturing_setup = optimize_for_texturing()      # Material preview
+```
+
+**Viewport Configuration:**
+
+[`ViewportConfig` dataclass](stone_slab_cad/utils/viewport_performance.py:47) provides comprehensive control:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `display_mode` | SOLID | Viewport display mode |
+| `disable_textures` | False | Disable textures for performance |
+| `use_matcap` | True | Use material capture shading |
+| `enable_backface_culling` | True | Cull back faces |
+| `subdivision_preview_levels` | 1 | Subsurf preview quality |
+| `texture_cache_size_mb` | 512 | GPU texture cache |
+| `hide_distant_objects` | True | Optimize distant geometry |
+| `distant_object_distance` | 50.0 | Distance threshold |
 
 ---
 
