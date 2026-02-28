@@ -155,7 +155,8 @@ self.onmessage = (e: MessageEvent) => {
     const topBR = pillars.br[0][pillars.br[0].length - 1];
     const topFR = pillars.fr[0][pillars.fr[0].length - 1];
     const topFL = pillars.fl[0][pillars.fl[0].length - 1];
-    addQuad(topBL, topBR, topFR, topFL);
+    // Reverse order (BL -> FL -> FR -> BR) makes it CCW viewed from top, so normal points +Y (UP)
+    addQuad(topBL, topFL, topFR, topBR);
     addGroup(0);
 
     // --- Robust Corner Stitching ---

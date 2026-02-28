@@ -153,9 +153,9 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
 
     // Three base materials — shared, updated in place
     const materials = useMemo(() => [
-      new THREE.MeshPhysicalMaterial({ side: THREE.FrontSide, metalness: 0.05, roughness: 0.6 }),   // 0: Main (top)
-      new THREE.MeshPhysicalMaterial({ side: THREE.FrontSide, metalness: 0.05, roughness: 0.75 }),   // 1: Sides
-      new THREE.MeshPhysicalMaterial({ side: THREE.FrontSide, metalness: 0.05, roughness: 0.65 }),   // 2: Profile
+      new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.05, roughness: 0.6 }),   // 0: Main (top)
+      new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.05, roughness: 0.75 }),   // 1: Sides
+      new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide, metalness: 0.05, roughness: 0.65 }),   // 2: Profile
     ], []);
 
     // Expose capture method
