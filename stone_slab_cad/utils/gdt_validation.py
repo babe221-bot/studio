@@ -188,7 +188,7 @@ class ChamferValidator:
             deviation=deviation,
             tolerance=tolerance,
             compliance_percentage=compliance,
-            message=f"Angle: {measurement.angle_degrees:.2f}° (spec: {self.spec.angle_degrees:.2f}° ±{tolerance}°)",
+            message=f"Angle: {measurement.angle_degrees:.2f}deg (spec: {self.spec.angle_degrees:.2f}deg +/-{tolerance}deg)",
             recommendations=recommendations
         )
     
@@ -265,7 +265,7 @@ class ChamferValidator:
             deviation=max_deviation,
             tolerance=profile_tolerance,
             compliance_percentage=compliance,
-            message=f"Depth std: {depth_std:.3f}mm, Angle std: {angle_std:.2f}°",
+            message=f"Depth std: {depth_std:.3f}mm, Angle std: {angle_std:.2f}deg",
             recommendations=["Check machine calibration" if status != ValidationStatus.PASS else ""]
         )
 
@@ -346,7 +346,7 @@ class EdgeSquarenessValidator:
             deviation=deviation_mm,
             tolerance=tolerance,
             compliance_percentage=compliance,
-            message=f"Perpendicularity: {deviation_mm:.3f}mm/100mm (tolerance: ±{tolerance}mm)",
+            message=f"Perpendicularity: {deviation_mm:.3f}mm/100mm (tolerance: +/-{tolerance}mm)",
             recommendations=recommendations
         )
 
@@ -383,7 +383,7 @@ class DripEdgeValidator:
             deviation=deviation,
             tolerance=tolerance,
             compliance_percentage=compliance,
-            message=f"Overhang: {measured_overhang_mm:.1f}mm (spec: {self.drip_spec.overhang_mm:.1f}mm ±{tolerance}mm)",
+            message=f"Overhang: {measured_overhang_mm:.1f}mm (spec: {self.drip_spec.overhang_mm:.1f}mm +/-{tolerance}mm)",
             recommendations=["Adjust flashing bracket position" if status != ValidationStatus.PASS else ""]
         )
     
