@@ -2,6 +2,7 @@
 3D Stone Slab Geometry Generation using Blender
 With Comprehensive 3D Asset Optimization Protocol
 And Texture Mapping & UV Unwrapping System
+And Real-Time Engine Optimization
 """
 import bpy
 import bmesh
@@ -22,6 +23,11 @@ from utils.lighting_system import (
 from utils.camera_system import (
     setup_product_camera, CameraController, CameraSettings,
     DOFSettings, CinematicComposition, ProductCameraSetup
+)
+from utils.realtime_engine import (
+    setup_realtime_optimization, configure_lighting_mode,
+    profile_scene_performance, PlatformType,
+    PERFORMANCE_BUDGETS, RealtimeEngineOptimizer
 )
 
 def clear_scene():
@@ -218,6 +224,19 @@ def generate_3d_model(config: Dict[Any, Any], output_path: str) -> None:
     print(f"   Shot Type: Hero")
     print(f"   Focal Length: 85mm" if material_type in ["marble", "granite"] else "   Focal Length: 50mm")
     print(f"   F-Stop: f/2.8")
+    
+    # Setup Real-Time Engine Optimization (Section 6)
+    print("\n⚡ Setting up Real-Time Engine Optimization...")
+    platform = config.get('platform', 'pc_high_end')
+    rt_results = setup_realtime_optimization(
+        scene=bpy.context.scene,
+        target=obj,
+        platform=platform
+    )
+    print(f"✅ Real-time optimization complete")
+    print(f"   Platform: {rt_results['platform']}")
+    print(f"   Triangle Budget: {rt_results['budget']['triangle_budget']:,}")
+    print(f"   Within Budget: {rt_results.get('within_budget', 'N/A')}")
     
     # Export to GLB
     print(f"📦 Exporting to: {output_path}")
