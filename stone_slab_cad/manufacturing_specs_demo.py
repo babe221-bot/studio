@@ -81,7 +81,7 @@ def demo_c8_chamfer_spec():
     print(f"  Finish Type: {spec.surface_treatment.finish_type.value}")
     print(f"  Brush Direction: {spec.surface_treatment.brush_direction}")
     print(f"  Brush Grit: {spec.surface_treatment.brush_grit}")
-    print(f"  Roughness Ra: {spec.surface_treatment.roughness_ra}μm")
+    print(f"  Roughness Ra: {spec.surface_treatment.roughness_ra}um")
     
     print("\nDrip Edge Configuration:")
     for orientation, drip_edge in spec.drip_edges.items():
@@ -92,9 +92,9 @@ def demo_c8_chamfer_spec():
         print(f"    Distance from Edge: {drip_edge.distance_from_edge_mm}mm")
     
     print("\nGD&T Specifications:")
-    print(f"  Profile Tolerance: ±{spec.gdt_spec.profile_tolerance_mm}mm")
-    print(f"  Angular Tolerance: ±{spec.gdt_spec.angular_tolerance_deg}°")
-    print(f"  Perpendicularity: ±{spec.gdt_spec.perpendicularity_tolerance_mm}mm")
+    print(f"  Profile Tolerance: +/-{spec.gdt_spec.profile_tolerance_mm}mm")
+    print(f"  Angular Tolerance: +/-{spec.gdt_spec.angular_tolerance_deg} deg")
+    print(f"  Perpendicularity: +/-{spec.gdt_spec.perpendicularity_tolerance_mm}mm")
     print(f"  Parallelism: ±{spec.gdt_spec.parallelism_tolerance_mm}mm")
 
 
@@ -179,7 +179,7 @@ def demo_profile_varieties():
             if first_profile.depth_mm:
                 print(f"  Depth: {first_profile.depth_mm}mm")
             if first_profile.angle_degrees:
-                print(f"  Angle: {first_profile.angle_degrees}°")
+                print(f"  Angle: {first_profile.angle_degrees} deg")
 
 
 def demo_builder_pattern():
