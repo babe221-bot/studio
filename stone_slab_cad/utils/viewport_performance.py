@@ -681,3 +681,307 @@ class ViewportProfiler:
                     total += len(mesh.polygons)
         return total
     
+    def _count_objects(self) -> int:
+        """Count visible objects in scene"""
+        return sum(1 for obj in bpy.context.scene.objects if obj.visible_get())
+    
+    def _count_lights(self) -> int:
+        """Count lights in scene"""
+        return sum(1 for obj in bpy.context.scene.objects 
+                  if obj.type == 'LIGHT' and obj.visible_get())
+    
+    def _get_memory_usage(self) -> float:
+        """Get approximate memory usage in MB"""
+        try:
+            import sys
+            return sys.getsizeof(bpy.data) / (1024 * 1024)
+        except:
+            return 0.0
+    
+    def _get_texture_memory(self) -> float:
+        """Get texture memory usage in MB"""
+        total = 0.0
+        for image in bpy.data.images:
+            if hasattr(image, 'size') and len(image.size) == 2:
+                # Rough estimate: width * height * channels * 4 bytes
+                width, height = image.size
+                channels = image.channels if hasattr(image, 'channels') else 4
+                total += (width * height * channels * 4) / (1024 * 1024)
+        return total
+    
+    def get_statistics_overlay(self) -> str:
+        """
+        Generate formatted statistics overlay text.
+        
+        Returns:
+            Formatted statistics string
+        """
+        lines = [
+            f"FPS: {self.stats.fps:.1f}",
+            f"Frame: {self.stats.frame_time_ms:.2f}ms",
+            f"Triangles: {self.stats.triangle_count:,}",
+            f"Objects: {self.stats.object_count}",
+            f"Lights: {self.stats.light_count}",
+            f"Memory: {self.stats.memory_usage_mb:.1f}MB",
+            f"Textures: {self.stats.texture_memory_mb:.1f}MB"
+        ]
+        return "\n".join(lines)
+    
+    def get_performance_report(self) -> Dict[str, Any]:
+        """
+        Generate comprehensive performance report.
+        
+        Returns:
+            Performance metrics dictionary
+        """
+        if not self._history:
+            return {}
+            
+        fps_values = [s.fps for s in self._history if s.fps > 0]
+        frame_times = [s.frame_time_ms for s in self._history]
+        
+        return {
+            'avg_fps': sum(fps_values) / len(fps_values) if fps_values else 0,
+            'min_fps': min(fps_values) if fps_values else 0,
+            'max_fps': max(fps_values) if fps_values else 0,
+            'avg_frame_time': sum(frame_times) / len(frame_times) if frame_times else 0,
+            'current_triangles': self.stats.triangle_count,
+            'current_memory_mb': self.stats.memory_usage_mb,
+            'samples': len(self._history)
+        }
+    
+    def draw_overlay(self, x: int = 20, y: int = 100):
+        """
+        Draw statistics overlay in viewport (Blender 2.8+ compatible).
+        
+        Args:
+            x: X position for overlay
+            y: Y position for overlay
+        """
+        # Note: This requires a Blender handler to work properly
+        # This method provides the data, actual drawing should be done
+        # via a draw handler callback
+        pass
+
+
+class PerformanceBudgetManager:
+    """
+    Manages performance budgets and alerts for viewport interaction.
+    """
+    
+    def __init__(self, max_triangles: int = 1000000, 
+                 max_memory_mb: int = 2048,
+                 target_fps: int = 30):
+        self.max_triangles = max_triangles
+        self.max_memory_mb = max_memory_mb
+        self.target_fps = target_fps
+        self.profiler = ViewportProfiler()
+        
+    def check_budget(self) -> Dict[str, Any]:
+        """
+        Check current scene against performance budget.
+        
+        Returns:
+            Budget status report
+        """
+        stats = self.profiler.update_stats()
+        
+        alerts = []
+        warnings = []
+        
+        # Triangle budget check
+        triangle_usage = (stats.triangle_count / self.max_triangles) * 100
+        if triangle_usage > 100:
+            alerts.append(f"Triangle budget exceeded: {stats.triangle_count:,} / {self.max_triangles:,}")
+        elif triangle_usage > 80:
+            warnings.append(f"Triangle budget at {triangle_usage:.1f}%")
+            
+        # Memory budget check
+        if stats.memory_usage_mb > self.max_memory_mb:
+            alerts.append(f"Memory budget exceeded: {stats.memory_usage_mb:.0f}MB / {self.max_memory_mb}MB")
+        elif stats.memory_usage_mb > self.max_memory_mb * 0.8:
+            warnings.append(f"Memory budget at {(stats.memory_usage_mb / self.max_memory_mb) * 100:.1f}%")
+            
+        # FPS check
+        if stats.fps > 0 and stats.fps < self.target_fps:
+            warnings.append(f"FPS below target: {stats.fps:.1f} < {self.target_fps}")
+            
+        return {
+            'within_budget': len(alerts) == 0,
+            'alerts': alerts,
+            'warnings': warnings,
+            'triangle_usage_percent': triangle_usage,
+            'memory_usage_percent': (stats.memory_usage_mb / self.max_memory_mb) * 100 if self.max_memory_mb > 0 else 0,
+            'fps_status': 'good' if stats.fps >= self.target_fps else 'low'
+        }
+    
+    def get_optimization_suggestions(self) -> List[str]:
+        """
+        Get optimization suggestions based on current scene.
+        
+        Returns:
+            List of optimization recommendations
+        """
+        stats = self.profiler.update_stats()
+        suggestions = []
+        
+        if stats.triangle_count > self.max_triangles:
+            suggestions.append("Consider using LODs for distant objects")
+            suggestions.append("Use lower subdivision levels in viewport")
+            suggestions.append("Hide non-essential geometry")
+            
+        if stats.texture_memory_mb > 512:
+            suggestions.append("Reduce texture resolution or use texture compression")
+            suggestions.append("Disable unused texture maps in viewport")
+            
+        if stats.light_count > 8:
+            suggestions.append("Reduce realtime light count")
+            suggestions.append("Bake lighting for static objects")
+            
+        if stats.fps < self.target_fps and stats.fps > 0:
+            suggestions.append("Enable backface culling")
+            suggestions.append("Use wireframe or bounding box for distant objects")
+            suggestions.append("Disable shadows in viewport")
+            
+        return suggestions
+
+
+# Convenience Functions
+
+def setup_performance_viewport(config: Optional[ViewportConfig] = None) -> Dict[str, Any]:
+    """
+    Quick setup for performance-optimized viewport.
+    
+    Args:
+        config: Optional custom configuration
+        
+    Returns:
+        Applied settings summary
+    """
+    config = config or ViewportConfig()
+    optimizer = ViewportOptimizer(config)
+    
+    results = {
+        'viewport': optimizer.optimize_for_modeling(),
+        'gpu': {},
+        'scene': {}
+    }
+    
+    # Configure GPU acceleration
+    gpu_accel = GPUAccelerator(config)
+    results['gpu'] = gpu_accel.configure_gpu_acceleration()
+    
+    # Setup scene display management
+    scene_mgr = SceneDisplayManager()
+    
+    # Hide distant objects if configured
+    if config.hide_distant_objects:
+        # Get active camera location or use origin
+        camera = bpy.context.scene.camera
+        if camera:
+            camera_loc = tuple(camera.location)
+        else:
+            camera_loc = (0.0, 0.0, 10.0)
+            
+        optimized = scene_mgr.hide_distant_objects(
+            camera_loc,
+            config.distant_object_distance,
+            config.use_bounding_box_for_distant
+        )
+        results['scene']['distant_optimized'] = optimized
+    
+    return results
+
+
+def create_profiling_overlay() -> ViewportProfiler:
+    """
+    Create and return a viewport profiler for statistics overlay.
+    
+    Returns:
+        Configured ViewportProfiler instance
+    """
+    return ViewportProfiler()
+
+
+def optimize_for_sculpting() -> Dict[str, Any]:
+    """
+    Quick preset for sculpting workflow optimization.
+    
+    Returns:
+        Applied settings
+    """
+    config = ViewportConfig(
+        display_mode=ViewportDisplayMode.SOLID,
+        shading_type=ShadingType.MATCAP,
+        use_matcap=True,
+        matcap_preset=MatcapPreset.CLAY,
+        enable_backface_culling=True,
+        subdivision_preview_levels=2,
+        disable_textures=True
+    )
+    return setup_performance_viewport(config)
+
+
+def optimize_for_layout() -> Dict[str, Any]:
+    """
+    Quick preset for layout/scene composition optimization.
+    
+    Returns:
+        Applied settings
+    """
+    config = ViewportConfig(
+        display_mode=ViewportDisplayMode.SOLID,
+        shading_type=ShadingType.WIREFRAME,
+        hide_distant_objects=True,
+        distant_object_distance=100.0,
+        use_bounding_box_for_distant=True,
+        disable_textures=True
+    )
+    return setup_performance_viewport(config)
+
+
+def optimize_for_texturing() -> Dict[str, Any]:
+    """
+    Quick preset for texture painting/UV work optimization.
+    
+    Returns:
+        Applied settings
+    """
+    config = ViewportConfig(
+        display_mode=ViewportDisplayMode.MATERIAL,
+        shading_type=ShadingType.STUDIO,
+        disable_textures=False,
+        use_simplified_shaders=False,
+        subdivision_preview_levels=1
+    )
+    return setup_performance_viewport(config)
+
+
+# Software-specific profiling tool mappings (for reference)
+PROFILING_TOOLS_REFERENCE = {
+    'blender': {
+        'statistics_overlay': 'Viewport > Overlay > Statistics',
+        'scene_statistics': 'Viewport > View > Statistic',
+        'performance_monitor': 'Preferences > System > Compute Device',
+        'draw_stats': 'Viewport > Overlay > Statistics'
+    },
+    'maya': {
+        'hud': 'Display > Heads Up Display',
+        'scene_metrics': 'Window > Settings/Preferences > Performance Settings',
+        'viewport_stats': 'Renderer > Default Renderer'
+    },
+    '3ds_max': {
+        'viewport_statistics': '[7] key or Views > Viewport Configuration',
+        'object_counts': 'Viewport > Show Statistics',
+        'fps_counter': 'Viewport Configuration > Statistics'
+    },
+    'unreal_engine': {
+        'stat_commands': 'Console: stat fps, stat unit, stat rhi',
+        'realtime_metrics': 'Editor Preferences > Miscellaneous > Frame Rate'
+    },
+    'unity': {
+        'profiler': 'Window > Analysis > Profiler',
+        'stats_panel': 'Game View > Stats button',
+        'frame_debugger': 'Window > Analysis > Frame Debugger'
+    }
+}
