@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { Material as MaterialType, SurfaceFinish, EdgeProfile, ProcessedEdges } from '@/types';
 
-interface VisualizationProps {
+export interface VisualizationProps {
   dims: { length: number; width: number; height: number };
   material?: MaterialType;
   finish?: SurfaceFinish;
@@ -17,7 +17,7 @@ interface VisualizationProps {
   onCapture?: (dataUrl: string) => void;
 }
 
-type CanvasHandle = {
+export type CanvasHandle = {
   captureImage: () => string | null;
 };
 

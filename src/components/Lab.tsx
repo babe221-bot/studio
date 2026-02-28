@@ -516,13 +516,34 @@ export function Lab() {
           <Card className="h-full min-h-[400px] md:min-h-[500px] lg:min-h-full">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>3D Vizualizacija</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setRefreshKey(k => k + 1)} aria-label="Osvježi 3D prikaz">
-                <RefreshCw className="h-4 w-4" aria-hidden="true" />
-              </Button>
+              <div className="flex gap-1">
+                <Button
+                  variant={showDimensions ? "secondary" : "ghost"}
+                  size="icon"
+                  onClick={() => setShowDimensions(!showDimensions)}
+                  aria-label={showDimensions ? "Sakrij dimenzije" : "Prikaži dimenzije"}
+                  title={showDimensions ? "Sakrij dimenzije" : "Prikaži dimenzije"}
+                >
+                  <Ruler className="h-4 w-4" aria-hidden="true" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setRefreshKey(k => k + 1)} aria-label="Osvježi 3D prikaz">
+                  <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="h-full pb-0">
               <ErrorBoundary>
-                <VisualizationCanvas key={refreshKey} {...visualizationState} />
+                <VisualizationCanvas
+                  ref={canvasRef}
+                  key={refreshKey}
+                  dims={{ length, width, height }}
+                  material={selectedMaterial}
+                  finish={selectedFinish}
+                  profile={selectedProfile}
+                  processedEdges={processedEdges}
+                  okapnikEdges={okapnikEdges}
+                  showDimensions={showDimensions}
+                />
               </ErrorBoundary>
             </CardContent>
           </Card>
