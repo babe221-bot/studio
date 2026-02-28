@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef, useDeferredValue, useCallback } from 'react';
-import { generateEnhancedPdf } from '@/lib/pdf-enhanced';
+// import { generateEnhancedPdf } from '@/lib/pdf-enhanced'; // Moved to dynamic import
 import type { CanvasHandle } from '@/components/VisualizationCanvas';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -440,6 +440,9 @@ export function Lab() {
     try {
       const currentImage = canvasRef.current?.captureImage();
       const images3D = orderItems.map(item => item.planSnapshotDataUri || currentImage || null);
+
+      const { generateEnhancedPdf } = await import('@/lib/pdf-enhanced');
+
       await generateEnhancedPdf(orderItems, edgeNames, images3D, {
         companyName: 'Kamena Galanterija',
         orderNumber: `RN-${new Date().toISOString().split('T')[0].replace(/-/g, '')}`,
