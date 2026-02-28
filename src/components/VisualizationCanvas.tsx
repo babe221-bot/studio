@@ -1,4 +1,4 @@
-
+asdasda
 "use client";
 
 import React, { useRef, useEffect, useImperativeHandle, forwardRef, useMemo } from 'react';
@@ -293,15 +293,27 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
 
       const handleResize = () => {
         if (!currentMount || !cameraRef.current || !rendererRef.current) return;
-        cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
+        const width = currentMount.clientWidth;
+        const height = currentMount.clientHeight || 400; // prevent divide by zero
+        if (width === 0) return;
+
+        cameraRef.current.aspect = width / height;
         cameraRef.current.updateProjectionMatrix();
-        rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
+        rendererRef.current.setSize(width, height);
       };
-      window.addEventListener('resize', handleResize);
+
+      const resizeObserver = new ResizeObserver(() => {
+        handleResize();
+      });
+      resizeObserver.observe(currentMount);
+
+      // Trigger an initial resize just to be safe
+      handleResize();
 
       return () => {
-        window.removeEventListener('resize', handleResize);
+        resizeObserver.disconnect();
         cancelAnimationFrame(animId);
+
         if (currentMount && renderer.domElement.parentNode === currentMount) {
           currentMount.removeChild(renderer.domElement);
         }
