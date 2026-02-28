@@ -1,5 +1,6 @@
 """
 3D Stone Slab Geometry Generation using Blender
+With Comprehensive 3D Asset Optimization Protocol
 """
 import bpy
 import bmesh
@@ -8,6 +9,7 @@ import json
 from typing import Dict, Any
 from utils.materials import create_material
 from utils.profiles import get_profile_settings
+from utils.mesh_optimizer import optimize_slab_geometry, MeshHierarchyBuilder, OptimizationConfig
 
 def clear_scene():
     """Clear all objects from the current scene"""
@@ -168,6 +170,12 @@ def generate_3d_model(config: Dict[Any, Any], output_path: str) -> None:
     # Select the object for export
     bpy.context.view_layer.objects.active = obj
     obj.select_set(True)
+    
+    # Execute Comprehensive 3D Asset Optimization Protocol
+    print("\n🔧 Executing 3D Asset Optimization Protocol...")
+    material_type = config.get('material', {}).get('type', 'stone')
+    optimization_results = optimize_slab_geometry(obj, material_type)
+    print(f"✅ Optimization complete: {optimization_results['new_name']}")
     
     # Export to GLB
     print(f"📦 Exporting to: {output_path}")

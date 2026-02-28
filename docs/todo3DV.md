@@ -45,13 +45,13 @@ A comprehensive guide to achieving photorealistic or stylized results in profess
 
 ### Optimization Checklist
 
-- [ ] Remove hidden/internal geometry
-- [ ] Merge overlapping vertices
-- [ ] Delete unused faces and edges
-- [ ] Apply appropriate smoothing groups
-- [ ] Verify normal orientation consistency
-- [ ] Implement proper naming conventions
-- [ ] Group and organize mesh hierarchically
+- [x] Remove hidden/internal geometry - **Implemented in [`utils/mesh_optimizer.py`](stone_slab_cad/utils/mesh_optimizer.py:97)**
+- [x] Merge overlapping vertices - **Implemented in [`utils/mesh_optimizer.py`](stone_slab_cad/utils/mesh_optimizer.py:72)**
+- [x] Delete unused faces and edges - **Implemented in [`utils/mesh_optimizer.py`](stone_slab_cad/utils/mesh_optimizer.py:152)**
+- [x] Apply appropriate smoothing groups - **Implemented in [`utils/mesh_optimizer.py`](stone_slab_cad/utils/mesh_optimizer.py:245)**
+- [x] Verify normal orientation consistency - **Implemented in [`utils/mesh_optimizer.py`](stone_slab_cad/utils/mesh_optimizer.py:192)**
+- [x] Implement proper naming conventions - **Implemented in [`utils/mesh_optimizer.py`](stone_slab_cad/utils/mesh_optimizer.py:55)**
+- [x] Group and organize mesh hierarchically - **Implemented in [`utils/mesh_optimizer.py`](stone_slab_cad/utils/mesh_optimizer.py:60)**
 
 ---
 
@@ -473,6 +473,130 @@ Project/
 - [ ] Confirm resolution requirements
 - [ ] Validate alpha channels
 - [ ] Review compositing integration
+
+---
+
+## 3D Asset Optimization Protocol Implementation
+
+The stone slab CAD pipeline now includes a comprehensive 3D Asset Optimization Protocol that automatically executes the following operations during model generation:
+
+### Protocol Overview
+
+Located in [`stone_slab_cad/utils/mesh_optimizer.py`](stone_slab_cad/utils/mesh_optimizer.py)
+
+#### 1. Geometry Cleanup (`GeometryOptimizer`)
+
+**Vertex Merging**
+- Merges overlapping vertices within 0.1mm tolerance
+- Establishes clean manifold topology
+- Eliminates duplicate geometry using bmesh weld operations
+
+**Internal Face Removal**
+- Removes hidden faces that don't contribute to visible silhouette
+- Analyzes face visibility through ray casting
+- Eliminates internal geometry that doesn't affect rendering
+
+**Orphaned Geometry Cleanup**
+- Purges unused faces with zero area or degenerate geometry
+- Removes orphaned edges with less than 2 linked faces
+- Deletes superfluous vertices with no face connections
+
+#### 2. Normal Orientation (`_audit_and_correct_normals`)
+
+**Normal Auditing**
+- Recalculates face normals using bmesh operations
+- Detects inverted faces facing toward mesh centroid
+- Automatically corrects inverted normal orientations
+
+**Uniform Facing Direction**
+- Ensures consistent normal direction across all polygons
+- Prevents lighting calculation disruptions
+- Validates normal consistency for PBR rendering
+
+#### 3. Smoothing Groups (`SmoothingGroupManager`)
+
+**Surface Continuity Analysis**
+- Classifies surfaces as: Planar, Curved, Transition, or Sharp
+- Analyzes angles between adjacent face normals
+- Determines edge hardness based on surface type
+
+**Edge Hardness Assignment**
+- Sharp edges (>90°): Marked as hard edges for crisp shading
+- Curved transitions: Smooth shading for organic appearance
+- Planar surfaces: Consistent smooth shading
+- Configurable angle threshold (30° default, material-specific)
+
+#### 4. Naming Conventions (`MeshHierarchyBuilder`)
+
+**Hierarchical Naming Format**
+```
+[AssetType]_[AssetName]_[Component]_[Version]
+Example: SLB_KITCHEN_ISLAND_GEO_v01
+```
+
+**Asset Categories**
+- `SLB` - Slab/Stone products
+- `CNT` - Countertop assemblies
+- `TILE` - Tile components
+- `TRIM` - Trim and edging
+- `ACC` - Accessories
+- `HDW` - Hardware
+
+#### 5. Mesh Hierarchy Construction
+
+**Collection Structure**
+```
+SLB_[Name]_MAIN_v01
+├── SLB_[Name]_GEO_v01      (Geometry collection)
+├── SLB_[Name]_COL_v01      (Collision meshes)
+├── SLB_[Name]_LOD_v01      (Level of detail variants)
+└── SLB_[Name]_HLP_v01      (Helper objects)
+```
+
+**Pivot Point Management**
+- Centers pivot to geometry bounds for proper placement
+- Maintains world position while adjusting local origin
+- Facilitates accurate assembly and animation workflows
+
+### Material-Specific Optimization Settings
+
+| Material Type | Smooth Angle | Notes |
+|---------------|--------------|-------|
+| Natural Stone (Marble/Granite) | 45° | Allows for organic surface variation |
+| Engineered Stone (Quartz) | 20° | Tighter edge definition |
+| Default | 30° | Standard stone finish |
+
+### Integration with CAD Pipeline
+
+The optimization protocol is automatically invoked in [`slab3d.py`](stone_slab_cad/slab3d.py:172) during the 3D model generation process:
+
+```python
+# Execute Comprehensive 3D Asset Optimization Protocol
+material_type = config.get('material', {}).get('type', 'stone')
+optimization_results = optimize_slab_geometry(obj, material_type)
+```
+
+### Usage Example
+
+```python
+from utils.mesh_optimizer import (
+    AssetOptimizationPipeline,
+    OptimizationConfig,
+    optimize_slab_geometry
+)
+
+# Quick optimization with material-specific settings
+results = optimize_slab_geometry(slab_object, material_type="marble")
+
+# Custom optimization pipeline
+config = OptimizationConfig(
+    asset_prefix="CNT",
+    merge_distance=0.00005,  # 0.05mm precision
+    smooth_angle_threshold=0.436332  # 25 degrees
+)
+pipeline = AssetOptimizationPipeline("CustomCountertop", config)
+results = pipeline.execute_full_optimization(slab_object)
+```
 
 ---
 
