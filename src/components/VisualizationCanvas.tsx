@@ -196,7 +196,9 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
 
       // Camera
       const camera = new THREE.PerspectiveCamera(42, currentMount.clientWidth / currentMount.clientHeight, 0.05, 500);
-      camera.position.set(5, 3.5, 5);
+      camera.position.set(4.5, 3.0, 4.5);
+
+
       cameraRef.current = camera;
 
       // Renderer

@@ -141,15 +141,21 @@ self.onmessage = (e: MessageEvent) => {
     pillars.bl[1] = leftPath.map(p => addVertex(-halfL, p.y, -halfW + p.x));
 
     // --- Bottom Face (y=0) ---
-    // A single quad for the flat bottom (before okapnik grooves)
+    // The bottom spans all 4 outer corners at y=0
     addQuad(pillars.bl[0][0], pillars.br[0][0], pillars.fr[1][0], pillars.fl[1][0]);
     addGroup(0);
 
     // --- Top Face (y=H) ---
-    // Use the top vertex of each corner path
-    const top = (pillar: number[]) => pillar[pillar.length - 1];
-    addQuad(top(pillars.bl[0]), top(pillars.bl[1]), top(pillars.fl[0]), top(pillars.fl[1]));
-    // Actually top face spans the full slab, use all 4 corner tops:
+    // The top spans all 4 outer corners at the top of each corner's profile path
+    // bl[0] top = back-left corner (back edge side)
+    // br[0] top = back-right corner (back edge side)  
+    // fr[0] top = front-right corner (front edge side)
+    // fl[0] top = front-left corner (front edge side)
+    const topBL = pillars.bl[0][pillars.bl[0].length - 1];
+    const topBR = pillars.br[0][pillars.br[0].length - 1];
+    const topFR = pillars.fr[0][pillars.fr[0].length - 1];
+    const topFL = pillars.fl[0][pillars.fl[0].length - 1];
+    addQuad(topBL, topBR, topFR, topFL);
     addGroup(0);
 
     // --- Robust Corner Stitching ---
