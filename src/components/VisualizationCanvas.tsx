@@ -214,9 +214,10 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       // Environment map (room environment for realistic reflections)
       const pmremGenerator = new THREE.PMREMGenerator(renderer);
       pmremGenerator.compileEquirectangularShader();
-      const envTexture = pmremGenerator.fromScene(new RoomEnvironment(0.5)).texture;
+      const envTexture = pmremGenerator.fromScene(new RoomEnvironment()).texture;
       scene.environment = envTexture;
       pmremGenerator.dispose();
+
 
       // OrbitControls
       const controls = new OrbitControls(camera, renderer.domElement);
