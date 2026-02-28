@@ -75,6 +75,7 @@ export function Lab() {
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isAddingItem, setIsAddingItem] = useState(false);
+  const [announcement, setAnnouncement] = useState<string>('');
 
   useEffect(() => {
     const newOkapnikEdges: ProcessedEdges = { ...okapnikEdges };
@@ -89,6 +90,15 @@ export function Lab() {
       setOkapnikEdges(newOkapnikEdges);
     }
   }, [processedEdges, okapnikEdges]);
+
+  useEffect(() => {
+    if (calculations.totalCost > 0) {
+      setAnnouncement(
+        `Kalkulacija ažurirana. Ukupni trošak: ${calculations.totalCost.toFixed(2)} eura. ` +
+        `Površina: ${calculations.surfaceArea.toFixed(2)} kvadratnih metara.`
+      );
+    }
+  }, [calculations.totalCost, calculations.surfaceArea]);
 
   const selectedMaterial = useMemo(() => materials.find(m => m.id.toString() === selectedMaterialId), [materials, selectedMaterialId]);
   const selectedFinish = useMemo(() => finishes.find(f => f.id.toString() === selectedFinishId), [finishes, selectedFinishId]);
@@ -349,6 +359,14 @@ export function Lab() {
 
   return (
     <main className="container mx-auto p-4 md:p-6 lg:p-8">
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {announcement}
+      </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 xl:grid-cols-4">
 
         <div className="flex flex-col gap-6 lg:col-span-1 xl:col-span-1">

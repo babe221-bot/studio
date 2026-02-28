@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from "@/components/ui/dialog";
+import { FocusScope } from '@radix-ui/react-focus-scope';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Material } from '@/types';
@@ -21,6 +22,8 @@ const MaterialModal: React.FC<MaterialModalProps> = ({ isOpen, onClose, onSave, 
   const [texture, setTexture] = useState('');
   const [color, setColor] = useState('#FFFFFF');
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   useEffect(() => {
     if (item) {
       setName(item.name);
@@ -35,13 +38,28 @@ const MaterialModal: React.FC<MaterialModalProps> = ({ isOpen, onClose, onSave, 
       setTexture('');
       setColor('#FFFFFF');
     }
+    setErrors({});
   }, [item, isOpen]);
 
   const handleSave = () => {
-    if (!name || !density || !costSqm) {
-      alert('Molimo popunite sva obavezna polja.');
+    const newErrors: Record<string, string> = {};
+
+    if (!name.trim()) {
+      newErrors.name = 'Naziv materijala je obavezan';
+    }
+    if (!density || density <= 0) {
+      newErrors.density = 'Gustoća mora biti veća od 0';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      // Announce errors to screen readers
+      const errorMessage = Object.values(newErrors).join('. ');
+      document.getElementById('form-errors')?.setAttribute('aria-label', errorMessage);
       return;
     }
+
+    setErrors({});
     onSave({
       id: item?.id || Date.now(),
       name,
@@ -54,37 +72,108 @@ const MaterialModal: React.FC<MaterialModalProps> = ({ isOpen, onClose, onSave, 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{item ? 'Uredi materijal' : 'Novi materijal'}</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="material-name" className="text-right">Naziv</Label>
-            <Input id="material-name" value={name} onChange={e => setName(e.target.value)} className="col-span-3" />
+      <FocusScope asChild loop trapped>
+        <DialogContent
+          aria-labelledby="material-modal-title"
+          aria-describedby="material-modal-desc"
+          onOpenAutoFocus={(e) => {
+            // Prevent auto-focus on close button, focus first input instead
+            e.preventDefault();
+            document.getElementById('material-name')?.focus();
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle id="material-modal-title">
+              {item ? 'Uredi materijal' : 'Novi materijal'}
+            </DialogTitle>
+            <DialogDescription id="material-modal-desc" className="sr-only">
+              Forma za {item ? 'uređivanje' : 'dodavanje'} materijala.
+              Sva polja su obavezna.
+            </DialogDescription>
+          </DialogHeader>
+          <div id="form-errors" className="sr-only" role="alert" />
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="material-name" className={errors.name ? 'text-destructive' : ''}>
+                Naziv <span aria-label="obavezno">*</span>
+              </Label>
+              <Input
+                id="material-name"
+                value={name}
+                onChange={e => {
+                  setName(e.target.value);
+                  if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
+                }}
+                aria-invalid={!!errors.name}
+                aria-describedby={errors.name ? 'name-error' : undefined}
+                required
+              />
+              {errors.name && (
+                <p id="name-error" className="text-sm text-destructive" role="alert">
+                  {errors.name}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="material-density" className={errors.density ? 'text-destructive' : ''}>
+                Gustoća (g/cm³) <span aria-label="obavezno">*</span>
+              </Label>
+              <Input
+                id="material-density"
+                type="number"
+                value={density}
+                onChange={e => {
+                  setDensity(parseFloat(e.target.value));
+                  if (errors.density) setErrors(prev => ({ ...prev, density: '' }));
+                }}
+                aria-invalid={!!errors.density}
+                aria-describedby={errors.density ? 'density-error' : undefined}
+                required
+              />
+              {errors.density && (
+                <p id="density-error" className="text-sm text-destructive" role="alert">
+                  {errors.density}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="material-cost">
+                Cijena (€/m²)
+              </Label>
+              <Input
+                id="material-cost"
+                type="number"
+                value={costSqm}
+                onChange={e => setCostSqm(parseFloat(e.target.value))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="material-texture">
+                URL Teksture
+              </Label>
+              <Input
+                id="material-texture"
+                value={texture}
+                onChange={e => setTexture(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="material-color">
+                Boja (HEX)
+              </Label>
+              <Input
+                id="material-color"
+                value={color}
+                onChange={e => setColor(e.target.value)}
+              />
+            </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="material-density" className="text-right">Gustoća (g/cm³)</Label>
-            <Input id="material-density" type="number" value={density} onChange={e => setDensity(parseFloat(e.target.value))} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="material-cost" className="text-right">Cijena (€/m²)</Label>
-            <Input id="material-cost" type="number" value={costSqm} onChange={e => setCostSqm(parseFloat(e.target.value))} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="material-texture" className="text-right">URL Teksture</Label>
-            <Input id="material-texture" value={texture} onChange={e => setTexture(e.target.value)} className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="material-color" className="text-right">Boja (HEX)</Label>
-            <Input id="material-color" value={color} onChange={e => setColor(e.target.value)} className="col-span-3" />
-          </div>
-        </div>
-        <DialogFooter>
-          <DialogClose asChild><Button type="button" variant="secondary">Odustani</Button></DialogClose>
-          <Button type="button" onClick={handleSave}>Spremi</Button>
-        </DialogFooter>
-      </DialogContent>
+          <DialogFooter>
+            <DialogClose asChild><Button type="button" variant="secondary">Odustani</Button></DialogClose>
+            <Button type="button" onClick={handleSave}>Spremi</Button>
+          </DialogFooter>
+        </DialogContent>
+      </FocusScope>
     </Dialog>
   );
 };
