@@ -91,22 +91,7 @@ export function Lab() {
     }
   }, [processedEdges, okapnikEdges]);
 
-  useEffect(() => {
-    if (calculations.totalCost > 0) {
-      const parts = [
-        `Kalkulacija ažurirana.`,
-        `Ukupni trošak: ${calculations.totalCost.toFixed(2)} eura.`,
-        `Površina: ${calculations.surfaceArea.toFixed(2)} kvadratnih metara.`,
-        `Težina: ${calculations.weight.toFixed(1)} kilograma.`
-      ];
 
-      if (calculations.okapnikCost > 0) {
-        parts.push(`Trošak okapnika: ${calculations.okapnikCost.toFixed(2)} eura.`);
-      }
-
-      setAnnouncement(parts.join(' '));
-    }
-  }, [calculations.totalCost, calculations.surfaceArea, calculations.weight, calculations.okapnikCost]);
 
   const selectedMaterial = useMemo(() => materials.find(m => m.id.toString() === selectedMaterialId), [materials, selectedMaterialId]);
   const selectedFinish = useMemo(() => finishes.find(f => f.id.toString() === selectedFinishId), [finishes, selectedFinishId]);
@@ -197,6 +182,23 @@ export function Lab() {
 
     return { surfaceArea, weight, materialCost, processingCost, okapnikCost, totalCost };
   }, [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnikEdges, selectedElement, quantity, bunjaEdgeStyle]);
+
+  useEffect(() => {
+    if (calculations.totalCost > 0) {
+      const parts = [
+        `Kalkulacija ažurirana.`,
+        `Ukupni trošak: ${calculations.totalCost.toFixed(2)} eura.`,
+        `Površina: ${calculations.surfaceArea.toFixed(2)} kvadratnih metara.`,
+        `Težina: ${calculations.weight.toFixed(1)} kilograma.`
+      ];
+
+      if (calculations.okapnikCost > 0) {
+        parts.push(`Trošak okapnika: ${calculations.okapnikCost.toFixed(2)} eura.`);
+      }
+
+      setAnnouncement(parts.join(' '));
+    }
+  }, [calculations.totalCost, calculations.surfaceArea, calculations.weight, calculations.okapnikCost]);
 
   const visualizationState = useMemo(() => ({
     dims: { length, width, height },
@@ -425,7 +427,7 @@ export function Lab() {
                 onClick={() => handleOpenModal('material')}
                 aria-label="Dodaj novi materijal"
               >
-                <PlusIcon className="h-4 w-4" />
+                <PlusIcon className="h-4 w-4" aria-hidden="true" />
               </Button>
             </CardHeader>
             <CardContent>
@@ -457,7 +459,7 @@ export function Lab() {
                     onClick={() => handleOpenModal('finish')}
                     aria-label="Dodaj novu obradu lica"
                   >
-                    <PlusIcon className="h-4 w-4" />
+                    <PlusIcon className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </div>
               </div>
@@ -493,7 +495,7 @@ export function Lab() {
                         onClick={() => handleOpenModal('profile')}
                         aria-label="Dodaj novi profil ivice"
                       >
-                        <PlusIcon className="h-4 w-4" />
+                        <PlusIcon className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   </div>
@@ -573,11 +575,11 @@ export function Lab() {
             <CardContent>
               <div className="flex flex-col gap-4 md:flex-row md:items-center">
                 <Button onClick={handleAddToOrder} className="w-full md:w-auto flex-1 h-11" disabled={isAddingItem}>
-                  {isAddingItem && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isAddingItem && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
                   {isAddingItem ? 'Generiram crtež...' : 'Dodaj stavku u nalog'}
                 </Button>
                 <Button onClick={handleDownloadPdf} variant="outline" className="w-full md:w-auto flex-1 h-11" disabled={orderItems.length === 0}>
-                  <FileDown className="mr-2 h-4 w-4" />
+                  <FileDown className="mr-2 h-4 w-4" aria-hidden="true" />
                   Preuzmi Nalog (PDF)
                 </Button>
               </div>
