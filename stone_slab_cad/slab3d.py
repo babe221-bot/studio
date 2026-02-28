@@ -15,6 +15,10 @@ from utils.texture_mapping import (
     unwrap_slab_for_stone, create_stone_pbr_material,
     UVUnwrapper, UVUnwrapConfig, UnwrapMethod
 )
+from utils.lighting_system import (
+    setup_studio_lighting, LightingRig, LightingStyle,
+    ThreePointLighting, HDRILighting, GlobalIlluminationSetup
+)
 
 def clear_scene():
     """Clear all objects from the current scene"""

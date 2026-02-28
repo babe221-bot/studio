@@ -498,3 +498,211 @@ class VolumetricLighting:
         if target:
             direction = target - location
             rot_quat = direction.to_track_quat('-Z', 'Y')
+            light_obj.rotation_euler = rot_quat.to_euler()
+        
+        # Create emissive material
+        mat = bpy.data.materials.new(name=f"{name}_Emissive")
+        mat.use_nodes = True
+        nodes = mat.node_tree.nodes
+        links = mat.node_tree.links
+        nodes.clear()
+        
+        # Emission shader
+        emission = nodes.new('ShaderNodeEmission')
+        emission.location = (0, 0)
+        emission.inputs['Strength'].default_value = energy
+        emission.inputs['Color'].default_value = color
+        
+        # Output
+        output = nodes.new('ShaderNodeOutputMaterial')
+        output.location = (200, 0)
+        
+        links.new(emission.outputs['Emission'], output.inputs['Surface'])
+        
+        # Assign material
+        light_obj.data.materials.append(mat)
+        
+        print(f"✅ Emissive plane created: {name} (energy: {energy})")
+        
+        return light_obj
+    
+    def create_soft_area_light(self, name: str, location: mathutils.Vector,
+                              target: mathutils.Vector, size: float,
+                              energy: float) -> bpy.types.Object:
+        """Create area light optimized for soft shadows"""
+        light_data = bpy.data.lights.new(name=name, type='AREA')
+        light_data.energy = energy
+        light_data.size = size
+        light_data.shape = 'DISK'
+        light_data.shadow_soft_size = size * 0.5
+        
+        light_obj = bpy.data.objects.new(name=name, object_data=light_data)
+        bpy.context.collection.objects.link(light_obj)
+        
+        light_obj.location = location
+        direction = target - location
+        rot_quat = direction.to_track_quat('-Z', 'Y')
+        light_obj.rotation_euler = rot_quat.to_euler()
+        
+        print(f"✅ Soft area light created: {name} (size: {size}m)")
+        
+        return light_obj
+
+
+class LightingRig:
+    """
+    Complete lighting rig combining all techniques.
+    """
+    
+    def __init__(self, style: LightingStyle = LightingStyle.STUDIO):
+        self.style = style
+        self.three_point: Optional[ThreePointLighting] = None
+        self.hdri: Optional[HDRILighting] = None
+        self.volumetric: Optional[VolumetricLighting] = None
+        self.lights: List[bpy.types.Object] = []
+    
+    def setup_complete_rig(self, target: bpy.types.Object,
+                          use_three_point: bool = True,
+                          use_hdri: bool = True,
+                          hdri_path: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Setup complete lighting rig for stone slab visualization.
+        """
+        target_location = target.location
+        
+        results = {
+            'style': self.style.value,
+            'lights_created': [],
+            'hdri_setup': False
+        }
+        
+        # Three-Point Lighting
+        if use_three_point:
+            config = self._get_three_point_config()
+            self.three_point = ThreePointLighting(config)
+            lights = self.three_point.setup(target_location=target_location)
+            self.lights.extend(lights.values())
+            results['lights_created'].extend(lights.keys())
+        
+        # HDRI Environment
+        if use_hdri:
+            hdri_config = HDRIConfig(
+                hdri_path=hdri_path,
+                strength=0.5 if use_three_point else 1.0,  # Reduce if using key light
+                color_temperature=5500 if self.style == LightingStyle.NATURAL else 6500
+            )
+            self.hdri = HDRILighting(hdri_config)
+            self.hdri.setup()
+            results['hdri_setup'] = True
+        
+        # Style-specific additions
+        if self.style == LightingStyle.DRAMATIC:
+            self._add_dramatic_effects(target_location)
+        elif self.style == LightingStyle.PRODUCT:
+            self._add_product_lighting(target_location)
+        
+        print(f"✅ Complete lighting rig setup: {self.style.value}")
+        
+        return results
+    
+    def _get_three_point_config(self) -> ThreePointConfig:
+        """Get three-point config based on style"""
+        configs = {
+            LightingStyle.STUDIO: ThreePointConfig(
+                key_energy=10.0, fill_ratio=0.5, rim_ratio=1.2
+            ),
+            LightingStyle.PRODUCT: ThreePointConfig(
+                key_energy=15.0, fill_ratio=0.3, rim_ratio=1.5
+            ),
+            LightingStyle.NATURAL: ThreePointConfig(
+                key_energy=8.0, fill_ratio=0.7, rim_ratio=0.8,
+                key_color=(1.0, 0.95, 0.8, 1.0),  # Warm sunlight
+                fill_color=(0.8, 0.9, 1.0, 1.0)   # Cool skylight
+            ),
+            LightingStyle.DRAMATIC: ThreePointConfig(
+                key_energy=12.0, fill_ratio=0.2, rim_ratio=2.0
+            ),
+            LightingStyle.ARCHVIZ: ThreePointConfig(
+                key_energy=5.0, fill_ratio=0.8, rim_ratio=1.0
+            )
+        }
+        return configs.get(self.style, ThreePointConfig())
+    
+    def _add_dramatic_effects(self, target_location: mathutils.Vector) -> None:
+        """Add dramatic lighting effects"""
+        self.volumetric = VolumetricLighting()
+        # Add subtle volumetric atmosphere
+        self.volumetric.add_volumetric_cube(
+            name="Dramatic_Atmosphere",
+            location=target_location,
+            size=8.0,
+            density=0.05
+        )
+    
+    def _add_product_lighting(self, target_location: mathutils.Vector) -> None:
+        """Add product photography lighting enhancements"""
+        self.volumetric = VolumetricLighting()
+        # Add ground plane reflection light
+        self.volumetric.create_emissive_plane(
+            name="Ground_Reflection",
+            location=target_location + mathutils.Vector((0, 0, -2)),
+            size=10.0,
+            energy=2.0,
+            color=(1.0, 1.0, 1.0, 1.0),
+            target=target_location
+        )
+
+
+def setup_studio_lighting(target: bpy.types.Object,
+                         style: str = "studio",
+                         hdri_path: Optional[str] = None,
+                         resolution: Tuple[int, int] = (1920, 1080)) -> Dict[str, Any]:
+    """
+    Convenience function for quick studio lighting setup.
+    
+    Args:
+        target: Object to light
+        style: Lighting style ('studio', 'product', 'natural', 'dramatic', 'archviz')
+        hdri_path: Optional HDRI environment map
+        resolution: Render resolution
+    
+    Returns:
+        Dict with setup results
+    """
+    # Parse style
+    style_map = {
+        'studio': LightingStyle.STUDIO,
+        'product': LightingStyle.PRODUCT,
+        'natural': LightingStyle.NATURAL,
+        'dramatic': LightingStyle.DRAMATIC,
+        'archviz': LightingStyle.ARCHVIZ
+    }
+    lighting_style = style_map.get(style.lower(), LightingStyle.STUDIO)
+    
+    # Create rig
+    rig = LightingRig(lighting_style)
+    results = rig.setup_complete_rig(
+        target=target,
+        use_three_point=True,
+        use_hdri=(hdri_path is not None),
+        hdri_path=hdri_path
+    )
+    
+    # Configure GI
+    render_settings = RenderSettings(
+        gi_method=GIMethod.PATH_TRACING,
+        samples=256 if lighting_style in [LightingStyle.PRODUCT, LightingStyle.DRAMATIC] else 128,
+        resolution_x=resolution[0],
+        resolution_y=resolution[1]
+    )
+    
+    gi_setup = GlobalIlluminationSetup(render_settings)
+    gi_setup.configure()
+    
+    results['render_settings'] = {
+        'gi_method': render_settings.gi_method.value,
+        'samples': render_settings.samples,
+        'resolution': resolution
+    }
+    
+    return results
