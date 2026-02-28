@@ -476,57 +476,171 @@ All PBR texture types supported via [`MaterialProperties.textures`](stone_slab_c
 
 ---
 
-## 5. Camera Composition and Depth of Field
+## 5. Camera Composition and Depth of Field ✓ IMPLEMENTED
 
-### Cinematic Composition Rules
+### Cinematic Composition Rules ✓
 
-**Rule of Thirds**
-- Divide frame into 3x3 grid
-- Place subject at intersection points
-- Create visual balance and interest
+Located in **[`CinematicComposition` class](stone_slab_cad/utils/camera_system.py:39)**
 
-**Leading Lines**
-- Use architectural elements to guide eye
-- Create depth and dimension
-- Direct attention to focal points
+**Rule of Thirds** ✅
+- ✅ Divide frame into 3x3 grid - [`apply_rule_of_thirds()`](stone_slab_cad/utils/camera_system.py:47)
+- ✅ Place subject at intersection points - 9 intersection points supported (1-9 grid)
+- ✅ Create visual balance and interest - Automatic camera positioning
 
-**Framing**
-- Use foreground elements as natural frames
-- Add depth layers to composition
-- Create context and environment
+**Leading Lines** ✅
+- ✅ Use architectural elements to guide eye - [`apply_leading_lines()`](stone_slab_cad/utils/camera_system.py:96)
+- ✅ Create depth and dimension - Direction-based positioning
+- ✅ Direct attention to focal points - Line alignment algorithms
 
-### Camera Technical Settings
+**Framing** ✅
+- ✅ Use foreground elements as natural frames - [`create_framing()`](stone_slab_cad/utils/camera_system.py:115)
+- ✅ Add depth layers to composition - Multi-object framing
+- ✅ Create context and environment - Foreground/background separation
 
-| Parameter | Effect | Typical Values |
-|-----------|--------|----------------|
-| Focal Length | Perspective compression | 24mm-200mm |
-| F-Stop (Aperture) | Depth of field | f/1.4 - f/22 |
-| Shutter Speed | Motion blur | 1/60s - 1/1000s |
-| ISO | Sensitivity/Grain | 100-3200 |
-| Focus Distance | Sharp plane location | Variable |
+**Composition Enums**:
+- [`CompositionRule`](stone_slab_cad/utils/camera_system.py:15) - RULE_OF_THIRDS, CENTERED, GOLDEN_RATIO, LEADING_LINES, SYMMETRY, DIAGONAL
 
-### Depth of Field Implementation
+### Camera Technical Settings ✓ IMPLEMENTED
 
-**Bokeh Quality Factors**
-- Blade count (circular vs. polygonal)
-- Bokeh shape (cat eye, onion rings)
-- Chromatic aberration control
-- Foreground/background blur balance
+All parameters configurable via **[`CameraSettings` dataclass](stone_slab_cad/utils/camera_system.py:60)**:
 
-**Focus Techniques**
-- Rack focus for narrative emphasis
-- Deep focus for landscape clarity
-- Shallow focus for subject isolation
-- Tilt-shift for miniature effect
+| Parameter | Effect | Typical Values | Implementation |
+|-----------|--------|----------------|----------------|
+| Focal Length | Perspective compression | 24mm-200mm | ✅ [`CameraSettings.focal_length`](stone_slab_cad/utils/camera_system.py:61) |
+| F-Stop (Aperture) | Depth of field | f/1.4 - f/22 | ✅ [`CameraSettings.f_stop`](stone_slab_cad/utils/camera_system.py:63) |
+| Shutter Speed | Motion blur | 1/60s - 1/1000s | ✅ [`CameraSettings.shutter_speed`](stone_slab_cad/utils/camera_system.py:64) |
+| ISO | Sensitivity/Grain | 100-3200 | ✅ [`CameraSettings.iso`](stone_slab_cad/utils/camera_system.py:65) |
+| Focus Distance | Sharp plane location | Variable | ✅ [`CameraSettings.focus_distance`](stone_slab_cad/utils/camera_system.py:66) |
+| Sensor Width | Film/sensor size | 36mm (full frame) | ✅ [`CameraSettings.sensor_width`](stone_slab_cad/utils/camera_system.py:62) |
 
-### Camera Movement
+**Camera Configuration** via [`CameraController.configure()`](stone_slab_cad/utils/camera_system.py:196):
+```python
+from utils.camera_system import CameraController, CameraSettings
 
-- **Dolly**: Linear movement toward/away
-- **Truck**: Horizontal parallel movement
-- **Pedestal**: Vertical movement
-- **Pan**: Horizontal rotation
-- **Tilt**: Vertical rotation
-- **Roll**: Rotation around view axis
+controller = CameraController()
+settings = CameraSettings(
+    focal_length=85,    # Portrait lens
+    f_stop=2.8,         # Shallow DOF
+    focus_distance=2.0,
+    use_dof=True,
+    aperture_blades=7   # Hexagonal bokeh
+)
+controller.configure(settings)
+```
+
+### Depth of Field Implementation ✓ IMPLEMENTED
+
+Located in **[`CameraController` class](stone_slab_cad/utils/camera_system.py:176)** and **[`DOFSettings` dataclass](stone_slab_cad/utils/camera_system.py:76)**
+
+**Bokeh Quality Factors** ✅
+- ✅ Blade count (circular vs. polygonal) - [`DOFSettings.bokeh_blades`](stone_slab_cad/utils/camera_system.py:81)
+- ✅ Bokeh shape - [`DOFSettings.bokeh_shape`](stone_slab_cad/utils/camera_system.py:80) (CIRCULAR, HEXAGONAL, OCTAGONAL)
+- ✅ Blade rotation - [`DOFSettings.bokeh_rotation`](stone_slab_cad/utils/camera_system.py:82)
+- ✅ Chromatic aberration - [`DOFSettings.chromatic_aberration`](stone_slab_cad/utils/camera_system.py:83)
+
+**Focus Techniques** ✅
+- ✅ Rack focus for narrative emphasis - [`CameraController.rack_focus()`](stone_slab_cad/utils/camera_system.py:275)
+- ✅ Deep focus for landscape clarity - [`CameraController.set_deep_focus()`](stone_slab_cad/utils/camera_system.py:308)
+- ✅ Shallow focus for subject isolation - [`CameraController.set_shallow_focus()`](stone_slab_cad/utils/camera_system.py:301)
+- ✅ Tilt-shift for miniature effect - [`CameraController.apply_tilt_shift()`](stone_slab_cad/utils/camera_system.py:316)
+
+**Focus Technique Enums**:
+- [`FocusTechnique`](stone_slab_cad/utils/camera_system.py:33) - RACK_FOCUS, DEEP_FOCUS, SHALLOW_FOCUS, TILT_SHIFT
+
+**Example - Rack Focus Animation**:
+```python
+controller = CameraController(camera)
+controller.rack_focus(
+    start_obj=foreground_slab,
+    end_obj=background_detail,
+    duration_frames=60,
+    f_stop=2.8
+)
+```
+
+### Camera Movement ✓ IMPLEMENTED
+
+Located in **[`CameraMovementController` class](stone_slab_cad/utils/camera_system.py:329)**
+
+All 6 basic movements + 2 advanced:
+
+| Movement | Description | Implementation |
+|----------|-------------|----------------|
+| **Dolly** | Linear movement toward/away | ✅ [`CameraMovementController.dolly()`](stone_slab_cad/utils/camera_system.py:341) |
+| **Truck** | Horizontal parallel movement | ✅ [`CameraMovementController.truck()`](stone_slab_cad/utils/camera_system.py:351) |
+| **Pedestal** | Vertical movement | ✅ [`CameraMovementController.pedestal()`](stone_slab_cad/utils/camera_system.py:361) |
+| **Pan** | Horizontal rotation | ✅ [`CameraMovementController.pan()`](stone_slab_cad/utils/camera_system.py:369) |
+| **Tilt** | Vertical rotation | ✅ [`CameraMovementController.tilt()`](stone_slab_cad/utils/camera_system.py:381) |
+| **Roll** | Rotation around view axis (Dutch angle) | ✅ [`CameraMovementController.roll()`](stone_slab_cad/utils/camera_system.py:393) |
+| **Orbit** | Circular movement around subject | ✅ [`CameraMovementController.orbit()`](stone_slab_cad/utils/camera_system.py:405) |
+| **Crane** | Arcing movement (pedestal + truck) | ✅ [`CameraMovementController.crane()`](stone_slab_cad/utils/camera_system.py:439) |
+
+**Camera Movement Enums**:
+- [`CameraMovement`](stone_slab_cad/utils/camera_system.py:21) - DOLLY, TRUCK, PEDESTAL, PAN, TILT, ROLL, ORBIT, CRANE
+
+**Example - Orbit Animation**:
+```python
+from utils.camera_system import CameraMovementController
+
+movement = CameraMovementController(camera)
+movement.orbit(
+    target=slab_object,
+    radius=3.0,
+    angle_degrees=360,
+    duration_frames=120
+)
+```
+
+### Product Camera Presets ✓ IMPLEMENTED
+
+Located in **[`ProductCameraSetup` class](stone_slab_cad/utils/camera_system.py:494)**
+
+Pre-configured setups for stone slab visualization:
+
+| Shot Type | Focal Length | F-Stop | Composition | Use Case |
+|-----------|--------------|--------|-------------|----------|
+| Hero | 85mm | f/2.8 | Rule of Thirds (center) | Main product showcase |
+| Detail | 100mm | f/2.0 | Close-up macro | Edge profiles, textures |
+| Context | 35mm | f/8.0 | Leading lines | In-environment shots |
+
+**Usage**:
+```python
+from utils.camera_system import ProductCameraSetup
+
+setup = ProductCameraSetup(slab_object)
+camera = setup.setup_hero_shot()  # or setup_detail_shot(), setup_context_shot()
+```
+
+### Convenience Function ✓
+
+**[`setup_product_camera()`](stone_slab_cad/utils/camera_system.py:556)** - Quick camera setup:
+
+```python
+from utils.camera_system import setup_product_camera
+
+camera = setup_product_camera(
+    target=slab_object,
+    shot_type="hero",      # "hero", "detail", or "context"
+    focal_length=85,
+    f_stop=2.8
+)
+```
+
+### Integration with CAD Pipeline
+
+The camera system is automatically invoked in [`slab3d.py`](stone_slab_cad/slab3d.py:209) after lighting setup:
+
+```python
+# Setup Camera Composition and Depth of Field
+camera = setup_product_camera(
+    target=obj,
+    shot_type="hero",
+    focal_length=85 if material_type in ["marble", "granite"] else 50,
+    f_stop=2.8
+)
+```
+
+For premium materials (marble, granite), an 85mm portrait lens with shallow depth of field (f/2.8) is used. For standard materials, a 50mm lens provides a natural perspective.
 
 ---
 

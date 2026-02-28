@@ -206,6 +206,19 @@ def generate_3d_model(config: Dict[Any, Any], output_path: str) -> None:
     print(f"   Lights: {', '.join(lighting_results['lights_created'])}")
     print(f"   GI Method: {lighting_results['render_settings']['gi_method']}")
     
+    # Setup Camera Composition and Depth of Field
+    print("\n📷 Setting up Camera System...")
+    camera = setup_product_camera(
+        target=obj,
+        shot_type="hero",
+        focal_length=85 if material_type in ["marble", "granite"] else 50,
+        f_stop=2.8
+    )
+    print(f"✅ Camera configured: {camera.name}")
+    print(f"   Shot Type: Hero")
+    print(f"   Focal Length: 85mm" if material_type in ["marble", "granite"] else "   Focal Length: 50mm")
+    print(f"   F-Stop: f/2.8")
+    
     # Export to GLB
     print(f"📦 Exporting to: {output_path}")
     bpy.ops.export_scene.gltf(
