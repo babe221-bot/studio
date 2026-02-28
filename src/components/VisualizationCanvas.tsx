@@ -1,5 +1,5 @@
-asdasda
 "use client";
+
 
 import React, { useRef, useEffect, useImperativeHandle, forwardRef, useMemo } from 'react';
 import * as THREE from 'three';
