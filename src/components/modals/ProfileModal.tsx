@@ -39,7 +39,8 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onSave, it
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      document.getElementById('profile-form-errors')?.setAttribute('aria-label', Object.values(newErrors).join('. '));
+      const errorMessage = Object.values(newErrors).join('. ');
+      document.getElementById('profile-form-errors')?.setAttribute('aria-label', errorMessage);
       return;
     }
 
@@ -72,7 +73,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onSave, it
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="profile-name" className={errors.name ? 'text-destructive' : ''}>
-                Naziv <span aria-label="obavezno">*</span>
+                Naziv <span aria-label="obavezno" aria-hidden="false">*</span>
               </Label>
               <Input
                 id="profile-name"

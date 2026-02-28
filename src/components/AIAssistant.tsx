@@ -40,9 +40,10 @@ export function AIAssistant() {
                 onClick={() => setIsOpen(true)}
                 className="fixed bottom-6 right-6 rounded-full h-14 w-14 shadow-xl hover:shadow-2xl transition-all duration-300"
                 size="icon"
+                aria-label="Otvori AI Pomoćnika"
                 title="Otvori AI Pomoćnika"
             >
-                <MessageSquare className="h-6 w-6" />
+                <MessageSquare className="h-6 w-6" aria-hidden="true" />
             </Button>
         );
     }
@@ -59,13 +60,26 @@ export function AIAssistant() {
                         Stručnjak za kamenoklesarstvo
                     </CardDescription>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full -mr-2" onClick={() => setIsOpen(false)}>
-                    <X className="h-4 w-4" />
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full -mr-2"
+                    onClick={() => setIsOpen(false)}
+                    aria-label="Zatvori AI Pomoćnika"
+                >
+                    <X className="h-4 w-4" aria-hidden="true" />
                 </Button>
             </CardHeader>
 
             <CardContent className="flex-1 p-0 flex flex-col overflow-hidden bg-muted/10">
-                <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+                <ScrollArea
+                    className="flex-1 p-4"
+                    ref={scrollRef}
+                    role="log"
+                    aria-live="polite"
+                    aria-relevant="additions"
+                    aria-label="Povijest razgovora s AI pomoćnikom"
+                >
                     {messages.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-center space-y-4 mt-12 opacity-80">
                             <div className="bg-primary/10 p-4 rounded-full">
@@ -121,9 +135,16 @@ export function AIAssistant() {
                             placeholder="Upišite vaše pitanje..."
                             className="flex-1 rounded-full px-4"
                             autoFocus
+                            aria-label="Vaše pitanje AI pomoćniku"
                         />
-                        <Button type="submit" size="icon" className="rounded-full shrink-0" disabled={isLoading || !input.trim()}>
-                            <Send className="h-4 w-4" />
+                        <Button
+                            type="submit"
+                            size="icon"
+                            className="rounded-full shrink-0"
+                            disabled={isLoading || !input.trim()}
+                            aria-label="Pošalji pitanje"
+                        >
+                            <Send className="h-4 w-4" aria-hidden="true" />
                         </Button>
                     </form>
                 </div>

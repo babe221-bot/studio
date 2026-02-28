@@ -27,8 +27,14 @@ export function SignOutButton(props: SignOutButtonProps) {
     }
 
     return (
-        <Button variant="ghost" size="icon" onClick={handleSignOut} title={isGuest ? "Napusti gost mode" : "Odjava"}>
-            <LogOut className="h-4 w-4" />
+        <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleSignOut}
+            aria-label={isGuest ? "Napusti gost mode" : "Odjava"}
+            title={isGuest ? "Napusti gost mode" : "Odjava"}
+        >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
         </Button>
     )
 }

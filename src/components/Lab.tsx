@@ -93,12 +93,20 @@ export function Lab() {
 
   useEffect(() => {
     if (calculations.totalCost > 0) {
-      setAnnouncement(
-        `Kalkulacija ažurirana. Ukupni trošak: ${calculations.totalCost.toFixed(2)} eura. ` +
-        `Površina: ${calculations.surfaceArea.toFixed(2)} kvadratnih metara.`
-      );
+      const parts = [
+        `Kalkulacija ažurirana.`,
+        `Ukupni trošak: ${calculations.totalCost.toFixed(2)} eura.`,
+        `Površina: ${calculations.surfaceArea.toFixed(2)} kvadratnih metara.`,
+        `Težina: ${calculations.weight.toFixed(1)} kilograma.`
+      ];
+
+      if (calculations.okapnikCost > 0) {
+        parts.push(`Trošak okapnika: ${calculations.okapnikCost.toFixed(2)} eura.`);
+      }
+
+      setAnnouncement(parts.join(' '));
     }
-  }, [calculations.totalCost, calculations.surfaceArea]);
+  }, [calculations.totalCost, calculations.surfaceArea, calculations.weight, calculations.okapnikCost]);
 
   const selectedMaterial = useMemo(() => materials.find(m => m.id.toString() === selectedMaterialId), [materials, selectedMaterialId]);
   const selectedFinish = useMemo(() => finishes.find(f => f.id.toString() === selectedFinishId), [finishes, selectedFinishId]);
@@ -411,7 +419,14 @@ export function Lab() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>2. Odabir materijala</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => handleOpenModal('material')}><PlusIcon className="h-4 w-4" /></Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleOpenModal('material')}
+                aria-label="Dodaj novi materijal"
+              >
+                <PlusIcon className="h-4 w-4" />
+              </Button>
             </CardHeader>
             <CardContent>
               <Label htmlFor="material-select">Vrsta kamena</Label>
@@ -431,12 +446,19 @@ export function Lab() {
                 <Label htmlFor="surface-finish-select">Obrada lica</Label>
                 <div className="flex items-center gap-2">
                   <Select value={selectedFinishId} onValueChange={setSelectedFinishId}>
-                    <SelectTrigger id="surface-finish-select"><SelectValue placeholder="Odaberite obradu" /></SelectTrigger>
+                    <SelectTrigger id="surface-finish-select" aria-label="Odaberite obradu lica"><SelectValue placeholder="Odaberite obradu" /></SelectTrigger>
                     <SelectContent>
                       {finishes.map(f => <SelectItem key={f.id} value={f.id.toString()}>{f.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Button variant="ghost" size="icon" onClick={() => handleOpenModal('finish')}><PlusIcon className="h-4 w-4" /></Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleOpenModal('finish')}
+                    aria-label="Dodaj novu obradu lica"
+                  >
+                    <PlusIcon className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
 
@@ -460,12 +482,19 @@ export function Lab() {
                     <Label>Profil i obrada ivica</Label>
                     <div className="flex items-center gap-2">
                       <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
-                        <SelectTrigger id="edge-profile-select"><SelectValue placeholder="Odaberite profil" /></SelectTrigger>
+                        <SelectTrigger id="edge-profile-select" aria-label="Odaberite profil ivice"><SelectValue placeholder="Odaberite profil" /></SelectTrigger>
                         <SelectContent>
                           {profiles.map(p => <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenModal('profile')}><PlusIcon className="h-4 w-4" /></Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleOpenModal('profile')}
+                        aria-label="Dodaj novi profil ivice"
+                      >
+                        <PlusIcon className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                   <div className="space-y-2 pt-2">
@@ -528,8 +557,8 @@ export function Lab() {
           <Card className="h-full min-h-[400px] md:min-h-[500px] lg:min-h-full">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>3D Vizualizacija</CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setRefreshKey(k => k + 1)} title="Osvježi 3D prikaz">
-                <RefreshCw className="h-4 w-4" />
+              <Button variant="ghost" size="icon" onClick={() => setRefreshKey(k => k + 1)} aria-label="Osvježi 3D prikaz">
+                <RefreshCw className="h-4 w-4" aria-hidden="true" />
               </Button>
             </CardHeader>
             <CardContent className="h-full pb-0">
@@ -595,8 +624,14 @@ export function Lab() {
                           <div className="text-right">
                             <p className="font-semibold">€{item.totalCost.toFixed(2)}</p>
                           </div>
-                          <Button variant="ghost" size="icon" className="ml-2" onClick={() => handleRemoveOrderItem(item.orderId)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="ml-2"
+                            onClick={() => handleRemoveOrderItem(item.orderId)}
+                            aria-label={`Ukloni stavku ${item.id} iz radnog naloga`}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" aria-hidden="true" />
                           </Button>
                         </div>
                       )
@@ -627,6 +662,6 @@ export function Lab() {
         onSave={(item) => handleSaveItem(item, 'profile')}
         item={editingItem as EdgeProfile | null}
       />
-    </main>
+    </main >
   );
 }
