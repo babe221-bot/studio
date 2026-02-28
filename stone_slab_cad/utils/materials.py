@@ -1,13 +1,51 @@
 """
 Material definitions for 3D rendering
+Uses PBR (Physically Based Rendering) system
 """
 import bpy
 from typing import Dict, Any
+from .pbr_materials import (
+    create_stone_material, get_material_preset,
+    PBRMaterialBuilder, MaterialProperties, PBRWorkflow
+)
 
 def create_material(material_info: Dict[str, Any], finish_info: Dict[str, Any]) -> bpy.types.Material:
-    """Create a new Blender material from configuration"""
+    """
+    Create a new PBR Blender material from configuration.
+    Uses the Metal/Roughness workflow with physical material properties.
+    """
     
     material_name = f"{material_info['name']}_{finish_info['name']}"
+    material_type = material_info.get('type', 'stone')
+    
+    # Map material types to presets
+    preset_mapping = {
+        'marble': 'marble_carrara',
+        'granite': 'granite_polished',
+        'quartz': 'quartz_premium',
+        'soapstone': 'soapstone',
+        'travertine': 'travertine',
+        'slate': 'slate'
+    }
+    
+    preset_name = preset_mapping.get(material_type, 'marble_carrara')
+    finish = finish_info.get('name', 'polished').lower()
+    
+    # Use new PBR system
+    try:
+        return create_stone_material(
+            stone_type=preset_name,
+            finish=finish,
+            workflow="metal_roughness"
+        )
+    except Exception as e:
+        print(f"⚠️  PBR material creation failed, using fallback: {e}")
+        return _create_fallback_material(material_name, material_info, finish_info)
+
+def _create_fallback_material(material_name: str, 
+                              material_info: Dict[str, Any], 
+                              finish_info: Dict[str, Any]) -> bpy.types.Material:
+    """Fallback basic material creation"""
     
     # Check if material already exists
     if material_name in bpy.data.materials:
@@ -34,3 +72,13 @@ def create_material(material_info: Dict[str, Any], finish_info: Dict[str, Any]) 
         bsdf.inputs['Metallic'].default_value = 0.0
         
     return mat
+
+# Export PBR utilities for external use
+__all__ = [
+    'create_material',
+    'create_stone_material',
+    'get_material_preset',
+    'PBRMaterialBuilder',
+    'MaterialProperties',
+    'PBRWorkflow'
+]
