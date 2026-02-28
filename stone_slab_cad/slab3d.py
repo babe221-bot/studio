@@ -19,6 +19,10 @@ from utils.lighting_system import (
     setup_studio_lighting, LightingRig, LightingStyle,
     ThreePointLighting, HDRILighting, GlobalIlluminationSetup
 )
+from utils.camera_system import (
+    setup_product_camera, CameraController, CameraSettings,
+    DOFSettings, CinematicComposition, ProductCameraSetup
+)
 
 def clear_scene():
     """Clear all objects from the current scene"""
