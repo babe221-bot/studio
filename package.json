@@ -40,6 +40,8 @@
     "@radix-ui/react-tabs": "^1.1.0",
     "@radix-ui/react-toast": "^1.2.0",
     "@radix-ui/react-tooltip": "^1.1.0",
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.17.12",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.97.0",
     "ai": "^6.0.99",
