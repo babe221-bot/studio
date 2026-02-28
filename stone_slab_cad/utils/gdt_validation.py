@@ -158,7 +158,7 @@ class ChamferValidator:
             deviation=deviation,
             tolerance=tolerance,
             compliance_percentage=compliance,
-            message=f"Depth: {measurement.depth_mm:.2f}mm (spec: {self.spec.depth_mm:.2f}mm ±{tolerance}mm)",
+            message=f"Depth: {measurement.depth_mm:.2f}mm (spec: {self.spec.depth_mm:.2f}mm +/-{tolerance}mm)",
             recommendations=recommendations
         )
     
@@ -221,7 +221,7 @@ class ChamferValidator:
             deviation=deviation,
             tolerance=tolerance,
             compliance_percentage=compliance,
-            message=f"Ra: {measurement.roughness_ra:.2f}μm (spec: {self.spec.surface_roughness_ra:.2f}μm)",
+            message=f"Ra: {measurement.roughness_ra:.2f}um (spec: {self.spec.surface_roughness_ra:.2f}um)",
             recommendations=[]
         )
     
@@ -405,7 +405,7 @@ class DripEdgeValidator:
             deviation=deviation,
             tolerance=tolerance,
             compliance_percentage=compliance,
-            message=f"Position: {measured_distance_from_edge_mm:.1f}mm from edge (spec: {self.drip_spec.distance_from_edge_mm:.1f}mm ±{tolerance}mm)",
+            message=f"Position: {measured_distance_from_edge_mm:.1f}mm from edge (spec: {self.drip_spec.distance_from_edge_mm:.1f}mm +/-{tolerance}mm)",
             recommendations=[]
         )
     
@@ -429,7 +429,7 @@ class DripEdgeValidator:
             deviation=width_deviation,
             tolerance=width_tolerance,
             compliance_percentage=max(0, 100 - (width_deviation / width_tolerance) * 100),
-            message=f"Width: {measured_width_mm:.1f}mm (spec: {self.drip_spec.groove_width_mm:.1f}mm ±{width_tolerance}mm)"
+            message=f"Width: {measured_width_mm:.1f}mm (spec: {self.drip_spec.groove_width_mm:.1f}mm +/-{width_tolerance}mm)"
         ))
         
         # Depth validation
@@ -445,7 +445,7 @@ class DripEdgeValidator:
             deviation=depth_deviation,
             tolerance=depth_tolerance,
             compliance_percentage=max(0, 100 - (depth_deviation / depth_tolerance) * 100),
-            message=f"Depth: {measured_depth_mm:.1f}mm (spec: {self.drip_spec.groove_depth_mm:.1f}mm ±{depth_tolerance}mm)"
+            message=f"Depth: {measured_depth_mm:.1f}mm (spec: {self.drip_spec.groove_depth_mm:.1f}mm +/-{depth_tolerance}mm)"
         ))
         
         return results
