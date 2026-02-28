@@ -14,7 +14,10 @@ import json
 from typing import Dict, Any
 from utils.materials import create_material
 from utils.profiles import get_profile_settings
-from utils.mesh_optimizer import optimize_slab_geometry, MeshHierarchyBuilder, OptimizationConfig
+from utils.mesh_optimizer import (
+    optimize_slab_geometry, MeshHierarchyBuilder, OptimizationConfig,
+    execute_three_phase_optimization, validate_watertight_topology
+)
 from utils.texture_mapping import (
     unwrap_slab_for_stone, create_stone_pbr_material,
     UVUnwrapper, UVUnwrapConfig, UnwrapMethod
