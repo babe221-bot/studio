@@ -35,6 +35,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { generateAndDownloadPdf } from '@/lib/pdf';
 import { generateTechnicalDrawing } from '@/ai/flows/imageGenerationFlow';
+import { ErrorBoundary } from './ErrorBoundary';
+import { useOrderCalculations } from '@/hooks/useOrderCalculations';
+import { useElementConfiguration } from '@/hooks/useElementConfiguration';
 
 export function Lab() {
   const { toast } = useToast();
@@ -44,32 +47,18 @@ export function Lab() {
   const [profiles, setProfiles] = useState<EdgeProfile[]>(initialEdgeProfiles);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
 
-  const [selectedElement, setSelectedElement] = useState<ConstructionElement | undefined>(constructionElements[0]);
-  const [quantity, setQuantity] = useState(1);
-  const [bunjaEdgeStyle, setBunjaEdgeStyle] = useState<'oštre' | 'lomljene'>('lomljene');
-
-  const [specimenId, setSpecimenId] = useState(`${constructionElements[0].name} 01`);
-  const [length, setLength] = useState(constructionElements[0].defaultLength);
-  const [width, setWidth] = useState(constructionElements[0].defaultWidth);
-  const [height, setHeight] = useState(constructionElements[0].defaultHeight);
-
-  const [selectedMaterialId, setSelectedMaterialId] = useState<string | undefined>(initialMaterials[0]?.id.toString());
-  const [selectedFinishId, setSelectedFinishId] = useState<string | undefined>(initialSurfaceFinishes[0]?.id.toString());
-  const [selectedProfileId, setSelectedProfileId] = useState<string | undefined>(initialEdgeProfiles[0]?.id.toString());
-
-  const [processedEdges, setProcessedEdges] = useState<ProcessedEdges>({
-    front: true,
-    back: false,
-    left: false,
-    right: false,
-  });
-
-  const [okapnikEdges, setOkapnikEdges] = useState<ProcessedEdges>({
-    front: false,
-    back: false,
-    left: false,
-    right: false,
-  });
+  const config = useElementConfiguration();
+  const {
+    selectedElement, length, setLength, width, setWidth, height, setHeight,
+    quantity, setQuantity, specimenId, setSpecimenId,
+    selectedMaterialId, setSelectedMaterialId,
+    selectedFinishId, setSelectedFinishId,
+    selectedProfileId, setSelectedProfileId,
+    processedEdges, updateProcessedEdge,
+    okapnikEdges, updateOkapnikEdge,
+    bunjaEdgeStyle, setBunjaEdgeStyle,
+    handleElementTypeChange
+  } = config;
 
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
@@ -77,111 +66,16 @@ export function Lab() {
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [announcement, setAnnouncement] = useState<string>('');
 
-  useEffect(() => {
-    const newOkapnikEdges: ProcessedEdges = { ...okapnikEdges };
-    let changed = false;
-    for (const edge of Object.keys(processedEdges) as Array<keyof ProcessedEdges>) {
-      if (!processedEdges[edge] && newOkapnikEdges[edge]) {
-        newOkapnikEdges[edge] = false;
-        changed = true;
-      }
-    }
-    if (changed) {
-      setOkapnikEdges(newOkapnikEdges);
-    }
-  }, [processedEdges, okapnikEdges]);
-
-
-
   const selectedMaterial = useMemo(() => materials.find(m => m.id.toString() === selectedMaterialId), [materials, selectedMaterialId]);
   const selectedFinish = useMemo(() => finishes.find(f => f.id.toString() === selectedFinishId), [finishes, selectedFinishId]);
   const selectedProfile = useMemo(() => profiles.find(p => p.id.toString() === selectedProfileId), [profiles, selectedProfileId]);
 
-  const calculations = useMemo(() => {
-    if (!selectedMaterial || !selectedFinish || !selectedProfile || !height) {
-      return { surfaceArea: 0, weight: 0, materialCost: 0, processingCost: 0, totalCost: 0, okapnikCost: 0 };
-    }
-
-    const length_m = length / 100;
-    const width_m = width / 100;
-    const height_m = height / 100;
-    const OKAPNIK_COST_PER_M = 5;
-    const BUNJA_BROKEN_EDGE_UPCHARGE_SQM = 25;
-
-    let totalCost = 0;
-    let surfaceArea = 0;
-    let weight = 0;
-    let materialCost = 0;
-    let processingCost = 0;
-    let okapnikCost = 0;
-
-    // --- Cost calculation per piece ---
-    const surfaceArea_m2_piece = length_m * width_m;
-    const weight_kg_piece = (length * width * height * selectedMaterial.density) / 1000;
-    const materialCost_piece = surfaceArea_m2_piece * selectedMaterial.cost_sqm;
-
-    let processed_perimeter_m = 0;
-    if (processedEdges.front) processed_perimeter_m += length_m;
-    if (processedEdges.back) processed_perimeter_m += length_m;
-    if (processedEdges.left) processed_perimeter_m += width_m;
-    if (processedEdges.right) processed_perimeter_m += width_m;
-    const edgeProcessingCost_piece = processed_perimeter_m * selectedProfile.cost_m;
-
-    let okapnik_perimeter_m = 0;
-    if (okapnikEdges.front) okapnik_perimeter_m += length_m;
-    if (okapnikEdges.back) okapnik_perimeter_m += length_m;
-    if (okapnikEdges.left) okapnik_perimeter_m += width_m;
-    if (okapnikEdges.right) okapnik_perimeter_m += width_m;
-    const okapnikCost_piece = okapnik_perimeter_m * OKAPNIK_COST_PER_M;
-
-    const surfaceProcessingCost_piece = surfaceArea_m2_piece * selectedFinish.cost_sqm;
-    const processingCost_piece = surfaceProcessingCost_piece + edgeProcessingCost_piece;
-    const totalCost_piece = materialCost_piece + processingCost_piece + okapnikCost_piece;
-
-    switch (selectedElement?.orderUnit) {
-      case 'piece':
-        surfaceArea = surfaceArea_m2_piece * quantity;
-        weight = weight_kg_piece * quantity;
-        materialCost = materialCost_piece * quantity;
-        processingCost = processingCost_piece * quantity;
-        okapnikCost = okapnikCost_piece * quantity;
-        totalCost = totalCost_piece * quantity;
-        break;
-
-      case 'sqm':
-        surfaceArea = quantity;
-        materialCost = selectedMaterial.cost_sqm * quantity;
-        processingCost = selectedFinish.cost_sqm * quantity;
-
-        if (selectedElement.hasSpecialBunjaEdges) {
-          if (bunjaEdgeStyle === 'lomljene') {
-            processingCost += BUNJA_BROKEN_EDGE_UPCHARGE_SQM * quantity;
-          }
-          // Weight for Bunja is based on its specific thickness.
-          weight = quantity * height_m * selectedMaterial.density * 1000;
-        } else {
-          weight = quantity * height_m * selectedMaterial.density * 1000;
-        }
-
-        totalCost = materialCost + processingCost;
-        break;
-
-      case 'lm':
-        // Cokl calculation (width is height of the cokl, height is thickness)
-        const materialCost_lm = width_m * selectedMaterial.cost_sqm;
-        const finishCost_lm = width_m * selectedFinish.cost_sqm;
-        const profileCost_lm = selectedProfile.cost_m; // Assuming profile is on the top edge
-
-        materialCost = materialCost_lm * quantity;
-        processingCost = (finishCost_lm + profileCost_lm) * quantity;
-        totalCost = materialCost + processingCost;
-        weight = width_m * height_m * selectedMaterial.density * 1000 * quantity;
-        surfaceArea = width_m * quantity; // Exposed surface area
-        break;
-    }
-
-    return { surfaceArea, weight, materialCost, processingCost, okapnikCost, totalCost };
-  }, [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnikEdges, selectedElement, quantity, bunjaEdgeStyle]);
+  const calculations = useOrderCalculations({
+    length, width, height,
+    selectedMaterial, selectedFinish, selectedProfile,
+    processedEdges, okapnikEdges,
+    selectedElement, quantity, bunjaEdgeStyle
+  });
 
   useEffect(() => {
     if (calculations.totalCost > 0) {
@@ -208,28 +102,6 @@ export function Lab() {
     processedEdges: processedEdges,
     okapnikEdges: okapnikEdges,
   }), [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnikEdges]);
-
-  const handleElementTypeChange = (elementId: string) => {
-    const element = constructionElements.find(e => e.id === elementId);
-    if (element) {
-      setSelectedElement(element);
-      setLength(element.defaultLength);
-      setWidth(element.defaultWidth);
-      setHeight(element.defaultHeight);
-      setSpecimenId(`${element.name} 01`);
-      setQuantity(1);
-
-      // Default edges and okapnik
-      if (element.orderUnit === 'sqm' || element.orderUnit === 'lm') {
-        setProcessedEdges({ front: false, back: false, left: false, right: false });
-      } else {
-        setProcessedEdges({ front: true, back: false, left: false, right: false });
-      }
-
-      // Okapnik is off by default for all elements
-      setOkapnikEdges({ front: false, back: false, left: false, right: false });
-    }
-  };
 
   const edgeNames = {
     front: 'Prednja',
@@ -507,7 +379,7 @@ export function Lab() {
                           <Checkbox
                             id={`edge-${edge}`}
                             checked={processedEdges[edge as keyof ProcessedEdges]}
-                            onCheckedChange={(checked) => setProcessedEdges(prev => ({ ...prev, [edge]: !!checked }))}
+                            onCheckedChange={(checked) => updateProcessedEdge(edge as keyof ProcessedEdges, !!checked)}
                           />
                           <Label htmlFor={`edge-${edge}`} className="font-normal cursor-pointer">{edgeNames[edge as keyof typeof edgeNames]}</Label>
                         </div>
@@ -522,7 +394,7 @@ export function Lab() {
                           <Checkbox
                             id={`okapnik-${edge}`}
                             checked={okapnikEdges[edge as keyof ProcessedEdges]}
-                            onCheckedChange={(checked) => setOkapnikEdges(prev => ({ ...prev, [edge]: !!checked }))}
+                            onCheckedChange={(checked) => updateOkapnikEdge(edge as keyof ProcessedEdges, !!checked)}
                             disabled={!processedEdges[edge as keyof ProcessedEdges]}
                           />
                           <Label htmlFor={`okapnik-${edge}`} className={`font-normal cursor-pointer ${!processedEdges[edge as keyof ProcessedEdges] ? 'text-muted-foreground' : ''}`}>{edgeNames[edge as keyof typeof edgeNames]}</Label>
@@ -564,7 +436,9 @@ export function Lab() {
               </Button>
             </CardHeader>
             <CardContent className="h-full pb-0">
-              <VisualizationCanvas key={refreshKey} {...visualizationState} />
+              <ErrorBoundary>
+                <VisualizationCanvas key={refreshKey} {...visualizationState} />
+              </ErrorBoundary>
             </CardContent>
           </Card>
         </div>
