@@ -3,6 +3,7 @@
 With Comprehensive 3D Asset Optimization Protocol
 And Texture Mapping & UV Unwrapping System
 And Real-Time Engine Optimization
+And Post-Processing Techniques
 """
 import bpy
 import bmesh
@@ -28,6 +29,11 @@ from utils.realtime_engine import (
     setup_realtime_optimization, configure_lighting_mode,
     profile_scene_performance, PlatformType,
     PERFORMANCE_BUDGETS, RealtimeEngineOptimizer
+)
+from utils.post_processing import (
+    setup_post_processing, apply_color_grading,
+    validate_render, PostProcessingConfig,
+    ColorGradingConfig, POST_RENDER_CHECKLIST
 )
 
 def clear_scene():
@@ -237,6 +243,18 @@ def generate_3d_model(config: Dict[Any, Any], output_path: str) -> None:
     print(f"   Platform: {rt_results['platform']}")
     print(f"   Triangle Budget: {rt_results['budget']['triangle_budget']:,}")
     print(f"   Within Budget: {rt_results.get('within_budget', 'N/A')}")
+    
+    # Setup Post-Processing Techniques (Section 7)
+    print("\n🎬 Setting up Post-Processing Techniques...")
+    pp_preset = config.get('post_processing_preset', 'product_photography')
+    pp_results = setup_post_processing(
+        scene=bpy.context.scene,
+        preset=pp_preset
+    )
+    print(f"✅ Post-processing setup complete")
+    print(f"   Preset: {pp_preset}")
+    print(f"   Effects: {', '.join(pp_results['post_effects']['effects_applied'])}")
+    print(f"   Color Grading: {pp_results['color_grading']['mode']}")
     
     # Export to GLB
     print(f"📦 Exporting to: {output_path}")
