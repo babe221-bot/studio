@@ -9,7 +9,7 @@ test.describe('Authentication and Login', () => {
         await expect(page.getByRole('heading', { name: 'Prijava' })).toBeVisible();
         await expect(page.locator('input[type="email"]')).toBeVisible();
         await expect(page.locator('input[type="password"]')).toBeVisible();
-        await expect(page.getByRole('button', { name: 'Prijavi se' })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Prijavi se', exact: true })).toBeVisible();
     });
 
     test('2. Should show validation error for empty fields', async ({ page }) => {

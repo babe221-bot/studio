@@ -8,15 +8,17 @@ test.describe('History and Templates functionality', () => {
     });
 
     test('19. Should open History/Templates drawer', async ({ page }) => {
-        const historyBtn = page.getByRole('button', { name: /(Povijest|Predlošci|Templates)/i }).first();
+        const historyBtn = page.getByRole('button', { name: /Povijest verzija/i }).first();
         if (await historyBtn.isVisible()) {
             await historyBtn.click();
-            await expect(page.getByText(/Spremljeni/i)).toBeVisible();
+            await expect(page.getByText(/Povijest verzija projekta/i)).toBeVisible();
         }
     });
 
     test('20. Save current config to history (Mock check)', async ({ page }) => {
-        const saveBtn = page.getByRole('button', { name: /Spremi/i }).filter({ hasNotText: /Promijeni/i }).first();
+        // Make sure a component is added to enable saving
+        await page.getByRole('button', { name: 'Dodaj stavku u nalog' }).click();
+        const saveBtn = page.getByRole('button', { name: /Spremi trenutnu verziju/i }).first();
         if (await saveBtn.isVisible()) {
             await saveBtn.click();
             // A toast or confirmation might appear
