@@ -649,7 +649,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
 
         mainGroupRef.current.add(mesh);
         pendingGeometryRef.current = null;
-      }).catch((err) => {
+      }).catch((err: Error) => {
         console.error('Geometry generation failed:', err);
       });
 
