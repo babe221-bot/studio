@@ -5,6 +5,7 @@ And Texture Mapping & UV Unwrapping System
 And Real-Time Engine Optimization
 And Post-Processing Techniques
 And Viewport Performance Tuning
+And Workflow Efficiency System
 """
 import bpy
 import bmesh
@@ -41,6 +42,13 @@ from utils.viewport_performance import (
     ViewportOptimizer, SceneDisplayManager,
     GPUAccelerator, PerformanceBudgetManager,
     ViewportConfig, optimize_for_texturing
+)
+from utils.workflow_efficiency import (
+    setup_project_structure, batch_export_selected,
+    run_quality_checklist, create_project_documentation,
+    AssetNamingManager, ProjectStructureManager,
+    QualityAssuranceManager, BatchExportManager,
+    AssetType, ProjectPhase
 )
 
 def clear_scene():
@@ -288,6 +296,29 @@ def generate_3d_model(config: Dict[Any, Any], output_path: str) -> None:
     stats = profiler.update_stats()
     print(f"   Scene Triangles: {stats.triangle_count:,}")
     print(f"   Objects: {stats.object_count}")
+    
+    # Setup Workflow Efficiency (Section 9)
+    print("\n📋 Running Workflow Efficiency Systems...")
+    
+    # Run quality assurance checks
+    qa = QualityAssuranceManager()
+    qa_results = qa.run_pre_render_checks()
+    print(f"✅ Quality checks complete")
+    print(f"   Passed: {len(qa_results['passed'])}")
+    if qa_results['failed']:
+        print(f"   Failed: {len(qa_results['failed'])}")
+    if qa_results['warnings']:
+        print(f"   Warnings: {len(qa_results['warnings'])}")
+    
+    # Generate standardized asset name
+    naming_mgr = AssetNamingManager(config.get('project_code', 'SLB'))
+    asset_type = AssetType.SLAB if material_type in ['marble', 'granite', 'quartz'] else AssetType.COUNTERTOP
+    standardized_name = naming_mgr.generate_asset_name(
+        asset_type=asset_type,
+        asset_name=obj.name,
+        variation=material_type
+    )
+    print(f"   Asset Name: {standardized_name}")
     
     # Export to GLB
     print(f"📦 Exporting to: {output_path}")

@@ -1083,3 +1083,27 @@ TEMPLATE_WORKFLOWS = {
         'phases': [
             ProjectPhase.REFERENCE,
             ProjectPhase.CONCEPTS,
+            ProjectPhase.MODELS,
+            ProjectPhase.TEXTURES,
+            ProjectPhase.LIGHTING,
+            ProjectPhase.RENDERS,
+            ProjectPhase.COMPOSITING
+        ],
+        'naming_convention': {
+            'project_code': 'ARCH',
+            'asset_types': [AssetType.SLAB, AssetType.TRIM, AssetType.ACCESSORY]
+        }
+    },
+    'technical_documentation': {
+        'description': 'Technical drawing and documentation',
+        'phases': [
+            ProjectPhase.MODELS,
+            ProjectPhase.RENDERS,
+            ProjectPhase.OUTPUT
+        ],
+        'naming_convention': {
+            'project_code': 'TECH',
+            'asset_types': [AssetType.SLAB, AssetType.HARDWARE]
+        }
+    }
+}
