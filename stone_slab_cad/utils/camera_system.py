@@ -567,3 +567,139 @@ class CameraMovementController:
             
             # Interpolate each axis
             rot_x = start_rotation[0] + (end_rotation[0] - start_rotation[0]) * t
+            rot_y = start_rotation[1] + (end_rotation[1] - start_rotation[1]) * t
+            rot_z = start_rotation[2] + (end_rotation[2] - start_rotation[2]) * t
+            
+            self.camera.rotation_euler = (rot_x, rot_y, rot_z)
+            self.camera.keyframe_insert(data_path="rotation_euler", frame=frame)
+
+
+class ProductCameraSetup:
+    """
+    Pre-configured camera setups for product visualization.
+    """
+    
+    def __init__(self, target: bpy.types.Object):
+        self.target = target
+        self.controller = CameraController()
+        self.composition = CinematicComposition(self.controller.camera)
+    
+    def setup_hero_shot(self) -> bpy.types.Object:
+        """
+        Classic hero shot with shallow depth of field.
+        """
+        camera = self.controller.camera
+        
+        # Position camera at 45° angle, eye level
+        direction = mathutils.Vector((1, -1, 0.5)).normalized()
+        distance = 3.0
+        camera.location = self.target.location + direction * distance
+        
+        # Look at target
+        direction = self.target.location - camera.location
+        rot_quat = direction.to_track_quat('-Z', 'Y')
+        camera.rotation_euler = rot_quat.to_euler()
+        
+        # Configure settings
+        settings = CameraSettings(
+            focal_length=85,        # Portrait lens
+            f_stop=2.8,             # Shallow DOF
+            use_dof=True,
+            composition_rule=CompositionRule.RULE_OF_THIRDS,
+            focus_object=self.target
+        )
+        self.controller.configure(settings)
+        
+        # Apply rule of thirds
+        self.composition.apply_rule_of_thirds(self.target, intersection=5)
+        
+        print("✅ Hero shot configured")
+        return camera
+    
+    def setup_detail_shot(self, detail_location: mathutils.Vector) -> bpy.types.Object:
+        """
+        Close-up detail shot with macro-like settings.
+        """
+        camera = self.controller.camera
+        
+        # Position camera close to detail
+        direction = (detail_location - self.target.location).normalized()
+        camera.location = detail_location + direction * 0.5 + mathutils.Vector((0, 0, 0.2))
+        
+        # Look at detail
+        direction = detail_location - camera.location
+        rot_quat = direction.to_track_quat('-Z', 'Y')
+        camera.rotation_euler = rot_quat.to_euler()
+        
+        # Configure for macro
+        settings = CameraSettings(
+            focal_length=100,
+            f_stop=2.0,
+            use_dof=True,
+            focus_distance=0.5
+        )
+        self.controller.configure(settings)
+        
+        print("✅ Detail shot configured")
+        return camera
+    
+    def setup_context_shot(self, environment_objects: List[bpy.types.Object] = None) -> bpy.types.Object:
+        """
+        Wide shot showing product in context.
+        """
+        camera = self.controller.camera
+        
+        # Position camera further back
+        direction = mathutils.Vector((0, -1, 0.3)).normalized()
+        distance = 5.0
+        camera.location = self.target.location + direction * distance
+        
+        # Look at target
+        direction = self.target.location - camera.location
+        rot_quat = direction.to_track_quat('-Z', 'Y')
+        camera.rotation_euler = rot_quat.to_euler()
+        
+        # Configure for wide context
+        settings = CameraSettings(
+            focal_length=35,
+            f_stop=8.0,             # Deep DOF
+            use_dof=True,
+            composition_rule=CompositionRule.LEADING_LINES
+        )
+        self.controller.configure(settings)
+        
+        print("✅ Context shot configured")
+        return camera
+
+
+def setup_product_camera(target: bpy.types.Object,
+                        shot_type: str = "hero",
+                        focal_length: float = 50.0,
+                        f_stop: float = 2.8) -> bpy.types.Object:
+    """
+    Convenience function for quick product camera setup.
+    
+    Args:
+        target: Object to focus on
+        shot_type: 'hero', 'detail', or 'context'
+        focal_length: Lens focal length in mm
+        f_stop: Aperture f-stop value
+    
+    Returns:
+        Configured camera object
+    """
+    setup = ProductCameraSetup(target)
+    
+    if shot_type == "hero":
+        return setup.setup_hero_shot()
+    elif shot_type == "detail":
+        # Use target location for detail
+        return setup.setup_detail_shot(target.location)
+    elif shot_type == "context":
+        return setup.setup_context_shot()
+    else:
+        # Default configuration
+        controller = CameraController()
+        settings = CameraSettings(focal_length=focal_length, f_stop=f_stop)
+        controller.configure(settings)
+        return controller.camera
