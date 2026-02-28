@@ -17,7 +17,7 @@ import type { Material as MaterialType, SurfaceFinish, EdgeProfile, ProcessedEdg
 
 // Import new architecture components
 import { resourceManager } from '@/lib/ResourceManager';
-import { getGeometryWorkerPool, type GeometryJobOutput } from '@/lib/WorkerPool';
+import { useGeometryWorkerPool, type GeometryJobOutput } from '@/lib/WorkerPool';
 
 export interface VisualizationProps {
   dims: { length: number; width: number; height: number };
@@ -168,7 +168,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
     const dimensionGroupRef = useRef<THREE.Group | null>(null);
 
     // Get Worker Pool singleton
-    const workerPoolRef = useRef(getGeometryWorkerPool());
+    const { executeJob, cancelJob } = useGeometryWorkerPool();
 
     // Pending geometry ref for cleanup if component unmounts before worker completes
     const pendingGeometryRef = useRef<THREE.BufferGeometry | null>(null);
@@ -600,7 +600,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       // ── Geometry generation via Worker Pool ──
       const jobId = `slab-geo-${length}-${width}-${height}-${profile.name}-${Date.now()}`;
 
-      workerPoolRef.current.executeJob({
+      executeJob({
         L: vizL,
         W: vizW,
         H: h,
