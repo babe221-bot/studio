@@ -42,6 +42,9 @@ import { generateTechnicalDrawing } from '@/ai/flows/imageGenerationFlow';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useOrderCalculations } from '@/hooks/useOrderCalculations';
 import { useElementConfiguration } from '@/hooks/useElementConfiguration';
+import { useProjectHistory } from '@/hooks/useProjectHistory';
+import { VersionHistoryDialog } from './history/VersionHistoryDialog';
+import { TemplateManager } from './history/TemplateManager';
 
 export function Lab() {
   const { toast } = useToast();
@@ -50,6 +53,15 @@ export function Lab() {
   const [finishes, setFinishes] = useState<SurfaceFinish[]>(initialSurfaceFinishes);
   const [profiles, setProfiles] = useState<EdgeProfile[]>(initialEdgeProfiles);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+
+  const {
+    versions,
+    templates,
+    saveVersion,
+    saveTemplate,
+    deleteVersion,
+    deleteTemplate,
+  } = useProjectHistory();
 
   const config = useElementConfiguration();
   const {
@@ -476,7 +488,24 @@ export function Lab() {
 
         <div className="lg:col-span-3 xl:col-span-4 lg:order-3 order-3">
           <Card>
-            <CardHeader><CardTitle>5. Radni nalog</CardTitle></CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle>5. Radni nalog</CardTitle>
+              <div className="flex gap-2">
+                <TemplateManager
+                  templates={templates}
+                  currentItems={orderItems}
+                  onSave={saveTemplate}
+                  onLoad={setOrderItems}
+                  onDelete={deleteTemplate}
+                />
+                <VersionHistoryDialog
+                  versions={versions}
+                  currentItems={orderItems}
+                  onRestore={setOrderItems}
+                  onDelete={deleteVersion}
+                />
+              </div>
+            </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-4 md:flex-row md:items-center">
                 <Button onClick={handleAddToOrder} className="w-full md:w-auto flex-1 h-11" disabled={isAddingItem}>
@@ -486,6 +515,18 @@ export function Lab() {
                 <Button onClick={handleDownloadPdf} variant="outline" className="w-full md:w-auto flex-1 h-11" disabled={orderItems.length === 0}>
                   <FileDown className="mr-2 h-4 w-4" aria-hidden="true" />
                   Preuzmi Nalog (PDF)
+                </Button>
+                <Button
+                  onClick={() => {
+                    const name = `Verzija ${versions.length + 1}`;
+                    saveVersion(name, orderItems);
+                    toast({ title: "Verzija spremljena", description: `Verzija "${name}" je dodana u povijest.` });
+                  }}
+                  variant="ghost"
+                  className="w-full md:w-auto flex-1 h-11 border-dashed border-2"
+                  disabled={orderItems.length === 0}
+                >
+                  Spremi trenutnu verziju
                 </Button>
               </div>
               <Separator className="my-4" />

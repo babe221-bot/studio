@@ -49,6 +49,22 @@ export interface OrderItem {
   bunjaEdgeStyle?: 'oštre' | 'lomljene';
 }
 
+export interface ProjectVersion {
+  id: string;
+  name: string;
+  timestamp: number;
+  items: OrderItem[];
+  notes?: string;
+}
+
+export interface ProjectTemplate {
+  id: string;
+  name: string;
+  items: OrderItem[];
+  description?: string;
+  createdAt: number;
+}
+
 export type ModalType = 'material' | 'finish' | 'profile' | null;
 
 export interface ConstructionElement {
