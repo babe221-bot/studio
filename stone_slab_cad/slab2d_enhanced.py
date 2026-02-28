@@ -82,3 +82,171 @@ def generate_pdf_drawing_svg(config: Dict[Any, Any]) -> str:
         fill='url(#hatchPattern)',
         opacity=0.3
     )
+    dwg.add(hatch)
+    
+    # Draw processed edges (blue highlight)
+    edge_offset = 2
+    if processed_edges.get('front'):
+        dwg.add(dwg.line(
+            start=(plan_x + edge_offset, plan_y + edge_offset),
+            end=(plan_x + plan_width - edge_offset, plan_y + edge_offset),
+            class_='edge-processed'
+        ))
+    if processed_edges.get('back'):
+        dwg.add(dwg.line(
+            start=(plan_x + edge_offset, plan_y + plan_height - edge_offset),
+            end=(plan_x + plan_width - edge_offset, plan_y + plan_height - edge_offset),
+            class_='edge-processed'
+        ))
+    if processed_edges.get('left'):
+        dwg.add(dwg.line(
+            start=(plan_x + edge_offset, plan_y + edge_offset),
+            end=(plan_x + edge_offset, plan_y + plan_height - edge_offset),
+            class_='edge-processed'
+        ))
+    if processed_edges.get('right'):
+        dwg.add(dwg.line(
+            start=(plan_x + plan_width - edge_offset, plan_y + edge_offset),
+            end=(plan_x + plan_width - edge_offset, plan_y + plan_height - edge_offset),
+            class_='edge-processed'
+        ))
+    
+    # Draw okapnik grooves (orange lines)
+    groove_offset = 5
+    groove_margin = 15
+    if okapnik_edges.get('front'):
+        dwg.add(dwg.line(
+            start=(plan_x + groove_margin, plan_y + groove_offset),
+            end=(plan_x + plan_width - groove_margin, plan_y + groove_offset),
+            class_='okapnik'
+        ))
+    if okapnik_edges.get('back'):
+        dwg.add(dwg.line(
+            start=(plan_x + groove_margin, plan_y + plan_height - groove_offset),
+            end=(plan_x + plan_width - groove_margin, plan_y + plan_height - groove_offset),
+            class_='okapnik'
+        ))
+    
+    # Dimension lines for length
+    dim_offset = 30
+    # Extension lines
+    dwg.add(dwg.line(
+        start=(plan_x, plan_y - dim_offset),
+        end=(plan_x, plan_y - 10),
+        class_='extension-line'
+    ))
+    dwg.add(dwg.line(
+        start=(plan_x + plan_width, plan_y - dim_offset),
+        end=(plan_x + plan_width, plan_y - 10),
+        class_='extension-line'
+    ))
+    # Dimension line
+    dwg.add(dwg.line(
+        start=(plan_x, plan_y - dim_offset),
+        end=(plan_x + plan_width, plan_y - dim_offset),
+        class_='dimension-line'
+    ))
+    # Dimension text
+    dwg.add(dwg.text(
+        f'{length} mm',
+        insert=(center_x, plan_y - dim_offset - 5),
+        class_='dimension',
+        text_anchor='middle'
+    ))
+    
+    # Dimension lines for width
+    dwg.add(dwg.line(
+        start=(plan_x - dim_offset, plan_y),
+        end=(plan_x - 10, plan_y),
+        class_='extension-line'
+    ))
+    dwg.add(dwg.line(
+        start=(plan_x - dim_offset, plan_y + plan_height),
+        end=(plan_x - 10, plan_y + plan_height),
+        class_='extension-line'
+    ))
+    dwg.add(dwg.line(
+        start=(plan_x - dim_offset, plan_y),
+        end=(plan_x - dim_offset, plan_y + plan_height),
+        class_='dimension-line'
+    ))
+    dwg.add(dwg.text(
+        f'{width} mm',
+        insert=(plan_x - dim_offset - 5, center_y),
+        class_='dimension',
+        text_anchor='middle',
+        transform=f'rotate(-90, {plan_x - dim_offset - 5}, {center_y})'
+    ))
+    
+    # Add section view (side view)
+    section_scale = scale * 2  # Exaggerate height for visibility
+    section_width = width * scale
+    section_height = height * section_scale
+    section_x = 550
+    section_y = 250
+    
+    dwg.add(dwg.text('Bočni pogled', insert=(section_x + section_width/2, 180), 
+                     class_='label', text_anchor='middle'))
+    
+    # Section rectangle
+    dwg.add(dwg.rect(
+        insert=(section_x, section_y - section_height/2),
+        size=(section_width, section_height),
+        fill='url(#hatchPattern)',
+        stroke='#333',
+        stroke_width=2
+    ))
+    
+    # Height dimension
+    dwg.add(dwg.line(
+        start=(section_x + section_width + 20, section_y - section_height/2),
+        end=(section_x + section_width + 20, section_y + section_height/2),
+        class_='dimension-line'
+    ))
+    dwg.add(dwg.text(
+        f'{height} mm',
+        insert=(section_x + section_width + 35, section_y),
+        class_='dimension',
+        text_anchor='middle',
+        transform=f'rotate(-90, {section_x + section_width + 35}, {section_y})'
+    ))
+    
+    # Add material info
+    material = config.get('material', {})
+    finish = config.get('finish', {})
+    profile = config.get('profile', {})
+    
+    info_y = 480
+    dwg.add(dwg.text(f"Materijal: {material.get('name', 'N/A')}", 
+                     insert=(50, info_y), class_='label'))
+    dwg.add(dwg.text(f"Obrada lica: {finish.get('name', 'N/A')}", 
+                     insert=(50, info_y + 20), class_='label'))
+    dwg.add(dwg.text(f"Profil: {profile.get('name', 'N/A')}", 
+                     insert=(50, info_y + 40), class_='label'))
+    dwg.add(dwg.text(f"Dimenzije: {length} × {width} × {height} mm", 
+                     insert=(400, info_y), class_='label'))
+    
+    return dwg.tostring()
+
+
+def generate_simple_drawing(config: Dict[Any, Any]) -> str:
+    """
+    Generate a simpler drawing for quick preview.
+    Returns base64 encoded SVG.
+    """
+    import base64
+    svg_string = generate_pdf_drawing_svg(config)
+    return base64.b64encode(svg_string.encode('utf-8')).decode('utf-8')
+
+
+if __name__ == '__main__':
+    # Test
+    test_config = {
+        'dims': {'length': 600, 'width': 600, 'height': 30},
+        'material': {'name': 'Carrara'},
+        'finish': {'name': 'Polirano'},
+        'profile': {'name': 'Polu-zaobljena R2cm'},
+        'processedEdges': {'front': True, 'back': True, 'left': False, 'right': False},
+        'okapnikEdges': {'front': True, 'back': False, 'left': False, 'right': False}
+    }
+    svg = generate_pdf_drawing_svg(test_config)
