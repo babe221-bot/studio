@@ -2,6 +2,8 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { generateEnhancedPdf } from '@/lib/pdf-enhanced';
+import type { CanvasHandle } from '@/components/VisualizationCanvas';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,7 +36,7 @@ import MaterialModal from '@/components/modals/MaterialModal';
 import FinishModal from '@/components/modals/FinishModal';
 import ProfileModal from '@/components/modals/ProfileModal';
 import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, EditableItem, ProcessedEdges, ConstructionElement } from '@/types';
-import { PlusIcon, Trash2, RefreshCw, FileDown, Loader2 } from 'lucide-react';
+import { PlusIcon, Trash2, RefreshCw, FileDown, Loader2, Eye, Ruler } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { generateAndDownloadPdf } from '@/lib/pdf';
@@ -81,6 +83,9 @@ export function Lab() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [announcement, setAnnouncement] = useState<string>('');
+  const [showDimensions, setShowDimensions] = useState(false);
+  const canvasRef = useRef<CanvasHandle>(null);
+  const canvasRefs = useRef<Map<number, CanvasHandle>>(new Map());
 
   const selectedMaterial = useMemo(() => materials.find(m => m.id.toString() === selectedMaterialId), [materials, selectedMaterialId]);
   const selectedFinish = useMemo(() => finishes.find(f => f.id.toString() === selectedFinishId), [finishes, selectedFinishId]);
