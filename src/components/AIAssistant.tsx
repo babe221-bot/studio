@@ -9,30 +9,15 @@ import { useState, useRef, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function AIAssistant() {
-    const { messages, sendMessage, status } = useChat();
-    const [input, setInput] = useState('');
+    const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat();
     const [isOpen, setIsOpen] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
-
-    const isLoading = status === 'submitted' || status === 'streaming';
 
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTo(0, scrollRef.current.scrollHeight);
         }
     }, [messages, isLoading]);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!input.trim() || isLoading) return;
-
-        await sendMessage({ text: input });
-        setInput('');
-    };
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setInput(e.target.value);
-    };
 
     if (!isOpen) {
         return (
@@ -141,7 +126,7 @@ export function AIAssistant() {
                             type="submit"
                             size="icon"
                             className="rounded-full shrink-0"
-                            disabled={isLoading || !input.trim()}
+                            disabled={isLoading || !input?.trim()}
                             aria-label="Pošalji pitanje"
                         >
                             <Send className="h-4 w-4" aria-hidden="true" />
