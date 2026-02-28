@@ -136,11 +136,23 @@ class MeshHierarchyBuilder:
 
 class GeometryOptimizer:
     """
-    Executes complete geometry cleanup including:
-    - Removal of hidden and internal faces
-    - Merging overlapping vertices
-    - Eliminating duplicate geometry
-    - Purging unused faces, orphaned edges, and superfluous vertices
+    Comprehensive mesh topology refinement system executing three critical cleanup phases:
+    
+    Phase 1: Sub-millimeter Vertex Consolidation
+        - Welds coincident vertices within 0.1mm tolerance using bmesh operations
+        - Establishes watertight manifold topology
+        - Eliminates redundant coordinate data
+    
+    Phase 2: Occluded Geometry Elimination
+        - Ray-casting visibility analysis from multiple external viewpoints
+        - Identifies and removes internal faces hidden from all external views
+        - Removes geometry contributing no visible silhouette information
+    
+    Phase 3: Topological Sanitation
+        - Purges degenerate zero-area faces
+        - Dissolves orphaned edges lacking dual-face connectivity
+        - Deletes superfluous vertices with null face adjacency
+        - Ensures optimal geometric data structures with only render-relevant elements
     """
     
     def __init__(self, config: OptimizationConfig):
@@ -149,207 +161,386 @@ class GeometryOptimizer:
             'verts_removed': 0,
             'faces_removed': 0,
             'edges_removed': 0,
-            'verts_merged': 0
+            'verts_merged': 0,
+            'internal_faces_removed': 0,
+            'degenerate_faces_removed': 0,
+            'orphaned_edges_dissolved': 0,
+            'superfluous_verts_deleted': 0
         }
+        # 0.1mm tolerance for sub-millimeter vertex consolidation
+        self.weld_tolerance = 0.0001  # 0.1mm in Blender units (meters)
     
     def optimize_mesh(self, obj: bpy.types.Object) -> Dict[str, int]:
-        """Execute full optimization pipeline on mesh object"""
+        """
+        Execute comprehensive three-phase optimization pipeline on mesh object.
+        Returns detailed statistics for each cleanup phase.
+        """
         if obj.type != 'MESH':
             return self.stats
             
         bm = bmesh.new()
         bm.from_mesh(obj.data)
+        
+        # Ensure lookup tables for efficient processing
+        bm.verts.ensure_lookup_table()
         bm.edges.ensure_lookup_table()
         bm.faces.ensure_lookup_table()
-        bm.verts.ensure_lookup_table()
         
         try:
-            # Step 1: Merge overlapping vertices
-            if self.config.remove_doubles:
-                self._merge_overlapping_vertices(bm)
+            print(f"\n🔧 GeometryOptimizer: Processing '{obj.name}'")
+            print("=" * 60)
             
-            # Step 2: Remove internal/hidden geometry
-            if self.config.cleanup_internal:
-                self._remove_internal_geometry(bm)
+            # Phase 1: Sub-millimeter Vertex Consolidation
+            print("\n📌 Phase 1: Sub-millimeter Vertex Consolidation (0.1mm tolerance)")
+            print("-" * 60)
+            self._phase1_vertex_consolidation(bm)
+            print(f"   ✓ Vertices merged: {self.stats['verts_merged']}")
             
-            # Step 3: Delete orphaned edges and unused faces
-            self._cleanup_orphaned_geometry(bm)
+            # Phase 2: Occluded Geometry Elimination
+            print("\n📌 Phase 2: Occluded Geometry Elimination (Ray-casting)")
+            print("-" * 60)
+            self._phase2_occluded_geometry_removal(bm)
+            print(f"   ✓ Internal faces removed: {self.stats['internal_faces_removed']}")
             
-            # Step 4: Verify manifold topology
+            # Phase 3: Topological Sanitation
+            print("\n📌 Phase 3: Topological Sanitation")
+            print("-" * 60)
+            self._phase3_topological_sanitation(bm)
+            print(f"   ✓ Degenerate faces removed: {self.stats['degenerate_faces_removed']}")
+            print(f"   ✓ Orphaned edges dissolved: {self.stats['orphaned_edges_dissolved']}")
+            print(f"   ✓ Superfluous vertices deleted: {self.stats['superfluous_verts_deleted']}")
+            
+            # Final validation and normal correction
             if self.config.validate_manifold:
                 self._validate_manifold_topology(bm)
             
-            # Step 5: Recalculate normals
             if self.config.recalc_normals:
                 self._audit_and_correct_normals(bm)
             
-            # Apply changes
+            # Apply changes to mesh
             bm.to_mesh(obj.data)
             obj.data.update()
+            
+            print("\n✅ GeometryOptimizer: Optimization complete!")
+            print("=" * 60)
             
         finally:
             bm.free()
             
         return self.stats
     
-    def _merge_overlapping_vertices(self, bm: bmesh.types.BMesh) -> None:
+    def _phase1_vertex_consolidation(self, bm: bmesh.types.BMesh) -> None:
         """
-        Merge overlapping vertices to establish clean manifold topology
-        and eliminate duplicate geometry.
+        Phase 1: Sub-millimeter Vertex Consolidation
+        
+        Welds coincident vertices within 0.1mm tolerance using bmesh operations
+        to establish watertight manifold topology while eliminating redundant 
+        coordinate data.
         """
-        # Find vertices within merge distance
-        verts_to_merge = []
-        processed = set()
+        initial_vert_count = len(bm.verts)
+        
+        # Use bmesh's find_doubles for efficient spatial search
+        # This finds all vertices within the weld tolerance
+        welded_verts = bmesh.ops.find_doubles(
+            bm,
+            verts=bm.verts,
+            dist=self.weld_tolerance
+        )['targetmap']
+        
+        # Count vertices that will be welded
+        verts_to_weld_count = len(welded_verts)
+        
+        if verts_to_weld_count > 0:
+            # Weld the found doubles using bmesh weld_verts operation
+            # This merges vertices at their average position
+            bmesh.ops.weld_verts(bm, targetmap=welded_verts)
+            self.stats['verts_merged'] += verts_to_weld_count
+            
+            # Re-ensure lookup tables after structural changes
+            bm.verts.ensure_lookup_table()
+            bm.edges.ensure_lookup_table()
+            bm.faces.ensure_lookup_table()
+        
+        # Secondary pass: Remove any remaining doubles with bmesh operation
+        # This catches any edge cases from the first pass
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=self.weld_tolerance)
+        
+        final_vert_count = len(bm.verts)
+        actual_merged = initial_vert_count - final_vert_count
+        self.stats['verts_merged'] = actual_merged
+        
+        print(f"   Initial vertices: {initial_vert_count}")
+        print(f"   Final vertices: {final_vert_count}")
+        print(f"   Weld tolerance: {self.weld_tolerance * 1000:.2f}mm")
+    
+    def _phase2_occluded_geometry_removal(self, bm: bmesh.types.BMesh) -> None:
+        """
+        Phase 2: Occluded Geometry Elimination
+        
+        Performs ray-casting visibility analysis from multiple external viewpoints
+        to identify and remove internal faces hidden from external viewpoints that
+        contribute no visible silhouette information to rendered output.
+        """
+        if not bm.faces:
+            return
+            
+        # Calculate mesh bounding box for ray origin calculation
+        bbox_min = mathutils.Vector((float('inf'), float('inf'), float('inf')))
+        bbox_max = mathutils.Vector((float('-inf'), float('-inf'), float('-inf')))
         
         for vert in bm.verts:
-            if vert.index in processed:
-                continue
-                
-            # Find nearby vertices
-            nearby = [
-                v for v in bm.verts
-                if v != vert and v.index not in processed
-                and (v.co - vert.co).length < self.config.merge_distance
-            ]
-            
-            if nearby:
-                group = [vert] + nearby
-                verts_to_merge.append(group)
-                processed.update(v.index for v in group)
-                processed.add(vert.index)
+            bbox_min.x = min(bbox_min.x, vert.co.x)
+            bbox_min.y = min(bbox_min.y, vert.co.y)
+            bbox_min.z = min(bbox_min.z, vert.co.z)
+            bbox_max.x = max(bbox_max.x, vert.co.x)
+            bbox_max.y = max(bbox_max.y, vert.co.y)
+            bbox_max.z = max(bbox_max.z, vert.co.z)
         
-        # Merge each group
-        for group in verts_to_merge:
-            if len(group) > 1:
-                # Calculate center point
-                center = sum((v.co for v in group), mathutils.Vector()) / len(group)
-                
-                # Move all vertices to center
-                for v in group:
-                    v.co = center
-                
-                # Weld them together
-                bmesh.ops.weld_verts(bm, targetmap={v: group[0] for v in group[1:]})
-                self.stats['verts_merged'] += len(group) - 1
+        bbox_center = (bbox_min + bbox_max) * 0.5
+        bbox_size = (bbox_max - bbox_min).length
         
-        # Remove doubles using bmesh operation for remaining duplicates
-        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=self.config.merge_distance)
-    
-    def _remove_internal_geometry(self, bm: bmesh.types.BMesh) -> None:
-        """
-        Remove hidden and internal faces that do not contribute
-        to the visible silhouette.
-        """
-        faces_to_remove = []
+        # Define multiple external viewpoints for comprehensive visibility testing
+        # These positions surround the mesh to catch all potentially visible faces
+        ray_origins = self._generate_viewpoints(bbox_center, bbox_size)
         
+        # Track faces visible from any viewpoint
+        visible_faces = set()
+        
+        # Create a BVH tree for efficient ray-mesh intersection
+        # This is more accurate than simple normal checks
+        bvh = mathutils.bvhtree.BVHTree.FromBMesh(bm, epsilon=0.00001)
+        
+        # For each face, check visibility from multiple viewpoints
         for face in bm.faces:
-            # Check if face is internal (completely surrounded)
-            is_internal = True
             face_center = face.calc_center_median()
-            face_normal = face.normal
+            face_normal = face.normal.normalized()
             
-            # Ray cast in normal direction to check visibility
-            for edge in face.edges:
-                for other_face in edge.link_faces:
-                    if other_face != face:
-                        # If adjacent face faces inward relative to this face
-                        angle = face_normal.angle(other_face.normal)
-                        if angle < 0.1:  # Nearly parallel (facing same direction)
-                            is_internal = False
-                            break
-                if not is_internal:
-                    break
+            is_visible = False
             
-            # Additional check: face area vs surrounding geometry
-            if is_internal and len(face.edges) > 3:
-                # Check for faces that don't affect silhouette
-                face_area = face.calc_area()
-                if face_area < 0.000001:  # Extremely small faces
-                    faces_to_remove.append(face)
+            for view_origin in ray_origins:
+                # Calculate ray direction from viewpoint to face center
+                ray_dir = (face_center - view_origin).normalized()
+                
+                # Skip if ray direction is opposite to face normal (back-facing)
+                if face_normal.dot(ray_dir) < -0.1:
                     continue
+                
+                # Cast ray from viewpoint toward face center
+                # Add small offset to avoid self-intersection
+                ray_start = view_origin
+                ray_end = face_center + face_normal * 0.0001
+                
+                # Perform ray cast
+                hit_location, hit_normal, hit_index, hit_distance = bvh.ray_cast(
+                    ray_start, ray_dir, bbox_size * 2.0
+                )
+                
+                if hit_index is not None:
+                    # Check if the hit is close to this face center
+                    if (hit_location - face_center).length < self.weld_tolerance * 10:
+                        is_visible = True
+                        break
+                    
+                    # Alternative: Check if this face is the closest hit
+                    # by comparing face indices
+                    try:
+                        hit_face = bm.faces[hit_index]
+                        if hit_face == face:
+                            is_visible = True
+                            break
+                    except IndexError:
+                        pass
             
-            # Mark for removal if internal and not visible
-            if is_internal:
-                faces_to_remove.append(face)
+            if is_visible:
+                visible_faces.add(face.index)
+        
+        # Identify internal (occluded) faces
+        internal_faces = [face for face in bm.faces if face.index not in visible_faces]
         
         # Remove internal faces
-        if faces_to_remove:
-            bmesh.ops.delete(bm, geom=faces_to_remove, context='FACES')
-            self.stats['faces_removed'] += len(faces_to_remove)
-    
-    def _cleanup_orphaned_geometry(self, bm: bmesh.types.BMesh) -> None:
-        """
-        Purge mesh of unused faces, orphaned edges, and superfluous vertices.
-        """
-        # Find orphaned edges (edges with less than 2 linked faces)
-        orphaned_edges = [e for e in bm.edges if len(e.link_faces) < 2]
-        
-        # Find unused faces (faces with zero area or degenerate)
-        unused_faces = []
-        for face in bm.faces:
-            if face.calc_area() < 0.0000001:  # Degenerate face
-                unused_faces.append(face)
-            elif len(face.verts) < 3:  # Face with less than 3 vertices
-                unused_faces.append(face)
-        
-        # Find superfluous vertices (vertices with no linked faces)
-        orphaned_verts = [v for v in bm.verts if len(v.link_faces) == 0]
-        
-        # Remove in proper order: faces first, then edges, then vertices
-        if unused_faces:
-            bmesh.ops.delete(bm, geom=unused_faces, context='FACES')
-            self.stats['faces_removed'] += len(unused_faces)
+        if internal_faces:
+            bmesh.ops.delete(bm, geom=internal_faces, context='FACES')
+            self.stats['internal_faces_removed'] = len(internal_faces)
+            self.stats['faces_removed'] += len(internal_faces)
             
+            # Update lookup tables
+            bm.faces.ensure_lookup_table()
+            bm.edges.ensure_lookup_table()
+            bm.verts.ensure_lookup_table()
+        
+        print(f"   Viewpoints tested: {len(ray_origins)}")
+        print(f"   Total faces: {len(bm.faces) + len(internal_faces)}")
+        print(f"   Visible faces: {len(visible_faces)}")
+        print(f"   Internal faces removed: {len(internal_faces)}")
+    
+    def _generate_viewpoints(self, center: mathutils.Vector, size: float) -> List[mathutils.Vector]:
+        """
+        Generate external viewpoints surrounding the mesh for comprehensive
+        visibility analysis.
+        """
+        offset = size * 1.5  # Viewpoints at 1.5x bounding box size
+        
+        # Primary cardinal directions
+        viewpoints = [
+            center + mathutils.Vector((offset, 0, 0)),      # +X
+            center + mathutils.Vector((-offset, 0, 0)),     # -X
+            center + mathutils.Vector((0, offset, 0)),      # +Y
+            center + mathutils.Vector((0, -offset, 0)),     # -Y
+            center + mathutils.Vector((0, 0, offset)),      # +Z
+            center + mathutils.Vector((0, 0, -offset)),     # -Z
+        ]
+        
+        # Diagonal viewpoints for edge coverage
+        diagonal_offset = offset * 0.707  # 1/sqrt(2)
+        viewpoints.extend([
+            center + mathutils.Vector((diagonal_offset, diagonal_offset, 0)),
+            center + mathutils.Vector((-diagonal_offset, diagonal_offset, 0)),
+            center + mathutils.Vector((diagonal_offset, -diagonal_offset, 0)),
+            center + mathutils.Vector((-diagonal_offset, -diagonal_offset, 0)),
+            center + mathutils.Vector((diagonal_offset, 0, diagonal_offset)),
+            center + mathutils.Vector((-diagonal_offset, 0, diagonal_offset)),
+            center + mathutils.Vector((0, diagonal_offset, diagonal_offset)),
+            center + mathutils.Vector((0, -diagonal_offset, diagonal_offset)),
+        ])
+        
+        return viewpoints
+    
+    def _phase3_topological_sanitation(self, bm: bmesh.types.BMesh) -> None:
+        """
+        Phase 3: Topological Sanitation
+        
+        Purges degenerate zero-area faces, dissolves orphaned edges lacking 
+        dual-face connectivity, and deletes superfluous vertices with null 
+        face adjacency, ensuring optimal geometric data structures containing 
+        only render-relevant elements.
+        """
+        # Step 3a: Remove degenerate zero-area faces
+        degenerate_faces = []
+        for face in bm.faces:
+            # Check for zero or near-zero area
+            face_area = face.calc_area()
+            if face_area < 1e-12:  # Zero-area threshold
+                degenerate_faces.append(face)
+            # Check for faces with less than 3 valid vertices
+            elif len(face.verts) < 3:
+                degenerate_faces.append(face)
+            # Check for collapsed faces (all vertices coincident)
+            elif self._is_face_collapsed(face):
+                degenerate_faces.append(face)
+        
+        if degenerate_faces:
+            bmesh.ops.delete(bm, geom=degenerate_faces, context='FACES')
+            self.stats['degenerate_faces_removed'] = len(degenerate_faces)
+            self.stats['faces_removed'] += len(degenerate_faces)
+            
+            bm.faces.ensure_lookup_table()
+            bm.edges.ensure_lookup_table()
+        
+        # Step 3b: Dissolve orphaned edges (edges with < 2 linked faces)
+        orphaned_edges = []
+        for edge in bm.edges:
+            face_count = len(edge.link_faces)
+            # Orphaned: 0 faces (wire edge) or 1 face (boundary on open mesh)
+            # For watertight manifold, we want exactly 2 faces per edge
+            if face_count < 2:
+                orphaned_edges.append(edge)
+        
         if orphaned_edges:
-            bmesh.ops.delete(bm, geom=orphaned_edges, context='EDGES')
+            # Use dissolve to cleanly remove without creating holes
+            bmesh.ops.dissolve_edges(bm, edges=orphaned_edges, use_verts=True)
+            self.stats['orphaned_edges_dissolved'] = len(orphaned_edges)
             self.stats['edges_removed'] += len(orphaned_edges)
             
-        if orphaned_verts:
-            bmesh.ops.delete(bm, geom=orphaned_verts, context='VERTS')
-            self.stats['verts_removed'] += len(orphaned_verts)
+            bm.edges.ensure_lookup_table()
+            bm.verts.ensure_lookup_table()
+        
+        # Step 3c: Delete superfluous vertices (no face adjacency)
+        superfluous_verts = []
+        for vert in bm.verts:
+            if len(vert.link_faces) == 0:
+                # Vertex has no connected faces
+                superfluous_verts.append(vert)
+        
+        if superfluous_verts:
+            bmesh.ops.delete(bm, geom=superfluous_verts, context='VERTS')
+            self.stats['superfluous_verts_deleted'] = len(superfluous_verts)
+            self.stats['verts_removed'] += len(superfluous_verts)
+            
+            bm.verts.ensure_lookup_table()
+        
+        print(f"   Degenerate faces purged: {self.stats['degenerate_faces_removed']}")
+        print(f"   Orphaned edges dissolved: {self.stats['orphaned_edges_dissolved']}")
+        print(f"   Superfluous vertices deleted: {self.stats['superfluous_verts_deleted']}")
+    
+    def _is_face_collapsed(self, face: bmesh.types.BMFace) -> bool:
+        """
+        Check if a face is collapsed (all vertices are coincident).
+        """
+        verts = list(face.verts)
+        if len(verts) < 2:
+            return True
+        
+        first_co = verts[0].co
+        for vert in verts[1:]:
+            if (vert.co - first_co).length > self.weld_tolerance:
+                return False
+        return True
     
     def _validate_manifold_topology(self, bm: bmesh.types.BMesh) -> None:
-        """Ensure all remaining geometry serves visual or collision requirements."""
+        """
+        Ensure watertight manifold topology - each edge should have exactly
+        2 linked faces for a closed mesh.
+        """
         non_manifold_edges = []
+        boundary_edges = []
         
         for edge in bm.edges:
-            # Manifold edges should have exactly 2 linked faces
-            if len(edge.link_faces) != 2:
+            face_count = len(edge.link_faces)
+            if face_count > 2:
                 non_manifold_edges.append(edge)
+            elif face_count == 1:
+                boundary_edges.append(edge)
         
-        # Report non-manifold geometry (could fix or flag for review)
         if non_manifold_edges:
-            print(f"⚠️  Found {len(non_manifold_edges)} non-manifold edges")
-            # Attempt to fix by dissolving
-            bmesh.ops.dissolve_edges(bm, edges=non_manifold_edges)
+            print(f"   ⚠️  Found {len(non_manifold_edges)} non-manifold edges (>{2} faces)")
+            # Attempt to fix by dissolving problematic edges
+            bmesh.ops.dissolve_edges(bm, edges=non_manifold_edges, use_verts=False)
+        
+        if boundary_edges:
+            print(f"   ℹ️  Found {len(boundary_edges)} boundary edges (open mesh)")
+        else:
+            print("   ✓ Mesh is watertight (no boundary edges)")
     
     def _audit_and_correct_normals(self, bm: bmesh.types.BMesh) -> None:
         """
         Audit and correct normal orientations to ensure uniform
         facing direction across all polygons.
         """
-        # Recalculate face normals
+        # Recalculate face normals using bmesh operation
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
         
-        # Check for inverted faces (facing inward on closed mesh)
+        # Verify normals are consistent (outward facing for closed meshes)
         if bm.faces:
             # Calculate mesh centroid
-            centroid = sum((f.calc_center_median() for f in bm.faces), 
-                          mathutils.Vector()) / len(bm.faces)
+            centroid = mathutils.Vector((0, 0, 0))
+            for face in bm.faces:
+                centroid += face.calc_center_median()
+            centroid /= len(bm.faces)
             
+            # Check for inverted faces
             inverted_faces = []
             for face in bm.faces:
                 face_center = face.calc_center_median()
                 to_center = (centroid - face_center).normalized()
                 
-                # If normal points toward center, it may be inverted
-                if face.normal.dot(to_center) > 0.5:
+                # If normal points significantly toward center, likely inverted
+                if face.normal.dot(to_center) > 0.7:
                     inverted_faces.append(face)
             
             # Flip inverted faces
             if inverted_faces:
                 bmesh.ops.reverse_faces(bm, faces=inverted_faces)
-                print(f"🔄 Corrected {len(inverted_faces)} inverted face normals")
+                print(f"   🔄 Corrected {len(inverted_faces)} inverted face normals")
 
 
 class SmoothingGroupManager:
