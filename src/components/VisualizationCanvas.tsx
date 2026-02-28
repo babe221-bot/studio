@@ -54,190 +54,357 @@ const createDimensionLabel = (text: string, size: number = 32) => {
   return sprite;
 };
 
-// Update slab geometry and materials using Web Worker
-useEffect(() => {
-  if (!sceneRef.current || !mainGroupRef.current || !material || !finish || !profile) return;
+// --- React Component ---
+const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
+  ({ dims, material, finish, profile, processedEdges, okapnikEdges, showDimensions = false }, ref) => {
+    const mountRef = useRef<HTMLDivElement>(null);
+    const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+    const sceneRef = useRef<THREE.Scene | null>(null);
+    const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+    const controlsRef = useRef<OrbitControls | null>(null);
+    const mainGroupRef = useRef<THREE.Group | null>(null);
+    const textureCache = useRef<{ [key: string]: THREE.Texture }>({});
+    const dimensionGroupRef = useRef<THREE.Group | null>(null);
 
-  const { length, width, height } = dims;
-  const vizL = length / 100;
-  const vizW = width / 100;
-  const h = height / 100;
+    const materials = useMemo(() => [
+      new THREE.MeshPhysicalMaterial({
+        side: THREE.DoubleSide,
+        metalness: 0.1,
+        roughness: 0.95,
+        clearcoat: 0.3,
+        clearcoatRoughness: 0.1
+      }), // 0: Main (textured)
+      new THREE.MeshPhysicalMaterial({
+        side: THREE.DoubleSide,
+        metalness: 0.1,
+        roughness: 0.9,
+        clearcoat: 0.2
+      }), // 1: Flat Sides
+      new THREE.MeshPhysicalMaterial({
+        side: THREE.DoubleSide,
+        metalness: 0.15,
+        roughness: 0.8,
+        clearcoat: 0.4
+      }), // 2: Profile
+    ], []);
 
-  const [mainMaterial, sideMaterial, profileMaterial] = materials;
-  const baseColor = new THREE.Color(material.color || '#FFFFFF');
-
-  mainMaterial.color = baseColor;
-  sideMaterial.color = baseColor.clone().lerp(new THREE.Color(0x000000), 0.15);
-  profileMaterial.color = baseColor.clone().lerp(new THREE.Color(0xffffff), 0.3);
-
-  const finishName = finish.name.toLowerCase();
-  const isPolished = finishName.includes('poliran');
-  const isHoned = finishName.includes('brus');
-  const isFlamed = finishName.includes('plamen');
-
-  if (isPolished) {
-    mainMaterial.roughness = 0.1;
-    mainMaterial.metalness = 0.2;
-    mainMaterial.clearcoat = 1.0;
-    mainMaterial.clearcoatRoughness = 0.1;
-  } else if (isHoned) {
-    mainMaterial.roughness = 0.4;
-    mainMaterial.metalness = 0.1;
-    mainMaterial.clearcoat = 0.3;
-  } else if (isFlamed) {
-    mainMaterial.roughness = 0.9;
-    mainMaterial.metalness = 0.05;
-    mainMaterial.clearcoat = 0;
-  } else {
-    mainMaterial.roughness = 0.6;
-    mainMaterial.metalness = 0.1;
-    mainMaterial.clearcoat = 0.2;
-  }
-
-  sideMaterial.roughness = 0.8;
-  profileMaterial.roughness = 0.7;
-
-  // Load texture
-  const textureUrl = material.texture;
-  if (textureUrl && textureUrl !== mainMaterial.userData.url) {
-    if (textureCache.current[textureUrl]) {
-      mainMaterial.map = textureCache.current[textureUrl];
-      mainMaterial.needsUpdate = true;
-    } else {
-      new THREE.TextureLoader().load(textureUrl, (texture) => {
-        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(5 / Math.max(vizL, vizW), 5 / Math.max(vizL, vizW) * (vizW / vizL));
-        mainMaterial.map = texture;
-        mainMaterial.needsUpdate = true;
-        textureCache.current[textureUrl] = texture;
-      });
-    }
-  } else if (!textureUrl) {
-    mainMaterial.map = null;
-    mainMaterial.needsUpdate = true;
-  }
-  mainMaterial.userData.url = textureUrl;
-
-  // Offload geometry generation to Worker
-  const worker = new Worker(new URL('@/workers/geometryWorker.ts', import.meta.url));
-  worker.postMessage({ L: vizL, W: vizW, H: h, profile, processedEdges });
-
-  worker.onmessage = (e) => {
-    const { positions, indices, groups } = e.data;
-    if (!mainGroupRef.current) return;
-
-    // Clear existing objects
-    while (mainGroupRef.current.children.length > 0) {
-      const object = mainGroupRef.current.children[0];
-      mainGroupRef.current.remove(object);
-      object.traverse((node) => {
-        if ((node as THREE.Mesh).isMesh) {
-          (node as THREE.Mesh).geometry.dispose();
+    // Expose capture method
+    useImperativeHandle(ref, () => ({
+      captureImage: () => {
+        if (rendererRef.current && sceneRef.current && cameraRef.current) {
+          rendererRef.current.render(sceneRef.current, cameraRef.current);
+          return rendererRef.current.domElement.toDataURL('image/png');
         }
+        return null;
+      },
+    }));
+
+    // Initialize Three.js scene
+    useEffect(() => {
+      const currentMount = mountRef.current;
+      if (!currentMount) return;
+
+      const scene = new THREE.Scene();
+      sceneRef.current = scene;
+
+      // Create checkerboard background
+      const checkerboardCanvas = document.createElement('canvas');
+      const size = 32;
+      checkerboardCanvas.width = size * 2;
+      checkerboardCanvas.height = size * 2;
+      const context = checkerboardCanvas.getContext('2d');
+      if (context) {
+        context.fillStyle = 'hsl(240 3.7% 12%)';
+        context.fillRect(0, 0, checkerboardCanvas.width, checkerboardCanvas.height);
+        context.fillStyle = 'hsl(240 3.7% 18%)';
+        context.fillRect(0, 0, size, size);
+        context.fillRect(size, size, size, size);
+      }
+      const bgTexture = new THREE.CanvasTexture(checkerboardCanvas);
+      bgTexture.wrapS = THREE.RepeatWrapping;
+      bgTexture.wrapT = THREE.RepeatWrapping;
+      bgTexture.repeat.set(100, 100);
+      scene.background = bgTexture;
+
+      // Camera setup
+      const camera = new THREE.PerspectiveCamera(
+        45,
+        currentMount.clientWidth / currentMount.clientHeight,
+        0.1,
+        1000
+      );
+      camera.position.set(5, 4, 5);
+      cameraRef.current = camera;
+
+      // Renderer setup with shadows
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        preserveDrawingBuffer: true,
+        alpha: true
       });
-    }
+      renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.2;
+      currentMount.appendChild(renderer.domElement);
+      rendererRef.current = renderer;
 
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setIndex(new THREE.BufferAttribute(indices, 1));
-    groups.forEach((g: any) => geometry.addGroup(g.start, g.count, g.materialIndex));
-    geometry.computeVertexNormals();
+      // Controls
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.minDistance = 1;
+      controls.maxDistance = 20;
+      controls.target.set(0, 0, 0);
+      controlsRef.current = controls;
 
-    const mainObject = new THREE.Mesh(geometry, materials);
-    mainObject.castShadow = true;
-    mainObject.receiveShadow = true;
+      // Enhanced lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+      scene.add(ambientLight);
 
-    const slabGroup = new THREE.Group();
-    slabGroup.add(mainObject);
+      const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
+      mainLight.position.set(5, 10, 5);
+      mainLight.castShadow = true;
+      mainLight.shadow.mapSize.width = 2048;
+      mainLight.shadow.mapSize.height = 2048;
+      scene.add(mainLight);
 
-    // Add okapnik grooves (Logic remains same as it's simple box geometry)
-    const okapnikGrooveDepth = 0.5 / 100;
-    const okapnikGrooveWidth = 0.8 / 100;
-    const okapnikOffset = 2.0 / 100;
-    const createOkapnik = (edgeL: number, vertical: boolean) => new THREE.Mesh(
-      new THREE.BoxGeometry(
-        vertical ? okapnikGrooveWidth : edgeL,
-        okapnikGrooveDepth,
-        vertical ? edgeL : okapnikGrooveWidth
-      ),
-      sideMaterial
+      const fillLight = new THREE.DirectionalLight(0xccddff, 0.5);
+      fillLight.position.set(-5, 3, -5);
+      scene.add(fillLight);
+
+      const rimLight = new THREE.DirectionalLight(0xffeedd, 0.4);
+      rimLight.position.set(0, 5, -8);
+      scene.add(rimLight);
+
+      // Ground plane
+      const groundGeometry = new THREE.PlaneGeometry(50, 50);
+      const groundMaterial = new THREE.MeshStandardMaterial({
+        color: 0x1a1a1a,
+        roughness: 0.8,
+        metalness: 0.2
+      });
+      const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -0.5;
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      const mainGroup = new THREE.Group();
+      mainGroupRef.current = mainGroup;
+      scene.add(mainGroup);
+
+      const dimensionGroup = new THREE.Group();
+      dimensionGroupRef.current = dimensionGroup;
+      scene.add(dimensionGroup);
+
+      let animationFrameId: number;
+      const animate = () => {
+        animationFrameId = requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      };
+      animate();
+
+      const handleResize = () => {
+        if (currentMount && cameraRef.current && rendererRef.current) {
+          cameraRef.current.aspect = currentMount.clientWidth / currentMount.clientHeight;
+          cameraRef.current.updateProjectionMatrix();
+          rendererRef.current.setSize(currentMount.clientWidth, currentMount.clientHeight);
+        }
+      };
+      window.addEventListener('resize', handleResize);
+
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        cancelAnimationFrame(animationFrameId);
+        if (currentMount && renderer.domElement) {
+          currentMount.removeChild(renderer.domElement);
+        }
+        Object.values(textureCache.current).forEach(t => t.dispose());
+        materials.forEach(m => m.dispose());
+      };
+    }, [materials]);
+
+    // Update slab geometry and materials using Web Worker
+    useEffect(() => {
+      if (!sceneRef.current || !mainGroupRef.current || !material || !finish || !profile) return;
+
+      const { length, width, height } = dims;
+      const vizL = length / 100;
+      const vizW = width / 100;
+      const h = height / 100;
+
+      const [mainMaterial, sideMaterial, profileMaterial] = materials;
+      const baseColor = new THREE.Color(material.color || '#FFFFFF');
+
+      mainMaterial.color = baseColor;
+      sideMaterial.color = baseColor.clone().lerp(new THREE.Color(0x000000), 0.15);
+      profileMaterial.color = baseColor.clone().lerp(new THREE.Color(0xffffff), 0.3);
+
+      const finishName = finish.name.toLowerCase();
+      const isPolished = finishName.includes('poliran');
+      const isHoned = finishName.includes('brus');
+      const isFlamed = finishName.includes('plamen');
+
+      if (isPolished) {
+        mainMaterial.roughness = 0.1;
+        mainMaterial.metalness = 0.2;
+        mainMaterial.clearcoat = 1.0;
+        mainMaterial.clearcoatRoughness = 0.1;
+      } else if (isHoned) {
+        mainMaterial.roughness = 0.4;
+        mainMaterial.metalness = 0.1;
+        mainMaterial.clearcoat = 0.3;
+      } else if (isFlamed) {
+        mainMaterial.roughness = 0.9;
+        mainMaterial.metalness = 0.05;
+        mainMaterial.clearcoat = 0;
+      } else {
+        mainMaterial.roughness = 0.6;
+        mainMaterial.metalness = 0.1;
+        mainMaterial.clearcoat = 0.2;
+      }
+
+      sideMaterial.roughness = 0.8;
+      profileMaterial.roughness = 0.7;
+
+      // Load texture
+      const textureUrl = material.texture;
+      if (textureUrl && textureUrl !== mainMaterial.userData.url) {
+        if (textureCache.current[textureUrl]) {
+          mainMaterial.map = textureCache.current[textureUrl];
+          mainMaterial.needsUpdate = true;
+        } else {
+          new THREE.TextureLoader().load(textureUrl, (texture) => {
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(5 / Math.max(vizL, vizW), 5 / Math.max(vizL, vizW) * (vizW / vizL));
+            mainMaterial.map = texture;
+            mainMaterial.needsUpdate = true;
+            textureCache.current[textureUrl] = texture;
+          });
+        }
+      } else if (!textureUrl) {
+        mainMaterial.map = null;
+        mainMaterial.needsUpdate = true;
+      }
+      mainMaterial.userData.url = textureUrl;
+
+      // Offload geometry generation to Worker
+      const worker = new Worker(new URL('@/workers/geometryWorker.ts', import.meta.url));
+      worker.postMessage({ L: vizL, W: vizW, H: h, profile, processedEdges });
+
+      worker.onmessage = (e) => {
+        const { positions, indices, groups } = e.data;
+        if (!mainGroupRef.current) return;
+
+        // Clear existing objects
+        while (mainGroupRef.current.children.length > 0) {
+          const object = mainGroupRef.current.children[0];
+          mainGroupRef.current.remove(object);
+          object.traverse((node) => {
+            if ((node as THREE.Mesh).isMesh) {
+              (node as THREE.Mesh).geometry.dispose();
+            }
+          });
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+        groups.forEach((g: any) => geometry.addGroup(g.start, g.count, g.materialIndex));
+        geometry.computeVertexNormals();
+
+        const mainObject = new THREE.Mesh(geometry, materials);
+        mainObject.castShadow = true;
+        mainObject.receiveShadow = true;
+
+        const slabGroup = new THREE.Group();
+        slabGroup.add(mainObject);
+
+        const okapnikGrooveDepth = 0.5 / 100;
+        const okapnikGrooveWidth = 0.8 / 100;
+        const okapnikOffset = 2.0 / 100;
+        const createOkapnik = (edgeL: number, vertical: boolean) => new THREE.Mesh(
+          new THREE.BoxGeometry(
+            vertical ? okapnikGrooveWidth : edgeL,
+            okapnikGrooveDepth,
+            vertical ? edgeL : okapnikGrooveWidth
+          ),
+          sideMaterial
+        );
+
+        if (okapnikEdges.front) {
+          const okapnik = createOkapnik(vizL, false);
+          okapnik.position.set(0, -okapnikGrooveDepth / 2, (vizW / 2) - okapnikOffset);
+          slabGroup.add(okapnik);
+        }
+        if (okapnikEdges.back) {
+          const okapnik = createOkapnik(vizL, false);
+          okapnik.position.set(0, -okapnikGrooveDepth / 2, -(vizW / 2) + okapnikOffset);
+          slabGroup.add(okapnik);
+        }
+        if (okapnikEdges.left) {
+          const okapnik = createOkapnik(vizW, true);
+          okapnik.position.set(-(vizL / 2) + okapnikOffset, -okapnikGrooveDepth / 2, 0);
+          slabGroup.add(okapnik);
+        }
+        if (okapnikEdges.right) {
+          const okapnik = createOkapnik(vizW, true);
+          okapnik.position.set((vizL / 2) - okapnikOffset, -okapnikGrooveDepth / 2, 0);
+          slabGroup.add(okapnik);
+        }
+
+        mainGroupRef.current.add(slabGroup);
+        if (controlsRef.current) {
+          controlsRef.current.target.set(0, h / 2, 0);
+          controlsRef.current.update();
+        }
+        worker.terminate();
+      };
+
+      return () => worker.terminate();
+
+    }, [dims, material, finish, profile, processedEdges, okapnikEdges, materials]);
+
+    // Update dimension labels
+    useEffect(() => {
+      if (!dimensionGroupRef.current || !sceneRef.current) return;
+
+      while (dimensionGroupRef.current.children.length > 0) {
+        dimensionGroupRef.current.remove(dimensionGroupRef.current.children[0]);
+      }
+
+      if (!showDimensions) return;
+
+      const { length, width, height } = dims;
+      const vizL = length / 100;
+      const vizW = width / 100;
+      const h = height / 100;
+
+      const lengthLabel = createDimensionLabel(`${length} cm`);
+      lengthLabel.position.set(0, h + 0.3, vizW / 2 + 0.3);
+      dimensionGroupRef.current.add(lengthLabel);
+
+      const widthLabel = createDimensionLabel(`${width} cm`);
+      widthLabel.position.set(-vizL / 2 - 0.3, h + 0.3, 0);
+      dimensionGroupRef.current.add(widthLabel);
+
+      const heightLabel = createDimensionLabel(`${height} cm`);
+      heightLabel.position.set(vizL / 2 + 0.3, h / 2, -vizW / 2 - 0.3);
+      dimensionGroupRef.current.add(heightLabel);
+
+    }, [dims, showDimensions]);
+
+    return (
+      <div
+        ref={mountRef}
+        className="w-full h-full min-h-[400px]"
+        style={{ touchAction: 'none' }}
+      />
     );
-
-    if (okapnikEdges.front) {
-      const okapnik = createOkapnik(vizL, false);
-      okapnik.position.set(0, -okapnikGrooveDepth / 2, (vizW / 2) - okapnikOffset);
-      slabGroup.add(okapnik);
-    }
-    if (okapnikEdges.back) {
-      const okapnik = createOkapnik(vizL, false);
-      okapnik.position.set(0, -okapnikGrooveDepth / 2, -(vizW / 2) + okapnikOffset);
-      slabGroup.add(okapnik);
-    }
-    if (okapnikEdges.left) {
-      const okapnik = createOkapnik(vizW, true);
-      okapnik.position.set(-(vizL / 2) + okapnikOffset, -okapnikGrooveDepth / 2, 0);
-      slabGroup.add(okapnik);
-    }
-    if (okapnikEdges.right) {
-      const okapnik = createOkapnik(vizW, true);
-      okapnik.position.set((vizL / 2) - okapnikOffset, -okapnikGrooveDepth / 2, 0);
-      slabGroup.add(okapnik);
-    }
-
-    mainGroupRef.current.add(slabGroup);
-
-    if (controlsRef.current) {
-      controlsRef.current.target.set(0, h / 2, 0);
-      controlsRef.current.update();
-    }
-
-    worker.terminate();
-  };
-
-  return () => worker.terminate();
-
-}, [dims, material, finish, profile, processedEdges, okapnikEdges, materials]);
-
-// Update dimension labels
-useEffect(() => {
-  if (!dimensionGroupRef.current || !sceneRef.current) return;
-
-  // Clear existing dimension labels
-  while (dimensionGroupRef.current.children.length > 0) {
-    dimensionGroupRef.current.remove(dimensionGroupRef.current.children[0]);
-  }
-
-  if (!showDimensions) return;
-
-  const { length, width, height } = dims;
-  const vizL = length / 100;
-  const vizW = width / 100;
-  const h = height / 100;
-
-  // Length label
-  const lengthLabel = createDimensionLabel(`${length} cm`);
-  lengthLabel.position.set(0, h + 0.3, vizW / 2 + 0.3);
-  dimensionGroupRef.current.add(lengthLabel);
-
-  // Width label
-  const widthLabel = createDimensionLabel(`${width} cm`);
-  widthLabel.position.set(-vizL / 2 - 0.3, h + 0.3, 0);
-  dimensionGroupRef.current.add(widthLabel);
-
-  // Height label
-  const heightLabel = createDimensionLabel(`${height} cm`);
-  heightLabel.position.set(vizL / 2 + 0.3, h / 2, -vizW / 2 - 0.3);
-  dimensionGroupRef.current.add(heightLabel);
-
-}, [dims, showDimensions]);
-
-return (
-  <div
-    ref={mountRef}
-    className="w-full h-full min-h-[400px]"
-    style={{ touchAction: 'none' }}
-  />
-);
   }
 );
 
