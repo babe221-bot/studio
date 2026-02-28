@@ -9,6 +9,43 @@ type EdgeNameMap = {
     [key: string]: string;
 };
 
+// Helper function to convert SVG data URI to PNG data URI
+async function svgToPng(svgDataUri: string, width: number = 200, height: number = 150): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = width * 2; // Higher resolution for better quality
+            canvas.height = height * 2;
+            const ctx = canvas.getContext('2d');
+
+            if (!ctx) {
+                reject(new Error('Could not get canvas context'));
+                return;
+            }
+
+            // Draw white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the SVG image
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            // Convert to PNG data URI
+            const pngDataUri = canvas.toDataURL('image/png');
+            resolve(pngDataUri);
+        };
+
+        img.onerror = () => {
+            reject(new Error('Failed to load SVG image'));
+        };
+
+        img.src = svgDataUri;
+    });
+}
+
 interface PdfGenerationOptions {
     companyName?: string;
     companyAddress?: string;
@@ -30,12 +67,12 @@ const getEdgeName = (edge: string): string => {
     return names[edge] || edge;
 };
 
-// Generate 2D technical drawing as SVG data URI
-function generateTechnicalDrawing2D(
+// Generate 2D technical drawing as PNG data URI
+async function generateTechnicalDrawing2D(
     item: OrderItem,
     edgeNames: EdgeNameMap,
     view: 'top' | 'side' | 'front' = 'top'
-): string {
+): Promise<string> {
     const { length, width, height } = item.dims;
     const scale = Math.min(150 / length, 100 / width, 80 / height);
 
@@ -128,11 +165,12 @@ function generateTechnicalDrawing2D(
     `;
     }
 
-    return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+    const svgDataUri = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+    return await svgToPng(svgDataUri, 200, 150);
 }
 
 // Generate edge profile diagram
-function generateProfileDiagram(profile: EdgeProfile, edgeName: string): string {
+async function generateProfileDiagram(profile: EdgeProfile, edgeName: string): Promise<string> {
     const profileName = profile.name.toLowerCase();
     const smusMatch = profileName.match(/smuš c([\d.]+)/);
     const poluRMatch = profileName.match(/polu-zaobljena r([\d.]+)/);
@@ -166,7 +204,8 @@ function generateProfileDiagram(profile: EdgeProfile, edgeName: string): string 
     </svg>
   `;
 
-    return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+    const svgDataUri = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+    return await svgToPng(svgDataUri, 200, 150);
 }
 
 // Main PDF generation function
@@ -281,8 +320,8 @@ export async function generateEnhancedPdf(
                     const imgHeight = 60;
 
                     // Detect image format from data URI
-                    const imageData = images3D[i]!;
-                    let format: 'PNG' | 'JPEG' | 'SVG' | 'WEBP' = 'PNG'; // Default to PNG
+                    let imageData = images3D[i]!;
+                    let format: 'PNG' | 'JPEG' = 'PNG'; // Default to PNG
 
                     if (imageData.startsWith('data:image/')) {
                         // Extract format from data URI (e.g., "data:image/svg+xml;base64,...")
@@ -296,9 +335,12 @@ export async function generateEnhancedPdf(
                             } else if (detectedFormat.includes('png')) {
                                 format = 'PNG';
                             } else if (detectedFormat.includes('svg')) {
-                                format = 'SVG';
+                                // Convert SVG to PNG - jsPDF doesn't support SVG
+                                imageData = await svgToPng(imageData, imgWidth * 4, imgHeight * 4);
+                                format = 'PNG';
                             } else if (detectedFormat.includes('webp')) {
-                                format = 'WEBP';
+                                // WEBP is not supported by jsPDF, default to PNG
+                                format = 'PNG';
                             }
                             // Else keep default PNG and let jsPDF attempt to decode
                         }
@@ -312,8 +354,8 @@ export async function generateEnhancedPdf(
 
             // --- 2D Technical Drawings ---
             try {
-                const topView = generateTechnicalDrawing2D(item, edgeNames, 'top');
-                const sideView = generateTechnicalDrawing2D(item, edgeNames, 'side');
+                const topView = await generateTechnicalDrawing2D(item, edgeNames, 'top');
+                const sideView = await generateTechnicalDrawing2D(item, edgeNames, 'side');
 
                 const drawingX = margin + 85;
                 const drawingY = cursorY;
@@ -321,10 +363,10 @@ export async function generateEnhancedPdf(
                 doc.setFontSize(8);
                 doc.text('Tehnički crtež', drawingX, drawingY - 1);
 
-                doc.addImage(topView, 'SVG', drawingX, drawingY, 50, 37.5);
+                doc.addImage(topView, 'PNG', drawingX, drawingY, 50, 37.5);
 
                 if (cursorY + 40 < pageHeight - 30) {
-                    doc.addImage(sideView, 'SVG', drawingX + 55, drawingY, 50, 37.5);
+                    doc.addImage(sideView, 'PNG', drawingX + 55, drawingY, 50, 37.5);
                 }
             } catch (e) {
                 console.error('Error adding 2D drawings:', e);
@@ -393,8 +435,8 @@ export async function generateEnhancedPdf(
 
                 for (const [edge] of processedEdges.slice(0, 3)) {
                     try {
-                        const diagram = generateProfileDiagram(item.profile, getEdgeName(edge));
-                        doc.addImage(diagram, 'SVG', diagramX, diagramY + 2, 25, 35);
+                        const diagram = await generateProfileDiagram(item.profile, getEdgeName(edge));
+                        doc.addImage(diagram, 'PNG', diagramX, diagramY + 2, 25, 35);
                         diagramX += 30;
                     } catch (e) {
                         // Skip diagram if error
