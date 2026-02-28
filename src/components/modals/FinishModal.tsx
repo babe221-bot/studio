@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from "@/components/ui/dialog";
+import { FocusScope } from '@radix-ui/react-focus-scope';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { SurfaceFinish } from '@/types';
@@ -17,6 +18,7 @@ interface FinishModalProps {
 const FinishModal: React.FC<FinishModalProps> = ({ isOpen, onClose, onSave, item }) => {
   const [name, setName] = useState('');
   const [costSqm, setCostSqm] = useState(0);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (item) {
@@ -26,13 +28,22 @@ const FinishModal: React.FC<FinishModalProps> = ({ isOpen, onClose, onSave, item
       setName('');
       setCostSqm(0);
     }
+    setErrors({});
   }, [item, isOpen]);
 
   const handleSave = () => {
-    if (!name || costSqm === null) {
-      alert('Molimo popunite sva polja.');
+    const newErrors: Record<string, string> = {};
+    if (!name.trim()) {
+      newErrors.name = 'Naziv obrade je obavezan';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      document.getElementById('finish-form-errors')?.setAttribute('aria-label', Object.values(newErrors).join('. '));
       return;
     }
+
+    setErrors({});
     onSave({
       id: item?.id || Date.now(),
       name,
@@ -42,25 +53,60 @@ const FinishModal: React.FC<FinishModalProps> = ({ isOpen, onClose, onSave, item
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{item ? 'Uredi obradu' : 'Nova obrada lica'}</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="finish-name" className="text-right">Naziv</Label>
-            <Input id="finish-name" value={name} onChange={e => setName(e.target.value)} className="col-span-3" />
+      <FocusScope asChild loop trapped>
+        <DialogContent
+          aria-labelledby="finish-modal-title"
+          aria-describedby="finish-modal-desc"
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            document.getElementById('finish-name')?.focus();
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle id="finish-modal-title">{item ? 'Uredi obradu' : 'Nova obrada lica'}</DialogTitle>
+            <DialogDescription id="finish-modal-desc" className="sr-only">
+              Forma za {item ? 'uređivanje' : 'dodavanje'} obrade lica. Naziv je obavezan.
+            </DialogDescription>
+          </DialogHeader>
+          <div id="finish-form-errors" className="sr-only" role="alert" />
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="finish-name" className={errors.name ? 'text-destructive' : ''}>
+                Naziv <span aria-label="obavezno">*</span>
+              </Label>
+              <Input
+                id="finish-name"
+                value={name}
+                onChange={e => {
+                  setName(e.target.value);
+                  if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
+                }}
+                aria-invalid={!!errors.name}
+                aria-describedby={errors.name ? 'finish-name-error' : undefined}
+                required
+              />
+              {errors.name && (
+                <p id="finish-name-error" className="text-sm text-destructive" role="alert">
+                  {errors.name}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="finish-cost">Trošak (€/m²)</Label>
+              <Input
+                id="finish-cost"
+                type="number"
+                value={costSqm}
+                onChange={e => setCostSqm(parseFloat(e.target.value))}
+              />
+            </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="finish-cost" className="text-right">Trošak (€/m²)</Label>
-            <Input id="finish-cost" type="number" value={costSqm} onChange={e => setCostSqm(parseFloat(e.target.value))} className="col-span-3" />
-          </div>
-        </div>
-        <DialogFooter>
-          <DialogClose asChild><Button type="button" variant="secondary">Odustani</Button></DialogClose>
-          <Button type="button" onClick={handleSave}>Spremi</Button>
-        </DialogFooter>
-      </DialogContent>
+          <DialogFooter>
+            <DialogClose asChild><Button type="button" variant="secondary">Odustani</Button></DialogClose>
+            <Button type="button" onClick={handleSave}>Spremi</Button>
+          </DialogFooter>
+        </DialogContent>
+      </FocusScope>
     </Dialog>
   );
 };

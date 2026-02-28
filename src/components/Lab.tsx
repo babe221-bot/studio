@@ -358,7 +358,7 @@ export function Lab() {
   };
 
   return (
-    <main className="container mx-auto p-4 md:p-6 lg:p-8">
+    <main className="container mx-auto p-4 md:p-6 lg:p-8 pb-safe px-safe">
       <div
         role="status"
         aria-live="polite"
@@ -367,9 +367,9 @@ export function Lab() {
       >
         {announcement}
       </div>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 xl:grid-cols-4">
 
-        <div className="flex flex-col gap-6 lg:col-span-1 xl:col-span-1">
+        <div className="flex flex-col gap-6 lg:col-span-1 xl:col-span-1 lg:order-1 order-2">
           <Card>
             <CardHeader><CardTitle>1. Unos naloga</CardTitle></CardHeader>
             <CardContent className="space-y-4">
@@ -524,8 +524,8 @@ export function Lab() {
           </Card>
         </div>
 
-        <div className="lg:col-span-2 xl:col-span-3">
-          <Card className="h-full min-h-[400px] md:min-h-[600px] lg:min-h-full">
+        <div className="lg:col-span-2 xl:col-span-3 lg:order-2 order-1">
+          <Card className="h-full min-h-[400px] md:min-h-[500px] lg:min-h-full">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>3D Vizualizacija</CardTitle>
               <Button variant="ghost" size="icon" onClick={() => setRefreshKey(k => k + 1)} title="Osvježi 3D prikaz">
@@ -538,16 +538,16 @@ export function Lab() {
           </Card>
         </div>
 
-        <div className="lg:col-span-3 xl:col-span-4">
+        <div className="lg:col-span-3 xl:col-span-4 lg:order-3 order-3">
           <Card>
             <CardHeader><CardTitle>5. Radni nalog</CardTitle></CardHeader>
             <CardContent>
               <div className="flex flex-col gap-4 md:flex-row md:items-center">
-                <Button onClick={handleAddToOrder} className="w-full md:w-auto flex-1" disabled={isAddingItem}>
+                <Button onClick={handleAddToOrder} className="w-full md:w-auto flex-1 h-11" disabled={isAddingItem}>
                   {isAddingItem && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isAddingItem ? 'Generiram crtež...' : 'Dodaj stavku u nalog'}
                 </Button>
-                <Button onClick={handleDownloadPdf} variant="outline" className="w-full md:w-auto flex-1" disabled={orderItems.length === 0}>
+                <Button onClick={handleDownloadPdf} variant="outline" className="w-full md:w-auto flex-1 h-11" disabled={orderItems.length === 0}>
                   <FileDown className="mr-2 h-4 w-4" />
                   Preuzmi Nalog (PDF)
                 </Button>

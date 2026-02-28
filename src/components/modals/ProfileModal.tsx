@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from "@/components/ui/dialog";
+import { FocusScope } from '@radix-ui/react-focus-scope';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { EdgeProfile } from '@/types';
@@ -17,6 +18,7 @@ interface ProfileModalProps {
 const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onSave, item }) => {
   const [name, setName] = useState('');
   const [costM, setCostM] = useState(0);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (item) {
@@ -26,13 +28,22 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onSave, it
       setName('');
       setCostM(0);
     }
+    setErrors({});
   }, [item, isOpen]);
 
   const handleSave = () => {
-    if (!name || costM === null) {
-      alert('Molimo popunite sva polja.');
+    const newErrors: Record<string, string> = {};
+    if (!name.trim()) {
+      newErrors.name = 'Naziv profila je obavezan';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      document.getElementById('profile-form-errors')?.setAttribute('aria-label', Object.values(newErrors).join('. '));
       return;
     }
+
+    setErrors({});
     onSave({
       id: item?.id || Date.now(),
       name,
@@ -42,25 +53,60 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onSave, it
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{item ? 'Uredi profil' : 'Novi profil ivice'}</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="profile-name" className="text-right">Naziv</Label>
-            <Input id="profile-name" value={name} onChange={e => setName(e.target.value)} className="col-span-3" />
+      <FocusScope asChild loop trapped>
+        <DialogContent
+          aria-labelledby="profile-modal-title"
+          aria-describedby="profile-modal-desc"
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            document.getElementById('profile-name')?.focus();
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle id="profile-modal-title">{item ? 'Uredi profil' : 'Novi profil ivice'}</DialogTitle>
+            <DialogDescription id="profile-modal-desc" className="sr-only">
+              Forma za {item ? 'uređivanje' : 'dodavanje'} profila ivice. Naziv je obavezan.
+            </DialogDescription>
+          </DialogHeader>
+          <div id="profile-form-errors" className="sr-only" role="alert" />
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="profile-name" className={errors.name ? 'text-destructive' : ''}>
+                Naziv <span aria-label="obavezno">*</span>
+              </Label>
+              <Input
+                id="profile-name"
+                value={name}
+                onChange={e => {
+                  setName(e.target.value);
+                  if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
+                }}
+                aria-invalid={!!errors.name}
+                aria-describedby={errors.name ? 'profile-name-error' : undefined}
+                required
+              />
+              {errors.name && (
+                <p id="profile-name-error" className="text-sm text-destructive" role="alert">
+                  {errors.name}
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="profile-cost">Trošak (€/m)</Label>
+              <Input
+                id="profile-cost"
+                type="number"
+                value={costM}
+                onChange={e => setCostM(parseFloat(e.target.value))}
+              />
+            </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="profile-cost" className="text-right">Trošak (€/m)</Label>
-            <Input id="profile-cost" type="number" value={costM} onChange={e => setCostM(parseFloat(e.target.value))} className="col-span-3" />
-          </div>
-        </div>
-        <DialogFooter>
-          <DialogClose asChild><Button type="button" variant="secondary">Odustani</Button></DialogClose>
-          <Button type="button" onClick={handleSave}>Spremi</Button>
-        </DialogFooter>
-      </DialogContent>
+          <DialogFooter>
+            <DialogClose asChild><Button type="button" variant="secondary">Odustani</Button></DialogClose>
+            <Button type="button" onClick={handleSave}>Spremi</Button>
+          </DialogFooter>
+        </DialogContent>
+      </FocusScope>
     </Dialog>
   );
 };
