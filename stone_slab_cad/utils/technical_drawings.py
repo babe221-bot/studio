@@ -318,3 +318,228 @@ class TechnicalDrawingGenerator:
         mesh = bpy.data.meshes.new("Section_View_Mesh")
         section_obj = bpy.data.objects.new(f"Section_{section_plane}", mesh)
         
+        # Create cross-section geometry (simplified rectangle for now)
+        bm = bmesh.new()
+        
+        # Define cross-section profile based on edge treatment
+        if self.spec and EdgeOrientation.ANTERIOR in self.spec.edge_treatments:
+            profile = self.spec.edge_treatments[EdgeOrientation.ANTERIOR]
+            self._create_profiled_section(bm, profile)
+        else:
+            # Simple rectangular section
+            bmesh.ops.create_cube(bm, size=1.0)
+        
+        bm.to_mesh(mesh)
+        bm.free()
+        
+        section_obj.location = view_position
+        section_obj.rotation_euler = (math.radians(90), 0, 0)
+        
+        self.drawing_collection.objects.link(section_obj)
+        
+        return section_obj
+    
+    def _create_profiled_section(self, 
+                                  bm: bmesh.types.BMesh,
+                                  profile: ProfileGeometry):
+        """Create cross-section with edge profile"""
+        # Base rectangle
+        bmesh.ops.create_cube(bm, size=1.0)
+        bm.normal_update()
+        
+        # Apply bevel to top edge to simulate chamfer/profile
+        if profile.depth_mm:
+            offset = profile.depth_mm / 1000.0
+            
+            # Find top edges
+            top_edges = [e for e in bm.edges 
+                        if all(v.co.y > 0.4 for v in e.verts)]
+            
+            if top_edges:
+                try:
+                    bmesh.ops.bevel(
+                        bm,
+                        geom=top_edges,
+                        offset=offset,
+                        segments=profile.segments_count,
+                        profile=profile.profile_factor
+                    )
+                except:
+                    pass
+    
+    def create_gdt_annotation(self,
+                               feature_position: Tuple[float, float, float],
+                               gdt_type: str,
+                               tolerance_value: float,
+                               datum_reference: Optional[str] = None) -> bpy.types.Object:
+        """
+        Create GD&T feature control frame
+        """
+        # Create text for GD&T symbol
+        text_curve = bpy.data.curves.new(f"GDT_{gdt_type}", 'FONT')
+        
+        # Build feature control frame text
+        lines = [
+            f"|{gdt_type}|",
+            f"|{tolerance_value:.2f}|",
+            f"|{datum_reference or '-'}|"
+        ]
+        text_curve.body = "\n".join(lines)
+        text_curve.size = 0.004
+        
+        text_obj = bpy.data.objects.new(f"GDT_{gdt_type}", text_curve)
+        text_obj.location = feature_position
+        self.drawing_collection.objects.link(text_obj)
+        
+        return text_obj
+    
+    def create_surface_finish_symbol(self,
+                                      position: Tuple[float, float, float],
+                                      roughness_ra: float = 3.2,
+                                      manufacturing_method: str = "M") -> bpy.types.Object:
+        """
+        Create surface finish symbol (check mark symbol)
+        """
+        curve = bpy.data.curves.new("Surface_Finish_Symbol", 'CURVE')
+        curve.dimensions = '2D'
+        
+        # Create check mark shape
+        spline = curve.splines.new('POLY')
+        spline.points.add(4)
+        
+        x, y, z = position
+        
+        # Check mark lines
+        spline.points[0].co = (x, y, 1)
+        spline.points[1].co = (x + 0.01, y + 0.02, 1)
+        spline.points[2].co = (x + 0.02, y, 1)
+        spline.points[3].co = (x + 0.02, y + 0.025, 1)
+        spline.points[4].co = (x + 0.025, y + 0.025, 1)
+        
+        symbol = bpy.data.objects.new("Surface_Finish_Symbol", curve)
+        self.drawing_collection.objects.link(symbol)
+        
+        # Add roughness value
+        text_curve = bpy.data.curves.new("Roughness_Text", 'FONT')
+        text_curve.body = f"Ra {roughness_ra}"
+        text_curve.size = 0.003
+        
+        text_obj = bpy.data.objects.new("Roughness_Text", text_curve)
+        text_obj.location = (x + 0.03, y + 0.01, z)
+        self.drawing_collection.objects.link(text_obj)
+        
+        return symbol
+    
+    def generate_standard_drawing_set(self,
+                                       sheet_config: DrawingSheetConfig,
+                                       slab_dims: Tuple[float, float, float] = (1000, 600, 30)) -> List[bpy.types.Object]:
+        """
+        Generate a complete standard drawing set
+        """
+        objects = []
+        
+        # Title block position
+        title_x, title_y = 0.25, -0.15
+        
+        # Create main views
+        views = [
+            (DrawingViewType.TOP, (0, 0, 0)),
+            (DrawingViewType.FRONT, (0, 0, 0)),
+            (DrawingViewType.RIGHT_SIDE, (0, 0, 0)),
+            (DrawingViewType.ISOMETRIC, (0.3, 0.1, 0))
+        ]
+        
+        for view_type, pos in views:
+            obj = self.create_orthographic_projection(view_type, slab_dims, pos)
+            objects.append(obj)
+        
+        # Create section view
+        section = self.create_section_view("AA", 0.5, (0.4, 0, 0))
+        objects.append(section)
+        
+        # Add dimensions for main slab
+        length_dim = DimensionLine(
+            start_point=(-slab_dims[0]/2000, -slab_dims[1]/2000 - 0.02, 0),
+            end_point=(slab_dims[0]/2000, -slab_dims[1]/2000 - 0.02, 0),
+            value_mm=slab_dims[0],
+            tolerance_mm=1.0
+        )
+        dim_obj = self.create_dimension_line(length_dim)
+        objects.append(dim_obj)
+        
+        # Add chamfer symbols for all edges
+        if self.spec and self.spec.edge_treatments:
+            for orientation in EdgeOrientation:
+                if orientation in self.spec.edge_treatments:
+                    profile = self.spec.edge_treatments[orientation]
+                    if profile.profile_type in [ProfileType.C8_CHAMFER, ProfileType.C5_CHAMFER, ProfileType.C10_CHAMFER]:
+                        # Add chamfer symbol
+                        pos = self._get_chamfer_symbol_position(orientation, slab_dims)
+                        chamfer_obj = self.create_chamfer_symbol(pos, self.spec.c8_chamfer)
+                        objects.append(chamfer_obj)
+        
+        # Add surface finish symbols
+        surface_pos = (-slab_dims[0]/2000 + 0.02, slab_dims[1]/2000 - 0.02, 0)
+        if self.spec:
+            roughness = self.spec.surface_treatment.roughness_ra
+            surface_obj = self.create_surface_finish_symbol(surface_pos, roughness)
+            objects.append(surface_obj)
+        
+        print(f"Generated standard drawing set with {len(objects)} objects")
+        return objects
+    
+    def _get_chamfer_symbol_position(self,
+                                      orientation: EdgeOrientation,
+                                      slab_dims: Tuple[float, float, float]) -> Tuple[float, float, float]:
+        """Get position for chamfer symbol based on edge orientation"""
+        l, w, h = slab_dims[0]/1000, slab_dims[1]/1000, slab_dims[2]/1000
+        
+        positions = {
+            EdgeOrientation.ANTERIOR: (l/4, w/2, h/2),
+            EdgeOrientation.POSTERIOR: (l/4, -w/2, h/2),
+            EdgeOrientation.PORT: (-l/2, w/4, h/2),
+            EdgeOrientation.STARBOARD: (l/2, w/4, h/2)
+        }
+        
+        return positions.get(orientation, (0, 0, h/2))
+    
+    def export_to_dxf(self, output_path: str):
+        # Export drawing to DXF format for CAD software
+        # Placeholder - requires additional DXF export library
+        print(f"DXF export not yet implemented. Would export to: {output_path}")
+        
+    def export_to_pdf(self, output_path: str):
+        # Export drawing to PDF format
+        # Placeholder - requires rendering and PDF generation
+        print(f"PDF export not yet implemented. Would export to: {output_path}")
+
+
+def create_manufacturing_drawing(spec: ManufacturingProcessSpec,
+                                  output_path: str,
+                                  slab_dims: Tuple[float, float, float] = (1000, 600, 30)):
+    """
+    Convenience function to create a complete manufacturing drawing
+    """
+    generator = TechnicalDrawingGenerator()
+    generator.initialize_drawing(spec)
+    
+    config = DrawingSheetConfig(
+        title=f"Manufacturing Drawing - {spec.specification_id}",
+        material="Granite",
+        finish=spec.surface_treatment.finish_type.value
+    )
+    
+    objects = generator.generate_standard_drawing_set(config, slab_dims)
+    
+    return objects
+
+
+__all__ = [
+    'DrawingViewType',
+    'AnnotationType',
+    'DrawingSheetConfig',
+    'DimensionLine',
+    'DetailCallout',
+    'TechnicalDrawingGenerator',
+    'create_manufacturing_drawing'
+]
