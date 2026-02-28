@@ -279,7 +279,32 @@ export async function generateEnhancedPdf(
 
                     const imgWidth = 80;
                     const imgHeight = 60;
-                    doc.addImage(images3D[i]!, 'PNG', margin, cursorY, imgWidth, imgHeight);
+
+                    // Detect image format from data URI
+                    const imageData = images3D[i]!;
+                    let format = 'PNG' as any; // Default to PNG
+
+                    if (imageData.startsWith('data:image/')) {
+                        // Extract format from data URI (e.g., "data:image/svg+xml;base64,...")
+                        const match = imageData.match(/data:image\/([^;]+);/);
+                        if (match) {
+                            const detectedFormat = match[1].toLowerCase();
+
+                            // Map common formats to jsPDF supported formats
+                            if (detectedFormat.includes('jpeg') || detectedFormat.includes('jpg')) {
+                                format = 'JPEG';
+                            } else if (detectedFormat.includes('png')) {
+                                format = 'PNG';
+                            } else if (detectedFormat.includes('svg')) {
+                                format = 'SVG';
+                            } else if (detectedFormat.includes('webp')) {
+                                format = 'WEBP';
+                            }
+                            // Else keep default PNG and let jsPDF attempt to decode
+                        }
+                    }
+
+                    doc.addImage(imageData, format, margin, cursorY, imgWidth, imgHeight);
                 } catch (e) {
                     console.error('Error adding 3D image:', e);
                 }
