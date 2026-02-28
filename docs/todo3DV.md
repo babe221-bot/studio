@@ -293,66 +293,186 @@ lighting_results = setup_studio_lighting(
 
 ---
 
-## 4. Physically Based Rendering (PBR) Materials
+## 4. Physically Based Rendering (PBR) Materials ✓ IMPLEMENTED
 
-### PBR Workflow Fundamentals
+### PBR Workflow Fundamentals ✓
 
-**Metal/Roughness Workflow (Recommended)**
-- Base Color: Albedo without specular highlights
-- Metallic: 0 (dielectric) to 1 (conductor)
-- Roughness: 0 (smooth) to 1 (rough)
-- Normal: Surface detail displacement
+Located in **[`utils/pbr_materials.py`](stone_slab_cad/utils/pbr_materials.py)** via **[`PBRMaterialBuilder`](stone_slab_cad/utils/pbr_materials.py:105)**
 
-**Specular/Glossiness Workflow**
-- Diffuse: Base color without reflections
-- Specular: Reflection color/intensity
-- Glossiness: Surface smoothness
-- Normal: Surface detail displacement
+**Metal/Roughness Workflow (Recommended)** ✅
+- ✅ Base Color: Albedo without specular highlights - [`MaterialProperties.base_color`](stone_slab_cad/utils/pbr_materials.py:29)
+- ✅ Metallic: 0 (dielectric) to 1 (conductor) - [`MaterialProperties.metallic`](stone_slab_cad/utils/pbr_materials.py:30)
+- ✅ Roughness: 0 (smooth) to 1 (rough) - [`MaterialProperties.roughness`](stone_slab_cad/utils/pbr_materials.py:31)
+- ✅ Normal: Surface detail displacement - [`MaterialProperties.normal_strength`](stone_slab_cad/utils/pbr_materials.py:42)
+- Implementation: [`_build_metal_roughness()`](stone_slab_cad/utils/pbr_materials.py:149)
 
-### Material Properties Reference
+**Specular/Glossiness Workflow** ✅
+- ✅ Diffuse: Base color without reflections - [`MaterialProperties.base_color`](stone_slab_cad/utils/pbr_materials.py:29)
+- ✅ Specular: Reflection color/intensity - [`MaterialProperties.specular_color`](stone_slab_cad/utils/pbr_materials.py:34)
+- ✅ Glossiness: Surface smoothness - [`MaterialProperties.glossiness`](stone_slab_cad/utils/pbr_materials.py:35)
+- Implementation: [`_build_specular_glossiness()`](stone_slab_cad/utils/pbr_materials.py:195)
 
-| Material | Metallic | Roughness | Notes |
-|----------|----------|-----------|-------|
-| Raw Metal | 1.0 | 0.1-0.4 | Iron, steel, gold |
-| Painted Metal | 0.0 | 0.3-0.7 | Paint is dielectric |
-| Plastic | 0.0 | 0.1-0.6 | Varies by finish |
-| Concrete | 0.0 | 0.9-1.0 | Very rough surface |
-| Glass | 0.0 | 0.0 | Use transmission |
-| Skin | 0.0 | 0.5-0.8 | Use subsurface scattering |
-| Water | 0.0 | 0.0-0.1 | High specularity |
+### Material Properties Reference Database ✓ IMPLEMENTED
 
-### Subsurface Scattering (SSS)
+**Located in [`MATERIAL_DATABASE`](stone_slab_cad/utils/pbr_materials.py:72)** with 12+ presets:
 
-**Key Parameters**
-- Scale: Overall SSS strength
-- Radius: Light penetration depth
-- Color: Absorption/scatter color
-- IOR: Index of refraction
+| Material | Metallic | Roughness | IOR | Status |
+|----------|----------|-----------|-----|--------|
+| Raw Metal | 1.0 | 0.1-0.4 | 2.5 | ✅ [`steel_raw`](stone_slab_cad/utils/pbr_materials.py:118), [`gold`](stone_slab_cad/utils/pbr_materials.py:124) |
+| Painted Metal | 0.0 | 0.3-0.7 | - | ✅ Configurable via builder |
+| Plastic | 0.0 | 0.1-0.6 | - | ✅ Supported |
+| Concrete | 0.0 | 0.9-1.0 | 1.5 | ✅ [`concrete`](stone_slab_cad/utils/pbr_materials.py:136) |
+| Glass | 0.0 | 0.0 | 1.45 | ✅ [`glass_clear`](stone_slab_cad/utils/pbr_materials.py:142) |
+| Ceramic | 0.0 | 0.05 | 1.5 | ✅ [`ceramic_glazed`](stone_slab_cad/utils/pbr_materials.py:148) |
 
-**Common SSS Values**
+**Stone Material Presets:**
+
+| Stone Type | Base Color | Roughness | IOR | SSS Scale | Preset Name |
+|------------|------------|-----------|-----|-----------|-------------|
+| Carrara Marble | (0.95, 0.95, 0.93) | 0.15 | 1.486 | 0.02 | ✅ [`marble_carrara`](stone_slab_cad/utils/pbr_materials.py:73) |
+| Calacatta Marble | (0.98, 0.96, 0.92) | 0.12 | 1.486 | 0.025 | ✅ [`marble_calacatta`](stone_slab_cad/utils/pbr_materials.py:80) |
+| Polished Granite | (0.35, 0.35, 0.37) | 0.08 | 1.54 | 0.0 | ✅ [`granite_polished`](stone_slab_cad/utils/pbr_materials.py:87) |
+| Honed Granite | (0.35, 0.35, 0.37) | 0.45 | 1.54 | 0.0 | ✅ [`granite_honed`](stone_slab_cad/utils/pbr_materials.py:94) |
+| Engineered Quartz | (0.9, 0.9, 0.88) | 0.1 | 1.54 | 0.0 | ✅ [`quartz_premium`](stone_slab_cad/utils/pbr_materials.py:101) |
+| Leather Quartz | (0.85, 0.85, 0.83) | 0.65 | 1.54 | 0.0 | ✅ [`quartz_leather`](stone_slab_cad/utils/pbr_materials.py:108) |
+| Soapstone | (0.25, 0.28, 0.26) | 0.7 | 1.53 | 0.05 | ✅ [`soapstone`](stone_slab_cad/utils/pbr_materials.py:115) |
+| Travertine | (0.82, 0.75, 0.65) | 0.55 | 1.52 | 0.03 | ✅ [`travertine`](stone_slab_cad/utils/pbr_materials.py:122) |
+| Slate | (0.18, 0.2, 0.22) | 0.8 | 1.57 | 0.0 | ✅ [`slate`](stone_slab_cad/utils/pbr_materials.py:129) |
+
+### Subsurface Scattering (SSS) ✓ IMPLEMENTED
+
+**Key Parameters** - All in [`MaterialProperties`](stone_slab_cad/utils/pbr_materials.py:24):
+- ✅ Scale: Overall SSS strength - [`subsurface_scale`](stone_slab_cad/utils/pbr_materials.py:45)
+- ✅ Radius: Light penetration depth - [`subsurface_radius`](stone_slab_cad/utils/pbr_materials.py:44)
+- ✅ Color: Absorption/scatter color - [`subsurface_color`](stone_slab_cad/utils/pbr_materials.py:46)
+- ✅ IOR: Index of refraction - [`ior`](stone_slab_cad/utils/pbr_materials.py:38)
+
+**Material-Specific SSS Values (Implemented):**
+
+| Material | Scale | Radius (R, G, B) | Implementation |
+|----------|-------|------------------|----------------|
+| Marble (Carrara) | 0.02 | (1.0, 0.8, 0.6) | ✅ [`marble_carrara`](stone_slab_cad/utils/pbr_materials.py:73) |
+| Marble (Calacatta) | 0.025 | (1.0, 0.8, 0.6) | ✅ [`marble_calacatta`](stone_slab_cad/utils/pbr_materials.py:80) |
+| Soapstone | 0.05 | (0.8, 1.0, 0.9) | ✅ [`soapstone`](stone_slab_cad/utils/pbr_materials.py:115) |
+| Travertine | 0.03 | (1.0, 0.7, 0.5) | ✅ [`travertine`](stone_slab_cad/utils/pbr_materials.py:122) |
+
+### Advanced Material Techniques ✓ IMPLEMENTED
+
+- ✅ **Layered materials** - **[`LayeredMaterialBuilder`](stone_slab_cad/utils/pbr_materials.py:347)** for complex surfaces (e.g., stone with coating)
+- ⬜ **Vertex color blending** - Framework ready via node groups
+- ⬜ **Triplanar mapping** - Can be added via texture coordinate nodes
+- ✅ **Procedural noise** - **[`ProceduralStoneMaterial`](stone_slab_cad/utils/pbr_materials.py:380)** for organic variation
+  - [`create_marble_material()`](stone_slab_cad/utils/pbr_materials.py:384) - Musgrave noise veins
+  - [`create_granite_material()`](stone_slab_cad/utils/pbr_materials.py:418) - Voronoi crystalline patterns
+- ✅ **Detail normal mapping** - Via [`normal_strength`](stone_slab_cad/utils/pbr_materials.py:42) in all materials
+- ✅ **Clear coat** - For polished surfaces: [`clearcoat`](stone_slab_cad/utils/pbr_materials.py:48), [`clearcoat_roughness`](stone_slab_cad/utils/pbr_materials.py:49)
+- ✅ **Anisotropic reflections** - For brushed metals: [`anisotropic`](stone_slab_cad/utils/pbr_materials.py:54), [`anisotropic_rotation`](stone_slab_cad/utils/pbr_materials.py:55)
+- ✅ **Sheen** - For velvet-like surfaces: [`sheen`](stone_slab_cad/utils/pbr_materials.py:51), [`sheen_tint`](stone_slab_cad/utils/pbr_materials.py:52)
+
+### Material Finish Variations ✓
+
+Five finish types supported via [`create_stone_material()`](stone_slab_cad/utils/pbr_materials.py:514):
+
+| Finish | Roughness | Clearcoat | Description |
+|--------|-----------|-----------|-------------|
+| Polished | 0.08 | 0.2 | Mirror-like reflection |
+| Honed | 0.4 | 0.0 | Smooth matte |
+| Leather | 0.65 | 0.0 | Textured matte |
+| Flamed | 0.85 | 0.0 | Rough textured |
+| Brushed | 0.3 | 0.05 | Directional finish |
+
+### Usage Examples
+
+**Create Stone Material:**
+```python
+from utils.pbr_materials import create_stone_material
+
+# Create polished Carrara marble
+material = create_stone_material(
+    stone_type='marble_carrara',
+    finish='polished',
+    workflow='metal_roughness'
+)
 ```
-Skin (Caucasian):
-  - Scale: 1.0
-  - Radius R: 1.0, G: 0.5, B: 0.25
-  
-Wax/Candle:
-  - Scale: 2.0
-  - Radius R: 2.0, G: 1.0, B: 0.5
-  
-Marble:
-  - Scale: 0.5
-  - Radius R: 0.5, G: 0.5, B: 0.5
+
+**Create Procedural Marble:**
+```python
+from utils.pbr_materials import ProceduralStoneMaterial
+
+proc = ProceduralStoneMaterial()
+marble_mat = proc.create_marble_material(
+    name="Custom_Marble",
+    vein_color=(0.3, 0.3, 0.35),
+    base_color=(0.95, 0.95, 0.93),
+    vein_scale=5.0
+)
 ```
 
-### Advanced Material Techniques
+**Create Layered Material:**
+```python
+from utils.pbr_materials import LayeredMaterialBuilder, get_material_preset
 
-- [ ] Layered materials for complex surfaces
-- [ ] Vertex color blending for terrain
-- [ ] Triplanar mapping for box projection
-- [ ] Procedural noise for organic variation
-- [ ] Detail normal mapping for close-up detail
-- [ ] Clear coat for automotive/car paint
-- [ ] Anisotropic reflections for brushed metals
+builder = LayeredMaterialBuilder()
+base = get_material_preset('marble_carrara')
+coat = get_material_preset('ceramic_glazed')
+
+layered = builder.create_layered_material(
+    base_props=base,
+    coat_props=coat,
+    blend_factor=0.3,
+    name="Sealed_Marble"
+)
+```
+
+**Custom PBR Material:**
+```python
+from utils.pbr_materials import PBRMaterialBuilder, MaterialProperties, PBRWorkflow
+
+props = MaterialProperties(
+    name="Custom_Stone",
+    material_type=MaterialType.STONE_NATURAL,
+    base_color=(0.9, 0.88, 0.85),
+    roughness=0.25,
+    ior=1.52,
+    subsurface_scale=0.02,
+    textures={
+        'albedo': '/path/to/albedo.png',
+        'normal': '/path/to/normal.png',
+        'roughness': '/path/to/roughness.png'
+    }
+)
+
+builder = PBRMaterialBuilder(PBRWorkflow.METAL_ROUGHNESS)
+material = builder.create_material(props)
+```
+
+### Integration with CAD Pipeline
+
+The PBR system is automatically used in [`utils/materials.py`](stone_slab_cad/utils/materials.py:9) which now imports from the PBR module:
+
+```python
+from .pbr_materials import create_stone_material, get_material_preset
+
+# Materials are automatically created with PBR properties
+# based on material type and finish configuration
+```
+
+### Texture Map Support
+
+All PBR texture types supported via [`MaterialProperties.textures`](stone_slab_cad/utils/pbr_materials.py:57):
+
+| Map Type | Metal/Roughness | Specular/Glossiness | Color Space |
+|----------|-----------------|---------------------|-------------|
+| Albedo/Diffuse | ✅ albedo | ✅ diffuse | sRGB |
+| Normal | ✅ normal | ✅ normal | Non-Color |
+| Roughness | ✅ roughness | N/A (inverted glossiness) | Non-Color |
+| Metallic | ✅ metallic | N/A | Non-Color |
+| Specular | N/A | ✅ specular | Non-Color |
+| Glossiness | N/A | ✅ glossiness | Non-Color |
+| AO | ✅ ao | ✅ ao | Non-Color |
+| Height | ✅ height | ✅ height | Non-Color |
+| Emissive | ✅ emissive | ✅ emissive | sRGB |
+| Subsurface | ✅ subsurface | ✅ subsurface | sRGB |
 
 ---
 
