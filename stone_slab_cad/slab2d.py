@@ -16,7 +16,7 @@ def generate_2d_drawings(config: Dict[Any, Any], dxf_path: str, svg_path: str) -
     width = dims['width']
     height = dims['height']
     
-    print(f"✏️  Creating 2D drawings: {length}×{width}×{height}mm")
+    print(f"Creating 2D drawings: {length}x{width}x{height}mm")
     
     # Generate DXF technical drawing
     generate_dxf_drawing(config, dxf_path)
@@ -150,7 +150,7 @@ def generate_dxf_drawing(config: Dict[Any, Any], output_path: str) -> None:
     
     # Save DXF file
     doc.saveas(output_path)
-    print(f"✅ DXF drawing saved: {output_path}")
+    print(f"DXF drawing saved: {output_path}")
 
 def generate_svg_preview(config: Dict[Any, Any], output_path: str) -> None:
     """Create SVG preview for web display"""
@@ -210,7 +210,7 @@ def generate_svg_preview(config: Dict[Any, Any], output_path: str) -> None:
     
     # Save SVG
     drawing.save_svg(output_path)
-    print(f"✅ SVG preview saved: {output_path}")
+    print(f"SVG preview saved: {output_path}")
 
 def add_title_block(msp, origin, config):
     """Add professional title block to DXF"""
