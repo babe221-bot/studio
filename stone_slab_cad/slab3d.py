@@ -263,6 +263,32 @@ def generate_3d_model(config: Dict[Any, Any], output_path: str) -> None:
     print(f"   Effects: {', '.join(pp_results['post_effects']['effects_applied'])}")
     print(f"   Color Grading: {pp_results['color_grading']['mode']}")
     
+    # Setup Viewport Performance Tuning (Section 8)
+    print("\n🖥️  Setting up Viewport Performance Tuning...")
+    vp_config = ViewportConfig(
+        display_mode='MATERIAL',
+        disable_textures=False,
+        use_matcap=True,
+        matcap_preset='CLAY',
+        enable_backface_culling=True,
+        subdivision_preview_levels=1,
+        enable_hardware_shading=True,
+        texture_cache_size_mb=512,
+        hide_distant_objects=True,
+        distant_object_distance=50.0,
+        use_bounding_box_for_distant=True
+    )
+    vp_results = setup_performance_viewport(vp_config)
+    print(f"✅ Viewport optimization complete")
+    print(f"   Display Mode: {vp_results.get('viewport', {}).get('type', 'SOLID')}")
+    print(f"   Hardware Shading: {vp_results.get('gpu', {}).get('hardware_shading', False)}")
+    
+    # Initialize performance profiler
+    profiler = create_profiling_overlay()
+    stats = profiler.update_stats()
+    print(f"   Scene Triangles: {stats.triangle_count:,}")
+    print(f"   Objects: {stats.object_count}")
+    
     # Export to GLB
     print(f"📦 Exporting to: {output_path}")
     bpy.ops.export_scene.gltf(
