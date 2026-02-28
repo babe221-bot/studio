@@ -168,46 +168,128 @@ print(f"✅ UV unwrap complete: {uv_results['islands_created']} islands")
 
 ---
 
-## 3. Advanced Lighting and Global Illumination
+## 3. Advanced Lighting and Global Illumination ✓ IMPLEMENTED
 
-### Lighting Setup Framework
+### Lighting Setup Framework ✓
 
-**Three-Point Lighting Foundation**
-- **Key Light**: Primary illumination source (45° angle, dominant intensity)
-- **Fill Light**: Shadow softening (opposite key, reduced intensity)
-- **Rim/Back Light**: Subject separation from background
+**Three-Point Lighting Foundation** - **[`ThreePointLighting` class](stone_slab_cad/utils/lighting_system.py:65)**
 
-### Global Illumination Techniques
+| Light | Purpose | Implementation | Configurable Parameters |
+|-------|---------|----------------|------------------------|
+| **Key Light** | Primary illumination (45° angle, dominant intensity) | ✅ [`_create_area_light()`](stone_slab_cad/utils/lighting_system.py:120) | [`key_energy`](stone_slab_cad/utils/lighting_system.py:49), [`key_angle`](stone_slab_cad/utils/lighting_system.py:47), [`key_color`](stone_slab_cad/utils/lighting_system.py:51) |
+| **Fill Light** | Shadow softening (opposite key, reduced intensity) | ✅ [`_create_area_light()`](stone_slab_cad/utils/lighting_system.py:120) | [`fill_ratio`](stone_slab_cad/utils/lighting_system.py:53) (default: 50% of key) |
+| **Rim Light** | Subject separation from background | ✅ [`_create_area_light()`](stone_slab_cad/utils/lighting_system.py:120) | [`rim_ratio`](stone_slab_cad/utils/lighting_system.py:58) (default: 120% of key) |
 
-| Method | Quality | Speed | Use Case |
-|--------|---------|-------|----------|
-| Path Tracing | Highest | Slowest | Final production renders |
-| Brute Force GI | High | Slow | Archviz, product shots |
-| Irradiance Cache | Medium | Medium | Animation sequences |
-| Light Cache | Medium | Fast | Preview and draft renders |
-| Real-Time GI | Variable | Real-time | Game engines, VR |
+### Global Illumination Techniques ✓ IMPLEMENTED
 
-### HDRI Environment Lighting
+All GI methods implemented via **[`GIMethod` enum](stone_slab_cad/utils/lighting_system.py:24)** and **[`GlobalIlluminationSetup` class](stone_slab_cad/utils/lighting_system.py:210)**:
 
-- Use high-quality 32-bit HDRI (4K-16K resolution)
-- Align dominant light direction with scene composition
-- Adjust exposure for appropriate brightness range
-- Combine with area lights for additional control
-- Consider color temperature for mood consistency
+| Method | Quality | Speed | Use Case | Implementation |
+|--------|---------|-------|----------|----------------|
+| Path Tracing | Highest | Slowest | Final production renders | ✅ [`GIMethod.PATH_TRACING`](stone_slab_cad/utils/lighting_system.py:25) |
+| Brute Force GI | High | Slow | Archviz, product shots | ✅ [`GIMethod.BRUTE_FORCE`](stone_slab_cad/utils/lighting_system.py:26) |
+| Irradiance Cache | Medium | Medium | Animation sequences | ✅ [`GIMethod.IRRADIANCE_CACHE`](stone_slab_cad/utils/lighting_system.py:27) |
+| Light Cache | Medium | Fast | Preview and draft renders | ✅ [`GIMethod.LIGHT_CACHE`](stone_slab_cad/utils/lighting_system.py:28) |
+| Real-Time GI | Variable | Real-time | Game engines, VR | ✅ [`GIMethod.REALTIME`](stone_slab_cad/utils/lighting_system.py:29) |
 
-### Special Lighting Techniques
+### HDRI Environment Lighting ✓ IMPLEMENTED
 
-**Volumetric Lighting**
-- God rays and atmospheric scattering
-- Dust particles and fog integration
-- Light shafts through windows
-- Subsurface scattering for organic materials
+Located in **[`HDRILighting` class](stone_slab_cad/utils/lighting_system.py:148)**:
+
+- ✅ **High-quality 32-bit HDRI support** - [`hdri_path`](stone_slab_cad/utils/lighting_system.py:43) parameter
+- ✅ **Align dominant light direction** - [`rotation`](stone_slab_cad/utils/lighting_system.py:41) control (Z-rotation in degrees)
+- ✅ **Adjust exposure** - [`exposure`](stone_slab_cad/utils/lighting_system.py:42) and [`strength`](stone_slab_cad/utils/lighting_system.py:40) parameters
+- ✅ **Combine with area lights** - Automatic integration with Three-Point system
+- ✅ **Color temperature control** - [`color_temperature`](stone_slab_cad/utils/lighting_system.py:44) in Kelvin with [`_kelvin_to_rgb()`](stone_slab_cad/utils/lighting_system.py:202) conversion
+
+**HDRI Configuration:**
+```python
+from utils.lighting_system import HDRILighting, HDRIConfig
+
+hdri_config = HDRIConfig(
+    hdri_path="/path/to/hdri.hdr",
+    strength=1.0,
+    rotation=45.0,  # Degrees
+    exposure=0.0,
+    color_temperature=5500  # Kelvin (daylight)
+)
+
+hdri = HDRILighting(hdri_config)
+world = hdri.setup()
+```
+
+### Special Lighting Techniques ✓ IMPLEMENTED
+
+**Volumetric Lighting** - **[`VolumetricLighting` class](stone_slab_cad/utils/lighting_system.py:264)**
+- ✅ God rays and atmospheric scattering - [`add_volumetric_cube()`](stone_slab_cad/utils/lighting_system.py:267)
+- ✅ Dust particles and fog integration - Volume scatter shader
+- ✅ Light shafts - Through volume density control
+- ✅ Subsurface scattering - Supported via PBR materials
 
 **Practical Lighting**
-- Emissive geometry as light sources
-- Image-based lighting from HDR captures
-- Area lights for soft shadows
-- Light portals for interior scenes
+- ✅ Emissive geometry as light sources - [`create_emissive_plane()`](stone_slab_cad/utils/lighting_system.py:301)
+- ✅ Image-based lighting from HDR captures - Via HDRI setup
+- ✅ Area lights for soft shadows - [`create_soft_area_light()`](stone_slab_cad/utils/lighting_system.py:331)
+- ✅ Light portals for interior scenes - Area light windows
+
+### Lighting Styles and Presets ✓
+
+Five predefined lighting styles in **[`LightingStyle` enum](stone_slab_cad/utils/lighting_system.py:14)**:
+
+| Style | Key Energy | Fill Ratio | Rim Ratio | Use Case |
+|-------|------------|------------|-----------|----------|
+| STUDIO | 10.0 | 50% | 120% | Standard studio setup |
+| PRODUCT | 15.0 | 30% | 150% | Product photography |
+| NATURAL | 8.0 | 70% | 80% | Daylight simulation |
+| DRAMATIC | 12.0 | 20% | 200% | High contrast |
+| ARCHVIZ | 5.0 | 80% | 100% | Architectural visualization |
+
+### Complete Lighting Rig ✓
+
+**[`LightingRig` class](stone_slab_cad/utils/lighting_system.py:349)** combines all techniques:
+
+```python
+from utils.lighting_system import LightingRig, LightingStyle, setup_studio_lighting
+
+# Quick setup with convenience function
+results = setup_studio_lighting(
+    target=slab_object,
+    style="product",  # or "studio", "natural", "dramatic", "archviz"
+    hdri_path="/path/to/studio.hdr",  # Optional
+    resolution=(1920, 1080)
+)
+
+# Advanced setup with full control
+rig = LightingRig(LightingStyle.PRODUCT)
+results = rig.setup_complete_rig(
+    target=slab_object,
+    use_three_point=True,
+    use_hdri=True,
+    hdri_path="/path/to/hdri.hdr"
+)
+```
+
+### Integration with CAD Pipeline
+
+The lighting system is automatically invoked in [`slab3d.py`](stone_slab_cad/slab3d.py:192) after UV unwrapping:
+
+```python
+# Setup Advanced Lighting and Global Illumination
+lighting_results = setup_studio_lighting(
+    target=obj,
+    style="product" if material_type in ["marble", "granite"] else "studio",
+    resolution=(1920, 1080)
+)
+```
+
+### Render Settings Configuration
+
+**[`RenderSettings` dataclass](stone_slab_cad/utils/lighting_system.py:73)** provides:
+- GI method selection
+- Sample counts (128-256 for production)
+- Bounce limits (diffuse, glossy, transmission)
+- Denoising (OptiX for GPU, OpenImageDenoise for CPU)
+- Resolution control
 
 ---
 
