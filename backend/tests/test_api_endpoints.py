@@ -14,6 +14,7 @@ import sys
 import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock, patch, MagicMock
+from httpx import AsyncClient, ASGITransport
 
 
 # ---------------------------------------------------------------------------
