@@ -537,56 +537,52 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
         roughness: Math.max(preset.roughness - 0.05, 0.05),
         metalness: preset.metalness,
         clearcoat: preset.clearcoat * 0.8,
-        const cached = textureCache.current.get(url);
-        if (cached) {
-          applyTexture(cached);
-        } else {
-          new THREE.TextureLoader().load(url, (tex) => {
-            tex.colorSpace = THREE.SRGBColorSpace;
-            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-            tex.anisotropy = rendererRef.current?.capabilities.getMaxAnisotropy() ?? 4;
-            textureCache.current.set(url, tex);
-            applyTexture(tex);
-          });
-        }
-      };
+        clearcoatRoughness: preset.clearcoatRoughness,
+      });
 
-      const applyTexture = (tex: THREE.Texture) => {
-        // Physical scale: one tile every 30cm
-        const tileSizeM = 0.30;
-        tex.repeat.set(vizL / tileSizeM, vizW / tileSizeM);
-        tex.needsUpdate = true;
-        mainMat.map = tex;
-        // needsUpdate is called at line 571 after this function
-      };
+      mainMatRef.current = mainMat;
+      sideMatRef.current = sideMat;
+      profileMatRef.current = profileMat;
+      resourceKeysRef.current.materials = [mainMatKey, sideMatKey, profileMatKey];
 
+      // Load texture via ResourceManager
+      const textureUrl = material.texture;
       if (textureUrl) {
-        loadTexture(textureUrl);
-      } else {
-        mainMat.map = null;
+        resourceKeysRef.current.texture = textureUrl;
+        resourceManager.loadTexture(textureUrl, {
+          colorSpace: THREE.SRGBColorSpace,
+          wrapS: THREE.RepeatWrapping,
+          wrapT: THREE.RepeatWrapping,
+        }).then((tex) => {
+          if (!isMountedRef.current) {
+            // Component unmounted during load, release the texture
+            resourceManager.releaseTexture(textureUrl);
+            return;
+          }
+
+          // Physical scale: one tile every 30cm
+          const tileSizeM = 0.30;
+          tex.repeat.set(vizL / tileSizeM, vizW / tileSizeM);
+          tex.needsUpdate = true;
+
+          if (mainMatRef.current) {
+            mainMatRef.current.map = tex;
+            mainMatRef.current.needsUpdate = true;
+          }
+        });
       }
-      mainMat.userData.url = textureUrl;
 
-      // Consolidated needsUpdate call
-      mainMat.needsUpdate = true;
-
-      // ── Fit camera to stone immediately (synchronous, before worker) ──
-      // This ensures the camera is correctly positioned from the first render frame,
-      // not delayed until the async geometry worker finishes.
+      // ── Fit camera to stone immediately ──
       if (cameraRef.current && controlsRef.current) {
         const camera = cameraRef.current;
         const controls = controlsRef.current;
 
-        // Centre of the stone
         const target = new THREE.Vector3(0, h / 2, 0);
         controls.target.copy(target);
 
-        // Drive distance from the DIAGONAL of the stone's top face + height contribution
-        // This ensures both long thin slabs and short thick blocks get a good framing.
         const diagonal = Math.sqrt(vizL * vizL + vizW * vizW);
         const fitDist = Math.max(diagonal, h * 10) * 1.0 + 0.8;
 
-        // 38° elevation, 40° azimuth gives a classic 3/4 product-shot perspective
         const elev = THREE.MathUtils.degToRad(38);
         const azim = THREE.MathUtils.degToRad(40);
 
@@ -601,22 +597,21 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
         controls.update();
       }
 
-      // ── Spawn geometry worker ──
-      // Terminate any existing worker first
-      if (workerRef.current) {
-        workerRef.current.terminate();
-        workerRef.current = null;
-      }
+      // ── Geometry generation via Worker Pool ──
+      const jobId = `slab-geo-${length}-${width}-${height}-${profile.name}-${Date.now()}`;
 
-      const worker = new Worker(new URL('@/workers/geometryWorker.ts', import.meta.url));
-      workerRef.current = worker;
-      let workerTerminated = false;
-
-      worker.postMessage({ L: vizL, W: vizW, H: h, profile, processedEdges, okapnikEdges });
-
-      worker.onmessage = (e) => {
-        const { positions, uvs, indices, groups } = e.data;
-        if (!mainGroupRef.current) return;
+      workerPoolRef.current.executeJob({
+        L: vizL,
+        W: vizW,
+        H: h,
+        profile,
+        processedEdges,
+        okapnikEdges,
+      }, jobId).then((result: GeometryJobOutput) => {
+        if (!isMountedRef.current || !mainGroupRef.current) {
+          // Component unmounted, don't process result
+          return;
+        }
 
         // Clear old meshes and dispose pending geometry
         if (pendingGeometryRef.current) {
@@ -627,20 +622,21 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
         while (mainGroupRef.current.children.length > 0) {
           const obj = mainGroupRef.current.children[0];
           mainGroupRef.current.remove(obj);
-          obj.traverse(node => {
+          obj.traverse((node) => {
             if ((node as THREE.Mesh).isMesh) {
               (node as THREE.Mesh).geometry.dispose();
             }
           });
         }
 
+        // Create new geometry
         const geometry = new THREE.BufferGeometry();
-        pendingGeometryRef.current = geometry; // Track for cleanup
+        pendingGeometryRef.current = geometry;
 
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        if (uvs) geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-        geometry.setIndex(new THREE.BufferAttribute(indices, 1));
-        groups.forEach((g: { start: number; count: number; materialIndex: number }) =>
+        geometry.setAttribute('position', new THREE.BufferAttribute(result.positions, 3));
+        if (result.uvs) geometry.setAttribute('uv', new THREE.BufferAttribute(result.uvs, 2));
+        geometry.setIndex(new THREE.BufferAttribute(result.indices, 1));
+        result.groups.forEach((g) =>
           geometry.addGroup(g.start, g.count, g.materialIndex)
         );
         geometry.computeVertexNormals();
@@ -649,31 +645,13 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
         const mesh = new THREE.Mesh(geometry, materials);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
-        mesh.position.y = 0; // bottom sits at y=0
+        mesh.position.y = 0;
 
         mainGroupRef.current.add(mesh);
-        pendingGeometryRef.current = null; // Geometry now attached to mesh, mesh will handle disposal
-
-        // Terminate worker after successful completion
-        if (workerRef.current === worker && !workerTerminated) {
-          workerTerminated = true;
-          worker.terminate();
-          workerRef.current = null;
-        }
-      };
-
-      worker.onerror = (err) => {
-        console.error('Geometry worker error:', err);
-        if (pendingGeometryRef.current) {
-          pendingGeometryRef.current.dispose();
-          pendingGeometryRef.current = null;
-        }
-        if (workerRef.current === worker && !workerTerminated) {
-          workerTerminated = true;
-          worker.terminate();
-          workerRef.current = null;
-        }
-      };
+        pendingGeometryRef.current = null;
+      }).catch((err) => {
+        console.error('Geometry generation failed:', err);
+      });
 
       return () => {
         // Dispose pending geometry if effect cleans up before worker completes
@@ -681,15 +659,8 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
           pendingGeometryRef.current.dispose();
           pendingGeometryRef.current = null;
         }
-
-        // Terminate worker only if it's still this one
-        if (workerRef.current === worker && !workerTerminated) {
-          workerTerminated = true;
-          worker.terminate();
-          workerRef.current = null;
-        }
       };
-    }, [dims, material, finish, profile, processedEdges, okapnikEdges]);
+    }, [dims, material, finish, profile, processedEdges, okapnikEdges, cleanupMaterials]);
 
     // ── Dimension Labels ────────────────────────────────────────────────────
     useEffect(() => {
