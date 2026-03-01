@@ -6,6 +6,10 @@ from typing import List, Optional, Dict, Any
 
 from app.models.schemas import CADResponse, ProcessingRequest
 from app.services import cad_service
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 router = APIRouter()
 
@@ -41,6 +45,8 @@ async def analyze_geometry(request: GeometryAnalysisRequest):
     """
     try:
         dims = request.dimensions
+        logger.info(f"[CAD API] analyze_geometry called with dimensions: {dims}")
+        
         result = {
             "area_cm2": dims.get("length", 0) * dims.get("width", 0),
             "perimeter_cm": 2 * (dims.get("length", 0) + dims.get("width", 0)),
@@ -68,9 +74,14 @@ async def analyze_geometry(request: GeometryAnalysisRequest):
                 "description": "Deblje ploče zahtijevaju pojačanu konstrukciju nosača",
                 "confidence": 0.9
             })
+            
+        logger.debug(f"[CAD API] Validation result generated")
+        if result["warnings"]:
+            logger.warning(f"[CAD API] Warnings generated: {result['warnings']}")
         
         return AIAnalysisResponse(success=True, result=result)
     except Exception as e:
+        logger.error(f"[CAD API] Error in analyze_geometry: {str(e)}")
         return AIAnalysisResponse(success=False, error=str(e))
 
 
