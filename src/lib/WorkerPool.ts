@@ -176,10 +176,12 @@ export class WorkerPool<TInput = unknown, TOutput = unknown> {
      */
     execute(input: TInput, config: JobConfig = {}): Promise<TOutput> {
         if (this.isTerminated) {
+            this.log('[ERROR] Attempted to execute job on terminated pool');
             return Promise.reject(new Error('WorkerPool has been terminated'));
         }
 
         if (this.jobQueue.length >= this.config.maxQueueSize) {
+            this.log(`[QUEUE FULL] Job rejected, queue at ${this.jobQueue.length}/${this.config.maxQueueSize}`);
             return Promise.reject(new Error('Job queue is full'));
         }
 
@@ -211,6 +213,13 @@ export class WorkerPool<TInput = unknown, TOutput = unknown> {
 
             // Insert job into queue based on priority
             this.insertJobByPriority(job);
+            this.log(`[JOB QUEUED] Job ${job.id} queued, queue length: ${this.jobQueue.length}`);
+
+            // Log queue warning at 80% capacity
+            if (this.jobQueue.length >= this.config.maxQueueSize * 0.8) {
+                this.log(`[QUEUE WARNING] Queue at ${Math.round(this.jobQueue.length / this.config.maxQueueSize * 100)}% capacity`);
+            }
+
             this.processQueue();
         });
     }
@@ -234,7 +243,7 @@ export class WorkerPool<TInput = unknown, TOutput = unknown> {
             ? executionTimes.reduce((a, b) => a + b, 0) / executionTimes.length
             : 0;
 
-        return {
+        const stats = {
             totalWorkers: this.workers.length,
             busyWorkers,
             idleWorkers: this.workers.length - busyWorkers,
@@ -243,6 +252,13 @@ export class WorkerPool<TInput = unknown, TOutput = unknown> {
             totalFailed: this.stats.totalFailed,
             averageExecutionTime: avgTime,
         };
+
+        // Log stats periodically for debugging
+        if (this.config.debug && this.stats.totalProcessed % 10 === 0 && this.stats.totalProcessed > 0) {
+            this.log('[STATS]', JSON.stringify(stats));
+        }
+
+        return stats;
     }
 
     /**
@@ -419,12 +435,21 @@ export class WorkerPool<TInput = unknown, TOutput = unknown> {
     }
 
     private handleWorkerError(state: WorkerState, error: ErrorEvent | Error): void {
-        this.log(`Worker ${state.id} error:`, error);
+        this.log(`[WORKER ERROR] Worker ${state.id} error:`, error);
+
+        // Calculate failure rate
+        const totalOps = this.stats.totalProcessed + this.stats.totalFailed;
+        const failureRate = totalOps > 0 ? (this.stats.totalFailed / totalOps) * 100 : 0;
 
         if (state.currentJob) {
             // Find and reject the current job
             // Note: In a real scenario, we might want to retry the job
             this.stats.totalFailed++;
+        }
+
+        // Log failure rate warning if > 10%
+        if (failureRate > 10) {
+            this.log(`[HIGH FAILURE RATE] ${failureRate.toFixed(1)}% of operations have failed`);
         }
 
         state.busy = false;

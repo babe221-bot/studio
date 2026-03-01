@@ -3,8 +3,36 @@
 // Handles: all edge profiles (flat, smuš, bullnose), robust corner stitching,
 //          okapnik groove as true bottom-face indentation, and UV generation.
 
+// Debug logging helper (only logs in development)
+const debug = (message: string, ...args: unknown[]) => {
+    // @ts-ignore - __DEBUG__ is injected by build
+    if (typeof __DEBUG__ !== 'undefined' && __DEBUG__) {
+        console.log(`[GeometryWorker] ${message}`, ...args);
+    }
+};
+
 self.onmessage = (e: MessageEvent) => {
     const { L, W, H, profile, processedEdges, okapnikEdges } = e.data;
+
+    // --- Input Validation & Logging ---
+    debug('Received job with dimensions:', { L, W, H, profile: profile?.name });
+
+    // Validate dimensions
+    const validationErrors: string[] = [];
+    if (L <= 0) validationErrors.push(`Invalid length: ${L}`);
+    if (W <= 0) validationErrors.push(`Invalid width: ${W}`);
+    if (H <= 0) validationErrors.push(`Invalid height: ${H}`);
+
+    if (validationErrors.length > 0) {
+        debug('Validation failed:', validationErrors);
+        // Continue processing but log the issues - worker will handle gracefully
+    }
+
+    // Check for extreme aspect ratios
+    const aspectRatio = Math.max(L, W) / Math.min(L || 1, W || 1);
+    if (aspectRatio > 4) {
+        debug('Warning: Extreme aspect ratio detected:', aspectRatio.toFixed(2));
+    }
 
     const vertices: number[] = [];
     const uvs: number[] = [];
@@ -280,6 +308,25 @@ self.onmessage = (e: MessageEvent) => {
     const positions = new Float32Array(vertices);
     const uvsArray = new Float32Array(uvs);
     const indexArray = new Uint32Array(indices);
+
+    // --- Output Validation & Logging ---
+    debug('Generated mesh:', {
+        vertexCount: vertices.length / 3,
+        indexCount: indices.length,
+        groupCount: groups.length,
+        hasValidData: vertices.length > 0 && indices.length > 0
+    });
+
+    // Validation checks
+    if (vertices.length === 0) {
+        debug('ERROR: No vertices generated');
+    }
+    if (indices.length === 0) {
+        debug('ERROR: No indices generated');
+    }
+    if (indices.length % 3 !== 0) {
+        debug('ERROR: Index count not divisible by 3 (incomplete triangles)');
+    }
 
     self.postMessage(
         { positions, uvs: uvsArray, indices: indexArray, groups },
