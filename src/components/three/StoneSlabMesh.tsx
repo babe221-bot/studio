@@ -132,6 +132,16 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
     const [geometryData, setGeometryData] = useState<GeometryJobOutput | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
 
+    // DEBUG: Log component state
+    useEffect(() => {
+        console.log('[StoneSlabMesh] Props received:', {
+            dims,
+            hasMaterial: !!material,
+            hasFinish: !!finish,
+            hasProfile: !!profile,
+        });
+    }, [dims, material, finish, profile]);
+
     // Track resources for cleanup
     const resourcesRef = useRef<{
         geometry: THREE.BufferGeometry | null;
@@ -157,8 +167,12 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
     // ============================================================================
 
     useEffect(() => {
-        if (!profile) return;
+        if (!profile) {
+            console.log('[StoneSlabMesh] Skipping geometry generation: no profile provided');
+            return;
+        }
 
+        console.log('[StoneSlabMesh] Starting geometry generation for profile:', profile.name);
         setIsGenerating(true);
         const jobId = `slab-${dims.length}-${dims.width}-${dims.height}-${profile.name}`;
 
@@ -173,11 +187,15 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
                     okapnikEdges,
                 }, jobId);
 
+                console.log('[StoneSlabMesh] Geometry generated successfully:', result ? 'has data' : 'no data', {
+                    positions: result?.positions?.length,
+                    indices: result?.indices?.length,
+                });
                 setGeometryData(result);
                 setIsGenerating(false);
                 onGeometryGenerated?.();
             } catch (error) {
-                console.error('Geometry generation failed:', error);
+                console.error('[StoneSlabMesh] Geometry generation failed:', error);
                 setIsGenerating(false);
             }
         };
@@ -380,6 +398,19 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
             }
         };
     }, [material, finish]);
+
+    // DEBUG: Log why mesh might not render
+    useEffect(() => {
+        if (!geometry) {
+            console.log('[StoneSlabMesh] Not rendering: geometry is null (geometryData:', geometryData, ')');
+        }
+        if (materials.length === 0) {
+            console.log('[StoneSlabMesh] Not rendering: materials array is empty (material:', material, ', finish:', finish, ')');
+        }
+        if (geometry && materials.length > 0) {
+            console.log('[StoneSlabMesh] Rendering mesh with geometry and', materials.length, 'materials');
+        }
+    }, [geometry, materials, geometryData, material, finish]);
 
     if (!geometry || materials.length === 0) {
         return null;

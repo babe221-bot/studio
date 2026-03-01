@@ -103,6 +103,21 @@ const Scene: React.FC<SceneProps> = ({
 }) => {
   const { scene, camera, gl } = useThree();
 
+  // DEBUG: Log props to diagnose blank screen
+  useEffect(() => {
+    console.log('[VisualizationCanvas] Scene props:', {
+      dims,
+      hasMaterial: !!material,
+      hasFinish: !!finish,
+      hasProfile: !!profile,
+      materialId: material?.id,
+      finishId: finish?.id,
+      profileId: profile?.id,
+      processedEdges,
+      okapnikEdges,
+    });
+  }, [dims, material, finish, profile, processedEdges, okapnikEdges]);
+
   useEffect(() => {
     onSceneReady(scene, camera, gl);
   }, [scene, camera, gl, onSceneReady]);
