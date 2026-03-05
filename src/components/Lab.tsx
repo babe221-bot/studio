@@ -491,7 +491,9 @@ export function Lab() {
     profile: selectedProfile,
     processedEdges: processedEdges,
     okapnikEdges: okapnikEdges,
-  }), [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnikEdges]));
+    grainOffset: grainOffset,
+    grainRotation: grainRotation,
+  }), [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnikEdges, grainOffset, grainRotation]));
 
   useEffect(() => {
     if (calculations.totalCost > 0) {
@@ -656,6 +658,10 @@ export function Lab() {
             profiles={profiles} selectedProfileId={selectedProfileId} setSelectedProfileId={setSelectedProfileId}
             edgeNames={edgeNames} processedEdges={processedEdges} updateProcessedEdge={updateProcessedEdge}
             okapnikEdges={okapnikEdges} updateOkapnikEdge={updateOkapnikEdge}
+          />
+          <GrainAlignmentConfig 
+            grainOffset={grainOffset} setGrainOffset={setGrainOffset} 
+            grainRotation={grainRotation} setGrainRotation={setGrainRotation} 
           />
           <CalculationSummary calculations={calculations} />
           
