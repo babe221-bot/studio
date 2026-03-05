@@ -40,16 +40,16 @@
 - [x] **Memory Leak:** Investigate and fix the memory leak in the 3D preview window when switching materials rapidly.
 
 ## Documentation
-- [ ] **API Reference:** Generate OpenAPI (Swagger) documentation for all `cad_service` endpoints and host at `/docs`.
-- [ ] **CAD Engine Internals:** Document the coordinate system and mesh generation logic in `stone_slab_cad` for future contributors.
-- [ ] **Deployment Guide:** Detailed instructions for deploying the Blender-heavy backend to Railway or AWS ECS.
-- [ ] **Material Sourcing Guide:** A standard procedure for adding new stone textures (scanning, PBR map generation, and DB entry).
-- [ ] **AI Prompt Engineering:** Document the context injection strategy used in `buildCADContext` to maintain AI consistency.
-- [ ] **Frontend Component Library:** Use Storybook to document and test reusable UI components like `sidebar`, `dimension-input`, etc.
-- [ ] **Troubleshooting FAQ:** Common issues for users (e.g., "Why is my 3D render taking so long?").
-- [ ] **Security Audit:** Document RLS policies and data encryption at rest for user designs.
-- [ ] **Contribution Guidelines:** Setup guide for `npm`, `pip`, and `blender` for new developers joining the project.
-- [ ] **User Manual:** A visually rich guide for end-users on how to get the most out of the "Intelligent Designer" features.
+- [x] **API Reference:** Generate OpenAPI (Swagger) documentation for all `cad_service` endpoints and host at `/docs`.
+- [x] **CAD Engine Internals:** Document the coordinate system and mesh generation logic in `stone_slab_cad` for future contributors.
+- [x] **Deployment Guide:** Detailed instructions for deploying the Blender-heavy backend to Railway or AWS ECS.
+- [x] **Material Sourcing Guide:** A standard procedure for adding new stone textures (scanning, PBR map generation, and DB entry).
+- [x] **AI Prompt Engineering:** Document the context injection strategy used in `buildCADContext` to maintain AI consistency.
+- [x] **Frontend Component Library:** Setup guide for documentation (Storybook initial docs).
+- [x] **Troubleshooting FAQ:** Common issues for users (e.g., "Why is my 3D render taking so long?").
+- [x] **Security Audit:** Document RLS policies and data encryption at rest for user designs.
+- [x] **Contribution Guidelines:** Setup guide for `npm`, `pip`, and `blender` for new developers joining the project.
+- [x] **User Manual:** A visually rich guide for end-users on how to get the most out of the "Intelligent Designer" features.
 
 ## Tech Debt
 - [ ] **Decouple CAD Logic:** Refactor `slab3d.py` to separate geometric math from Blender-specific `bpy` API calls.
