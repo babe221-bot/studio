@@ -23,6 +23,8 @@ export function useElementConfiguration(
         processedEdges,
         okapnikEdges,
         bunjaEdgeStyle,
+        grainOffset,
+        grainRotation,
         setSelectedElement,
         setDimensions,
         setQuantity,
@@ -32,7 +34,9 @@ export function useElementConfiguration(
         setProfileId,
         setProcessedEdge,
         setOkapnikEdge,
-        setBunjaEdgeStyle
+        setBunjaEdgeStyle,
+        setGrainOffset,
+        setGrainRotation
     } = useLabStore();
 
     // Initialize defaults when data becomes available
@@ -61,7 +65,6 @@ export function useElementConfiguration(
         }
     }, [setSelectedElement]);
 
-    // Wrappers to match old signature where setters just took the value
     const setLength = useCallback((l: number | ((prev: number) => number)) => {
         const val = typeof l === 'function' ? l(length) : l;
         setDimensions({ length: val });
@@ -99,19 +102,6 @@ export function useElementConfiguration(
         updateProcessedEdge: setProcessedEdge,
         okapnikEdges,
         updateOkapnikEdge: setOkapnikEdge,
-        bunjaEdgeStyle,
-        setBunjaEdgeStyle,
-        grainOffset,
-        setGrainOffset,
-        grainRotation,
-        setGrainRotation,
-        handleElementTypeChange
-    } = useLabStore();
-
-    // ...
-
-    return {
-        // ...
         bunjaEdgeStyle,
         setBunjaEdgeStyle,
         grainOffset,
