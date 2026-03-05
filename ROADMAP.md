@@ -3,11 +3,11 @@
 ## High Priority
 - [x] **Asynchronous CAD Workers:** Move Blender/DXF rendering to a Redis-backed Celery/RQ queue to prevent blocking FastAPI request threads.
 - [ ] **Stripe Payments:** Implement a "Secure Deposit" flow using Stripe Elements to allow users to reserve slabs directly from the configurator.
-- [ ] **Supabase Auth Bridge:** Complete the transition from anonymous guest cookies to full Supabase Auth sessions for project persistence.
-- [ ] **Database Schema Expansion:** Add `orders`, `invoices`, and `user_profiles` tables to Supabase with proper RLS policies.
-- [ ] **Inventory API:** Connect `MaterialDB` to a real-time inventory system (mock or external API) to show "In Stock" labels on materials.
+- [x] **Supabase Auth Bridge:** Complete the transition from anonymous guest cookies to full Supabase Auth sessions for project persistence.
+- [x] **Database Schema Expansion:** Add `orders`, `invoices`, and `user_profiles` tables to Supabase with proper RLS policies.
+- [x] **Inventory API:** Connect `MaterialDB` to a real-time inventory system (mock or external API) to show "In Stock" labels on materials.
 - [x] **Production-Ready Docker:** Optimize `backend/Dockerfile` using multi-stage builds to reduce image size from ~2GB (Blender included) to <800MB.
-- [ ] **Global State Management:** Migration of component-local state in `Lab.tsx` to a robust Zustand or Redux store for better deep-linking support.
+- [x] **Global State Management:** Migration of component-local state in `Lab.tsx` to a robust Zustand or Redux store for better deep-linking support.
 - [ ] **Real-time Price Engine:** Move price calculation logic from frontend `useOrderCalculations` to the backend to ensure data integrity for payments.
 - [ ] **Sentry Integration:** Set up full-stack error tracking for both Next.js and FastAPI to capture production failures.
 - [ ] **PostHog Analytics:** Implement event tracking for the configuration funnel (Selection -> Dimensioning -> Render -> Checkout).
