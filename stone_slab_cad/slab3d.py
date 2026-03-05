@@ -109,13 +109,21 @@ def apply_edge_profiles(bm: bmesh.types.BMesh, profile: Dict[Any, Any],
                     edges_to_bevel.append(edge)
     
     if edges_to_bevel:
-        bmesh.ops.bevel(
-            bm,
-            geom=edges_to_bevel,
-            offset=profile_settings['radius'] / 1000,  # Convert mm to meters
-            segments=profile_settings['segments'],
-            profile=profile_settings['profile_factor']
-        )
+        # Z-fighting Fix: Add slight random noise or merge vertices before bevel
+        # to ensure no overlapping geometry with adjacent faces
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.0001)
+        
+        try:
+            bmesh.ops.bevel(
+                bm,
+                geom=edges_to_bevel,
+                offset=profile_settings['radius'] / 1000,  # Convert mm to meters
+                segments=profile_settings['segments'],
+                profile=profile_settings['profile_factor'],
+                clamp_overlap=True # Prevent geometry self-intersection
+            )
+        except Exception as e:
+            print(f"Bevel failed (potential Z-fighting geometry): {e}")
 
 def create_okapnik_grooves(bm: bmesh.types.BMesh, okapnik_edges: Dict[str, bool],
                           length: float, width: float, height: float) -> None:
