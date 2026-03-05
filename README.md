@@ -94,6 +94,14 @@ The chat API includes built-in rate limiting:
 
 ## Development Notes
 
+- All AI flows use `gpt-4o` as the default model
 - The application has been migrated from Google Cloud/Firebase to Supabase
 - Genkit/Gemini has been replaced with Vercel AI SDK/OpenAI
-- All AI flows use `gpt-4o` as the default model
+
+## AI Agent Context
+If you are an AI coding assistant working on this project, please consult the documentation in `docs/ai_context/` to understand the architecture, patterns, and conventions:
+- [AI Overview](docs/ai_context/AI_OVERVIEW.md)
+- [Architecture Map](docs/ai_context/AI_ARCHITECTURE_MAP.md)
+- [Frontend Guide](docs/ai_context/AI_FRONTEND_GUIDE.md)
+- [Backend Guide](docs/ai_context/AI_BACKEND_GUIDE.md)
+- [Workflow Commands](docs/ai_context/AI_WORKFLOW_COMMANDS.md)

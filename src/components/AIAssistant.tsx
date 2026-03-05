@@ -1,6 +1,6 @@
 'use client';
 
-import { useChat } from '@ai-sdk/react';
+import { useChat, type UIMessage as Message } from '@ai-sdk/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function AIAssistant() {
-    const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat();
+    const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat() as any;
     const [isOpen, setIsOpen] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -79,7 +79,7 @@ export function AIAssistant() {
                         </div>
                     ) : (
                         <div className="space-y-4 flex flex-col pb-2">
-                            {messages.map((m) => (
+                            {messages.map((m: Message) => (
                                 <div
                                     key={m.id}
                                     className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -90,7 +90,7 @@ export function AIAssistant() {
                                             : 'bg-card border text-card-foreground rounded-bl-sm'
                                             }`}
                                     >
-                                        {m.parts?.map((part, i) => {
+                                        {(m as any).parts?.map((part: any, i: number) => {
                                             if (part.type === 'text') {
                                                 return <span key={i}>{part.text}</span>;
                                             }
