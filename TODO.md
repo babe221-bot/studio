@@ -11,8 +11,8 @@
 - [x] **Blender Containerization (Production CAD):**
     - [x] Update `backend/Dockerfile` to install `blender` system packages to support headless execution of `stone_slab_cad` rendering via the API.
     - [x] Remove legacy `weasyprint` and `reportlab` system dependencies from the Dockerfile as PDF generation has moved to the frontend/browser.
-- [ ] **Supabase Auth Polish:**
-    - [ ] Review `Header.tsx` and guest session logic (`GUEST_COOKIE_NAME`) to seamlessly bridge anonymous configurator users with authenticated Supabase sessions when saving projects.
+- [x] **Supabase Auth Polish:**
+    - [x] Review `Header.tsx` and guest session logic (`GUEST_COOKIE_NAME`) to seamlessly bridge anonymous configurator users with authenticated Supabase sessions when saving projects.
 - [ ] **PDF Generation Optimization:**
     - [ ] Review the browser-side `generateEnhancedPdf` flow to ensure large base64 strings don't crash mobile browsers, or finalize moving it to an edge function.
 
