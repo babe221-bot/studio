@@ -54,7 +54,7 @@ app = FastAPI(
 # Configure CORS
 # In production, set ALLOWED_ORIGINS to specific domains (e.g., "https://stone-studio.vercel.app")
 # For local development, it defaults to localhost:3000
-allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001")
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://localhost:3333")
 ALLOWED_ORIGINS = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
 
 # Security: Ensure we don't accidentally leave it open if no origins are specified
