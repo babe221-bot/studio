@@ -292,16 +292,32 @@ export async function generateEnhancedPdf(
             doc.text(`${i + 1}. ${item.id} - ${item.material.name}`, margin + 2, cursorY + 2);
             cursorY += 12;
 
+            // --- 3D Visualization ---
+            // Optimization: If on mobile or image is too large, use a placeholder or reduced quality
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             const previewHeight = 45;
+            
             if (images3D[i]) {
-                try { doc.addImage(images3D[i]!, 'PNG', margin, cursorY, 60, previewHeight); } catch (e) {}
+                try { 
+                    // Only add 3D image if it's a valid data URI
+                    if (images3D[i]!.length > 100) {
+                        doc.addImage(images3D[i]!, 'PNG', margin, cursorY, 60, previewHeight, undefined, isMobile ? 'FAST' : 'MEDIUM'); 
+                    }
+                } catch (e) { console.error("3D Image add failed", e); }
             }
+            
+            // --- 2D Technical Drawings ---
+            // Generate these one by one to avoid OOM
             try {
                 const topView = await generateTechnicalDrawing2D(item, edgeNames, 'top');
-                doc.addImage(topView, 'PNG', margin + 65, cursorY, 60, previewHeight);
-                const sideView = await generateTechnicalDrawing2D(item, edgeNames, 'side');
-                doc.addImage(sideView, 'PNG', margin + 130, cursorY, 60, previewHeight);
-            } catch (e) {}
+                doc.addImage(topView, 'PNG', margin + 65, cursorY, 60, previewHeight, undefined, 'FAST');
+                
+                // Optional side view on mobile to save memory
+                if (!isMobile || (isMobile && i === 0)) {
+                    const sideView = await generateTechnicalDrawing2D(item, edgeNames, 'side');
+                    doc.addImage(sideView, 'PNG', margin + 130, cursorY, 60, previewHeight, undefined, 'FAST');
+                }
+            } catch (e) { console.error("2D Drawing failed", e); }
 
             cursorY += previewHeight + 8;
             const costs = calculateItemCosts(item);
