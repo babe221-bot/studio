@@ -311,7 +311,37 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
         const mats = [mainMat, sideMat, profileMat];
         resourcesRef.current.materialKeys = [mainMatKey, sideMatKey, profileMatKey];
 
-        // Load texture if available
+        // Load advanced PBR maps if available
+        const pbrMaps = (material as any).pbr_maps;
+        if (pbrMaps) {
+            const mapEntries = [
+                { type: 'roughnessMap', url: pbrMaps.roughness, colorSpace: THREE.NoColorSpace },
+                { type: 'normalMap', url: pbrMaps.normal, colorSpace: THREE.NoColorSpace },
+                { type: 'metalnessMap', url: pbrMaps.metallic, colorSpace: THREE.NoColorSpace },
+                { type: 'aoMap', url: pbrMaps.ao, colorSpace: THREE.NoColorSpace }
+            ];
+
+            mapEntries.forEach(entry => {
+                if (entry.url) {
+                    resourceManager.loadTexture(entry.url, {
+                        colorSpace: entry.colorSpace,
+                        wrapS: THREE.RepeatWrapping,
+                        wrapT: THREE.RepeatWrapping,
+                    }).then(tex => {
+                        const tileSizeM = 0.30;
+                        tex.repeat.set(vizDims.L / tileSizeM, vizDims.W / tileSizeM);
+                        tex.needsUpdate = true;
+                        
+                        mats.forEach(m => {
+                            (m as any)[entry.type] = tex;
+                            m.needsUpdate = true;
+                        });
+                    });
+                }
+            });
+        }
+
+        // Load base texture if available
         if (material.texture) {
             const texKey = material.texture;
             resourcesRef.current.textureKey = texKey;

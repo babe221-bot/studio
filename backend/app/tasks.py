@@ -4,36 +4,58 @@ import base64
 import tempfile
 import shutil
 import httpx
+import asyncio
 from pathlib import Path
 from app.worker import celery_app
 
 async def download_file(url: str, dest: Path):
     async with httpx.AsyncClient() as client:
-        resp = await client.get(url)
-        if resp.status_code == 200:
-            dest.write_bytes(resp.content)
-            return True
+        try:
+            resp = await client.get(url, timeout=30.0)
+            if resp.status_code == 200:
+                dest.write_bytes(resp.content)
+                return True
+        except Exception as e:
+            print(f"Failed to download {url}: {e}")
     return False
 
 @celery_app.task(bind=True)
 def render_3d_task(self, config: dict, format: str = "png"):
     """
     Celery task to invoke Blender headlessly.
+    format: "png" (multiple views) or "glb" (AR model)
     """
-    import asyncio # For running async download in sync worker
-    
     dims = config.get("dims", {})
     mat = config.get("material", {})
-    # ... rest of task logic
-
     finish = config.get("finish", {})
     profile = config.get("profile", {})
     edges = config.get("processedEdges", {})
     okapniks = config.get("okapnikEdges", {})
 
     tmp_dir = tempfile.mkdtemp(prefix="studio_render_")
+    tmp_path = Path(tmp_dir)
     
     try:
+        # PBR Maps handling
+        roughness_path = None
+        normal_path = None
+        metallic_path = None
+        
+        if mat.get("roughness_map"):
+            p = tmp_path / "roughness.jpg"
+            if asyncio.run(download_file(mat["roughness_map"], p)):
+                roughness_path = str(p)
+        
+        if mat.get("normal_map"):
+            p = tmp_path / "normal.jpg"
+            if asyncio.run(download_file(mat["normal_map"], p)):
+                normal_path = str(p)
+                
+        if mat.get("metallic_map"):
+            p = tmp_path / "metallic.jpg"
+            if asyncio.run(download_file(mat["metallic_map"], p)):
+                metallic_path = str(p)
+
         # Construct Blender CLI command
         root_dir = Path(__file__).resolve().parents[2]
         script_path = root_dir / "stone_slab_cad" / "utils" / "mcp_visualization.py"
@@ -57,6 +79,13 @@ def render_3d_task(self, config: dict, format: str = "png"):
 
         if format == "glb":
             cmd.append("--export_glb")
+            
+        if roughness_path:
+            cmd.extend(["--roughness_map", roughness_path])
+        if normal_path:
+            cmd.extend(["--normal_map", normal_path])
+        if metallic_path:
+            cmd.extend(["--metallic_map", metallic_path])
 
         # Add edges
         if edges.get("front"): cmd.append("--edge_front")

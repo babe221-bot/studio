@@ -133,6 +133,12 @@ async def get_materials(db: Optional[AsyncSession] = None) -> List[Dict[str, Any
                 "inventory": {
                     "count": getattr(m, "inventory_count", 0),
                     "low_stock": getattr(m, "inventory_count", 0) <= getattr(m, "low_stock_threshold", 5)
+                },
+                "pbr_maps": {
+                    "roughness": getattr(m, "roughness_map", None),
+                    "normal": getattr(m, "normal_map", None),
+                    "metallic": getattr(m, "metallic_map", None),
+                    "ao": getattr(m, "ambient_occlusion_map", None)
                 }
             }
             for m in materials
