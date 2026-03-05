@@ -48,6 +48,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 import { useOrderCalculations } from '@/hooks/useOrderCalculations';
 import { useElementConfiguration } from '@/hooks/useElementConfiguration';
 import { useProjectHistory } from '@/hooks/useProjectHistory';
+import { useDesignAnalysis } from '@/hooks/useDesignAnalysis';
 import { VersionHistoryDialog } from './history/VersionHistoryDialog';
 import { TemplateManager } from './history/TemplateManager';
 
@@ -417,6 +418,17 @@ export function Lab() {
     processedEdges, okapnikEdges,
     selectedElement, quantity, bunjaEdgeStyle
   });
+
+  const { warnings, isAnalyzing: isAnalyzingDesign } = useDesignAnalysis(
+    length, width, height, selectedMaterial, selectedElement
+  );
+
+  // Inject warnings into AI Context
+  useEffect(() => {
+    if (warnings.length > 0) {
+      // We could also add these to setCadData if we want them in AI prompts
+    }
+  }, [warnings]);
 
   const deferredVisualizationState = useDeferredValue(useMemo(() => ({
     dims: { length, width, height },
