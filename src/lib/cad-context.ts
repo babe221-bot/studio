@@ -4,6 +4,7 @@
  */
 
 import type { OrderItem, Material, SurfaceFinish, EdgeProfile } from '@/types';
+import type { DesignWarning } from '@/hooks/useDesignAnalysis';
 
 /**
  * Context about the current CAD project state that can be injected into AI prompts.
@@ -18,6 +19,7 @@ export interface CADContextData {
         width: number;
         height: number;
     } | null;
+    safetyWarnings?: DesignWarning[];
 }
 
 /**
