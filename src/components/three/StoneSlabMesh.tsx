@@ -124,6 +124,8 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
     profile,
     processedEdges,
     okapnikEdges,
+    grainOffset = { x: 0, y: 0 },
+    grainRotation = 0,
     onGeometryGenerated,
 }) => {
     const meshRef = useRef<THREE.Mesh>(null);
@@ -332,6 +334,8 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
                     }).then(tex => {
                         const tileSizeM = 0.30;
                         tex.repeat.set(vizDims.L / tileSizeM, vizDims.W / tileSizeM);
+                        tex.offset.set(grainOffset.x, grainOffset.y);
+                        tex.rotation = (grainRotation * Math.PI) / 180;
                         tex.needsUpdate = true;
                         
                         mats.forEach(m => {
@@ -356,6 +360,8 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
                 // Physical scale: one tile every 30cm
                 const tileSizeM = 0.30;
                 tex.repeat.set(vizDims.L / tileSizeM, vizDims.W / tileSizeM);
+                tex.offset.set(grainOffset.x, grainOffset.y);
+                tex.rotation = (grainRotation * Math.PI) / 180;
                 tex.needsUpdate = true;
 
                 if (mainMat.map !== tex) {
@@ -366,7 +372,7 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
         }
 
         return mats;
-    }, [material, finish, vizDims.L, vizDims.W]);
+    }, [material, finish, vizDims.L, vizDims.W, grainOffset, grainRotation]);
 
     // ============================================================================
     // Geometry Construction
