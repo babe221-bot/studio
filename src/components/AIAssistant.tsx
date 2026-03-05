@@ -18,9 +18,6 @@ export function AIAssistant() {
     const cadContextString = useMemo(() => buildCADContext(cadData), [cadData]);
 
     const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
-        body: {
-            cadContext: cadContextString
-        },
         onError: (err) => {
             toast({
                 title: 'Greška',
@@ -29,6 +26,18 @@ export function AIAssistant() {
             });
         }
     }) as any;
+
+    const handleSubmitWithContext = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!input.trim()) return;
+        
+        const messageWithContext = cadContextString 
+            ? `[Kontekst projekta:\n${cadContextString}]\n\nPitanje korisnika: ${input}`
+            : input;
+            
+        handleSubmit(e as any, { prompt: messageWithContext });
+    };
+
     const [isOpen, setIsOpen] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -132,7 +141,7 @@ export function AIAssistant() {
                 </ScrollArea>
 
                 <div className="p-3 border-t bg-card">
-                    <form onSubmit={handleSubmit} className="flex gap-2">
+                    <form onSubmit={handleSubmitWithContext} className="flex gap-2">
                         <Input
                             value={input}
                             onChange={handleInputChange}
