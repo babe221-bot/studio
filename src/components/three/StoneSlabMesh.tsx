@@ -23,6 +23,8 @@ interface StoneSlabMeshProps {
     profile?: EdgeProfile;
     processedEdges: ProcessedEdges;
     okapnikEdges: ProcessedEdges;
+    grainOffset?: { x: number; y: number };
+    grainRotation?: number;
     onGeometryGenerated?: () => void;
 }
 
