@@ -58,9 +58,43 @@ interface PdfGenerationOptions {
     companyAddress?: string;
     companyPhone?: string;
     companyEmail?: string;
+    companyIban?: string;
     orderNumber?: string;
     customerName?: string;
     notes?: string;
+    isQuotation?: boolean;
+}
+
+// Itemized cost calculation for PDF
+function calculateItemCosts(item: OrderItem) {
+    const length_m = item.dims.length / 100;
+    const width_m = item.dims.width / 100;
+    const surfaceArea_m2 = length_m * width_m;
+    const OKAPNIK_COST_PER_M = 5;
+
+    const materialCost = item.orderUnit === 'sqm' 
+        ? item.material.cost_sqm * item.quantity 
+        : surfaceArea_m2 * item.material.cost_sqm * item.quantity;
+
+    const finishCost = item.orderUnit === 'sqm'
+        ? item.finish.cost_sqm * item.quantity
+        : surfaceArea_m2 * item.finish.cost_sqm * item.quantity;
+
+    let processed_perimeter_m = 0;
+    if (item.processedEdges.front) processed_perimeter_m += length_m;
+    if (item.processedEdges.back) processed_perimeter_m += length_m;
+    if (item.processedEdges.left) processed_perimeter_m += width_m;
+    if (item.processedEdges.right) processed_perimeter_m += width_m;
+    const edgeCost = processed_perimeter_m * item.profile.cost_m * item.quantity;
+
+    let okapnik_perimeter_m = 0;
+    if (item.okapnikEdges.front) okapnik_perimeter_m += length_m;
+    if (item.okapnikEdges.back) okapnik_perimeter_m += length_m;
+    if (item.okapnikEdges.left) okapnik_perimeter_m += width_m;
+    if (item.okapnikEdges.right) okapnik_perimeter_m += width_m;
+    const okapnikCost = okapnik_perimeter_m * OKAPNIK_COST_PER_M * item.quantity;
+
+    return { materialCost, finishCost, edgeCost, okapnikCost };
 }
 
 // Helper to get edge names in Croatian
@@ -86,7 +120,6 @@ async function generateTechnicalDrawing2D(
     let svg = '';
 
     if (view === 'top') {
-        // Top view (plan view)
         const w = length * scale;
         const h = width * scale;
         const cx = 100;
@@ -99,44 +132,30 @@ async function generateTechnicalDrawing2D(
             <line x1="0" y1="0" x2="0" y2="4" stroke="#666" stroke-width="0.5"/>
           </pattern>
         </defs>
-        <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" 
-              fill="none" stroke="black" stroke-width="2"/>
-        <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" 
-              fill="url(#hatch)" opacity="0.3"/>
-        
-        <!-- Dimension lines -->
+        <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" fill="none" stroke="black" stroke-width="2"/>
+        <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" fill="url(#hatch)" opacity="0.3"/>
         <line x1="${cx - w / 2}" y1="${cy - h / 2 - 15}" x2="${cx + w / 2}" y2="${cy - h / 2 - 15}" stroke="black" stroke-width="0.5"/>
         <line x1="${cx - w / 2}" y1="${cy - h / 2 - 10}" x2="${cx - w / 2}" y2="${cy - h / 2 - 20}" stroke="black" stroke-width="0.5"/>
         <line x1="${cx + w / 2}" y1="${cy - h / 2 - 10}" x2="${cx + w / 2}" y2="${cy - h / 2 - 20}" stroke="black" stroke-width="0.5"/>
         <text x="${cx}" y="${cy - h / 2 - 20}" text-anchor="middle" font-size="8" font-family="Arial">${length} cm</text>
-        
         <line x1="${cx - w / 2 - 15}" y1="${cy - h / 2}" x2="${cx - w / 2 - 15}" y2="${cy + h / 2}" stroke="black" stroke-width="0.5"/>
         <line x1="${cx - w / 2 - 10}" y1="${cy - h / 2}" x2="${cx - w / 2 - 20}" y2="${cy - h / 2}" stroke="black" stroke-width="0.5"/>
         <line x1="${cx - w / 2 - 10}" y1="${cy + h / 2}" x2="${cx - w / 2 - 20}" y2="${cy + h / 2}" stroke="black" stroke-width="0.5"/>
         <text x="${cx - w / 2 - 25}" y="${cy}" text-anchor="middle" font-size="8" font-family="Arial" transform="rotate(-90 ${cx - w / 2 - 25} ${cy})">${width} cm</text>
-        
-        <!-- Edge processing indicators -->
         ${item.processedEdges.front ? `<line x1="${cx - w / 2}" y1="${cy - h / 2}" x2="${cx + w / 2}" y2="${cy - h / 2}" stroke="#2196F3" stroke-width="3"/>` : ''}
         ${item.processedEdges.back ? `<line x1="${cx - w / 2}" y1="${cy + h / 2}" x2="${cx + w / 2}" y2="${cy + h / 2}" stroke="#2196F3" stroke-width="3"/>` : ''}
         ${item.processedEdges.left ? `<line x1="${cx - w / 2}" y1="${cy - h / 2}" x2="${cx - w / 2}" y2="${cy + h / 2}" stroke="#2196F3" stroke-width="3"/>` : ''}
         ${item.processedEdges.right ? `<line x1="${cx + w / 2}" y1="${cy - h / 2}" x2="${cx + w / 2}" y2="${cy + h / 2}" stroke="#2196F3" stroke-width="3"/>` : ''}
-        
-        <!-- Okapnik indicators -->
         ${item.okapnikEdges.front ? `<rect x="${cx - w / 2 + 5}" y="${cy - h / 2 + 2}" width="${w - 10}" height="4" fill="#FF9800"/>` : ''}
         ${item.okapnikEdges.back ? `<rect x="${cx - w / 2 + 5}" y="${cy + h / 2 - 6}" width="${w - 10}" height="4" fill="#FF9800"/>` : ''}
-        
-        <!-- Labels -->
         <text x="${cx}" y="${cy}" text-anchor="middle" font-size="10" font-family="Arial" font-weight="bold">${item.material.name}</text>
         <text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="8" font-family="Arial">Pogled odozgo</text>
-      </svg>
-    `;
-    } else if (view === 'side') {
-        // Side view (section)
-        const w = width * scale;
+      </svg>`;
+    } else {
+        const w = (view === 'side' ? width : length) * scale;
         const h = height * scale * 2;
         const cx = 100;
         const cy = 75;
-
         svg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150">
         <defs>
@@ -144,39 +163,16 @@ async function generateTechnicalDrawing2D(
             <line x1="0" y1="0" x2="0" y2="3" stroke="#888" stroke-width="0.5"/>
           </pattern>
         </defs>
-        <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" 
-              fill="url(#hatch2)" stroke="black" stroke-width="2"/>
+        <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" fill="url(#hatch2)" stroke="black" stroke-width="2"/>
         <line x1="${cx + w / 2 + 10}" y1="${cy - h / 2}" x2="${cx + w / 2 + 10}" y2="${cy + h / 2}" stroke="black" stroke-width="0.5"/>
         <text x="${cx + w / 2 + 20}" y="${cy}" text-anchor="middle" font-size="8" font-family="Arial" transform="rotate(-90 ${cx + w / 2 + 20} ${cy})">${height} cm</text>
-        <text x="${cx}" y="${cy + h / 2 + 15}" text-anchor="middle" font-size="8" font-family="Arial">Bočni pogled</text>
-      </svg>
-    `;
-    } else {
-        // Front view
-        const w = length * scale;
-        const h = height * scale * 2;
-        const cx = 100;
-        const cy = 75;
-
-        svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150">
-        <defs>
-          <pattern id="hatch3" patternUnits="userSpaceOnUse" width="3" height="3" patternTransform="rotate(45)">
-            <line x1="0" y1="0" x2="0" y2="3" stroke="#888" stroke-width="0.5"/>
-          </pattern>
-        </defs>
-        <rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" 
-              fill="url(#hatch3)" stroke="black" stroke-width="2"/>
-        <text x="${cx}" y="${cy + h / 2 + 15}" text-anchor="middle" font-size="8" font-family="Arial">Prednji pogled</text>
-      </svg>
-    `;
+        <text x="${cx}" y="${cy + h / 2 + 15}" text-anchor="middle" font-size="8" font-family="Arial">${view === 'side' ? 'Bočni' : 'Prednji'} pogled</text>
+      </svg>`;
     }
-
     const svgDataUri = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
     return await svgToPng(svgDataUri, 200, 150);
 }
 
-// Generate edge profile diagram
 async function generateProfileDiagram(profile: EdgeProfile, edgeName: string): Promise<string> {
     const profileName = profile.name.toLowerCase();
     const smusMatch = profileName.match(/smuš c([\d.]+)/);
@@ -187,13 +183,11 @@ async function generateProfileDiagram(profile: EdgeProfile, edgeName: string): P
     let label = '';
 
     if (smusMatch) {
-        const size = smusMatch[1];
         path = 'M40,20 L40,100 L60,120 L60,20 Z';
-        label = `Smuš C${size}`;
+        label = `Smuš C${smusMatch[1]}`;
     } else if (poluRMatch) {
-        const r = poluRMatch[1];
         path = 'M40,20 L40,100 Q40,120 60,120 L60,20 Z';
-        label = `Polu-zaobljena R${r}`;
+        label = `Polu-zaobljena R${poluRMatch[1]}`;
     } else if (punoRMatch) {
         path = 'M40,20 Q40,120 50,120 Q60,120 60,20 Z';
         label = 'Puno zaobljena';
@@ -208,14 +202,11 @@ async function generateProfileDiagram(profile: EdgeProfile, edgeName: string): P
       <path d="${path}" fill="none" stroke="black" stroke-width="2"/>
       <text x="50" y="135" text-anchor="middle" font-size="8" font-family="Arial">${label}</text>
       <text x="50" y="8" text-anchor="middle" font-size="7" font-family="Arial" fill="#666">${edgeName}</text>
-    </svg>
-  `;
-
+    </svg>`;
     const svgDataUri = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
-    return await svgToPng(svgDataUri, 200, 150);
+    return await svgToPng(svgDataUri, 100, 140);
 }
 
-// Main PDF generation function
 export async function generateEnhancedPdf(
     orderItems: OrderItem[],
     edgeNames: EdgeNameMap,
@@ -231,300 +222,151 @@ export async function generateEnhancedPdf(
 
         const {
             companyName = 'Kamena Galanterija',
-            companyAddress = '',
-            companyPhone = '',
-            companyEmail = '',
+            companyAddress = 'Industrijska zona 1, 21000 Split',
+            companyPhone = '+385 21 000 000',
+            companyEmail = 'info@kamen-studio.hr',
+            companyIban = 'HR12 2340 0091 1100 2233 4',
             orderNumber = `RN-${new Date().toISOString().split('T')[0].replace(/-/g, '')}`,
             customerName = '',
-            notes = ''
+            notes = '',
+            isQuotation = true
         } = options;
 
-        // --- Header Section ---
         doc.setFillColor(44, 62, 80);
         doc.rect(0, 0, pageWidth, 40, 'F');
-
         doc.setTextColor(255, 255, 255);
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(24);
-        doc.text('RADNI NALOG', margin, 25);
-
+        doc.text(isQuotation ? 'PONUDA / QUOTATION' : 'RADNI NALOG', margin, 25);
         doc.setFontSize(10);
         doc.setFont('Helvetica', 'normal');
         doc.text(`Broj: ${orderNumber}`, pageWidth - margin - 50, 20);
         doc.text(`Datum: ${new Date().toLocaleDateString('hr-HR')}`, pageWidth - margin - 50, 27);
 
         cursorY = 50;
-
-        // --- Company Info ---
         doc.setTextColor(44, 62, 80);
-        doc.setFontSize(10);
+        doc.setFontSize(12);
         doc.setFont('Helvetica', 'bold');
         doc.text(companyName, margin, cursorY);
+        doc.setFontSize(9);
         doc.setFont('Helvetica', 'normal');
+        cursorY += 6;
+        doc.text(companyAddress, margin, cursorY);
         cursorY += 5;
-        if (companyAddress) {
-            doc.text(companyAddress, margin, cursorY);
-            cursorY += 5;
-        }
-        if (companyPhone) {
-            doc.text(`Tel: ${companyPhone}`, margin, cursorY);
-            cursorY += 5;
-        }
-        if (companyEmail) {
-            doc.text(`Email: ${companyEmail}`, margin, cursorY);
-            cursorY += 5;
-        }
+        doc.text(`Tel: ${companyPhone} | Email: ${companyEmail}`, margin, cursorY);
+        cursorY += 5;
+        doc.text(`IBAN: ${companyIban}`, margin, cursorY);
+        doc.setDrawColor(44, 62, 80);
+        doc.setLineWidth(0.5);
+        doc.line(margin, cursorY + 4, pageWidth - margin, cursorY + 4);
+        cursorY += 15;
 
         if (customerName) {
-            cursorY += 5;
             doc.setFont('Helvetica', 'bold');
-            doc.text(`Kupac: ${customerName}`, margin, cursorY);
-            cursorY += 10;
-        } else {
+            doc.setFontSize(11);
+            doc.text(`PRIMA:`, margin, cursorY);
+            doc.setFont('Helvetica', 'normal');
+            doc.text(customerName, margin + 20, cursorY);
             cursorY += 10;
         }
 
-        // --- Items ---
         let totalCost = 0;
+        let totalWeight = 0;
 
         for (let i = 0; i < orderItems.length; i++) {
-            // Yield to main thread every 2 items to keep UI responsive
-            if (i > 0 && i % 2 === 0) {
-                await yieldToMain();
-            }
-
+            if (i > 0 && i % 2 === 0) await yieldToMain();
             const item = orderItems[i];
             totalCost += item.totalCost;
+            totalWeight += (item.dims.length * item.dims.width * item.dims.height * item.material.density) / 1000 * item.quantity;
 
-            // Check page break
-            if (cursorY > pageHeight - 100 && i < orderItems.length - 1) {
+            if (cursorY > pageHeight - 120) {
                 doc.addPage();
-                cursorY = margin;
+                cursorY = margin + 10;
             }
 
-            // Item header
-            doc.setFillColor(236, 240, 241);
-            doc.rect(margin, cursorY - 5, pageWidth - margin * 2, 12, 'F');
+            doc.setFillColor(245, 247, 249);
+            doc.rect(margin, cursorY - 5, pageWidth - margin * 2, 10, 'F');
             doc.setTextColor(44, 62, 80);
             doc.setFont('Helvetica', 'bold');
-            doc.setFontSize(12);
+            doc.setFontSize(11);
+            doc.text(`${i + 1}. ${item.id} - ${item.material.name}`, margin + 2, cursorY + 2);
+            cursorY += 12;
 
-            let quantityString = '';
-            switch (item.orderUnit) {
-                case 'piece': quantityString = `${item.quantity} kom`; break;
-                case 'sqm': quantityString = `${item.quantity.toFixed(2)} m²`; break;
-                case 'lm': quantityString = `${item.quantity.toFixed(2)} m`; break;
-            }
-
-            doc.text(`Stavka ${i + 1}: ${item.id} (${quantityString})`, margin + 2, cursorY + 2);
-            cursorY += 18;
-
-            // --- 3D Visualization ---
+            const previewHeight = 45;
             if (images3D[i]) {
-                try {
-                    doc.setFont('Helvetica', 'normal');
-                    doc.setFontSize(8);
-                    doc.setTextColor(100, 100, 100);
-                    doc.text('3D Prikaz', margin, cursorY);
-                    cursorY += 4;
-
-                    const imgWidth = 80;
-                    const imgHeight = 60;
-
-                    // Detect image format from data URI
-                    let imageData = images3D[i]!;
-                    let format: 'PNG' | 'JPEG' = 'PNG'; // Default to PNG
-
-                    if (imageData.startsWith('data:image/')) {
-                        // Extract format from data URI (e.g., "data:image/svg+xml;base64,...")
-                        const match = imageData.match(/data:image\/([^;]+);/);
-                        if (match) {
-                            const detectedFormat = match[1].toLowerCase();
-
-                            // Map common formats to jsPDF supported formats
-                            if (detectedFormat.includes('jpeg') || detectedFormat.includes('jpg')) {
-                                format = 'JPEG';
-                            } else if (detectedFormat.includes('png')) {
-                                format = 'PNG';
-                            } else if (detectedFormat.includes('svg')) {
-                                // Convert SVG to PNG - jsPDF doesn't support SVG
-                                imageData = await svgToPng(imageData, imgWidth * 4, imgHeight * 4);
-                                format = 'PNG';
-                            } else if (detectedFormat.includes('webp')) {
-                                // WEBP is not supported by jsPDF, default to PNG
-                                format = 'PNG';
-                            }
-                            // Else keep default PNG and let jsPDF attempt to decode
-                        }
-                    }
-
-                    doc.addImage(imageData, format, margin, cursorY, imgWidth, imgHeight);
-                } catch (e) {
-                    console.error('Error adding 3D image:', e);
-                }
+                try { doc.addImage(images3D[i]!, 'PNG', margin, cursorY, 60, previewHeight); } catch (e) {}
             }
-
-            // --- 2D Technical Drawings ---
             try {
                 const topView = await generateTechnicalDrawing2D(item, edgeNames, 'top');
+                doc.addImage(topView, 'PNG', margin + 65, cursorY, 60, previewHeight);
                 const sideView = await generateTechnicalDrawing2D(item, edgeNames, 'side');
+                doc.addImage(sideView, 'PNG', margin + 130, cursorY, 60, previewHeight);
+            } catch (e) {}
 
-                const drawingX = margin + 85;
-                const drawingY = cursorY;
-
-                doc.setFontSize(8);
-                doc.text('Tehnički crtež', drawingX, drawingY - 1);
-
-                doc.addImage(topView, 'PNG', drawingX, drawingY, 50, 37.5);
-
-                if (cursorY + 40 < pageHeight - 30) {
-                    doc.addImage(sideView, 'PNG', drawingX + 55, drawingY, 50, 37.5);
-                }
-            } catch (e) {
-                console.error('Error adding 2D drawings:', e);
-            }
-
-            cursorY += 70;
-
-            // --- Item Details Table ---
-            const processedEdgesString = Object.entries(item.processedEdges)
-                .filter(([, v]) => v)
-                .map(([k]) => getEdgeName(k))
-                .join(', ') || 'Nema';
-
-            const okapnikEdgesString = Object.entries(item.okapnikEdges || {})
-                .filter(([, v]) => v)
-                .map(([k]) => getEdgeName(k))
-                .join(', ') || 'Nema';
-
-            const tableData = [
-                ['Materijal', item.material.name],
-                ['Obrada lica', item.finish.name],
-                ['Dimenzije', `${item.dims.length} × ${item.dims.width} × ${item.dims.height} cm`],
-                ['Profil ivice', item.profile.name],
-                ['Obrada ivica', processedEdgesString],
+            cursorY += previewHeight + 8;
+            const costs = calculateItemCosts(item);
+            const edgeStr = Object.entries(item.processedEdges).filter(([, v]) => v).map(([k]) => getEdgeName(k)).join(', ') || 'Nema';
+            
+            const itemTableData = [
+                ['Materijal', `${item.material.name} (${item.dims.height}cm)`, `€${costs.materialCost.toFixed(2)}`],
+                ['Obrada lica', item.finish.name, `€${costs.finishCost.toFixed(2)}`],
+                ['Obrada ivica', `${item.profile.name} (${edgeStr})`, `€${costs.edgeCost.toFixed(2)}`],
             ];
-
-            if (okapnikEdgesString !== 'Nema') {
-                tableData.push(['Okapnik', okapnikEdgesString]);
-            }
-
-            if (item.bunjaEdgeStyle) {
-                tableData.push(['Stil ivica', item.bunjaEdgeStyle === 'lomljene' ? 'Lomljene' : 'Oštre']);
-            }
-
-            tableData.push([
-                { content: 'Cijena', styles: { fontStyle: 'bold' } },
-                { content: `€${item.totalCost.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold' } }
-            ] as any);
+            if (costs.okapnikCost > 0) itemTableData.push(['Okapnik', 'Izrada okapnika', `€${costs.okapnikCost.toFixed(2)}`]);
+            itemTableData.push([{ content: 'SUBTOTAL', colSpan: 2, styles: { halign: 'right', fontStyle: 'bold' } }, { content: `€${item.totalCost.toFixed(2)}`, styles: { fontStyle: 'bold', halign: 'right' } }] as any);
 
             autoTable(doc, {
                 startY: cursorY,
-                head: [],
-                body: tableData,
-                theme: 'grid',
-                tableWidth: pageWidth - margin * 2,
+                head: [['Stavka', 'Detalji', 'Cijena']],
+                body: itemTableData,
+                theme: 'striped',
                 margin: { left: margin },
-                styles: { font: 'Helvetica', fontSize: 9, cellPadding: 2 },
-                columnStyles: {
-                    0: { fontStyle: 'bold', cellWidth: 35, fillColor: [248, 249, 250] },
-                    1: { cellWidth: 'auto' },
-                },
-                alternateRowStyles: { fillColor: [255, 255, 255] },
+                tableWidth: pageWidth - margin * 2,
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [44, 62, 80] },
+                columnStyles: { 2: { halign: 'right', cellWidth: 30 } }
             });
-
-            cursorY = (doc as any).lastAutoTable.finalY + 10;
-
-            // --- Edge Profile Diagrams ---
-            const processedEdges = Object.entries(item.processedEdges).filter(([, v]) => v);
-            if (processedEdges.length > 0) {
-                const diagramY = cursorY;
-                let diagramX = margin;
-
-                doc.setFontSize(8);
-                doc.setTextColor(100, 100, 100);
-                doc.text('Profil ivice:', margin, diagramY);
-
-                for (const [edge] of processedEdges.slice(0, 3)) {
-                    try {
-                        const diagram = await generateProfileDiagram(item.profile, getEdgeName(edge));
-                        doc.addImage(diagram, 'PNG', diagramX, diagramY + 2, 25, 35);
-                        diagramX += 30;
-                    } catch (e) {
-                        // Skip diagram if error
-                    }
-                }
-                cursorY += 40;
-            }
-
-            // Separator
-            if (i < orderItems.length - 1) {
-                doc.setDrawColor(200, 200, 200);
-                doc.setLineWidth(0.5);
-                doc.line(margin, cursorY, pageWidth - margin, cursorY);
-                cursorY += 10;
-            }
+            cursorY = (doc as any).lastAutoTable.finalY + 15;
         }
 
-        // --- Notes Section ---
-        if (notes) {
-            if (cursorY + 30 > pageHeight - margin) {
-                doc.addPage();
-                cursorY = margin;
-            }
-
-            doc.setFont('Helvetica', 'bold');
-            doc.setFontSize(11);
-            doc.setTextColor(44, 62, 80);
-            doc.text('Napomene:', margin, cursorY);
-            cursorY += 7;
-
-            doc.setFont('Helvetica', 'normal');
-            doc.setFontSize(10);
-            const splitNotes = doc.splitTextToSize(notes, pageWidth - margin * 2);
-            doc.text(splitNotes, margin, cursorY);
-            cursorY += splitNotes.length * 5 + 10;
-        }
-
-        // --- Summary Section ---
-        if (cursorY + 25 > pageHeight - margin) {
-            doc.addPage();
-            cursorY = margin;
-        }
-
-        doc.setFillColor(44, 62, 80);
-        doc.rect(margin, cursorY, pageWidth - margin * 2, 20, 'F');
-
-        doc.setTextColor(255, 255, 255);
+        if (cursorY > pageHeight - 80) { doc.addPage(); cursorY = margin + 10; }
+        const summaryX = pageWidth - margin - 80;
+        doc.setFillColor(245, 247, 249);
+        doc.rect(summaryX, cursorY, 80, 40, 'F');
+        doc.setFontSize(10);
+        doc.setTextColor(44, 62, 80);
+        doc.text('UKUPNO ZA PLATITI:', summaryX + 5, cursorY + 10);
+        doc.setFontSize(16);
         doc.setFont('Helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.text(`UKUPNO: €${totalCost.toFixed(2)}`, pageWidth - margin - 5, cursorY + 13, { align: 'right' });
+        doc.text(`€${totalCost.toFixed(2)}`, pageWidth - margin - 5, cursorY + 10, { align: 'right' });
+        doc.setFontSize(9);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(`Masa: ${totalWeight.toFixed(1)} kg`, summaryX + 5, cursorY + 20);
+        doc.text(`PDV (uključen): €${(totalCost * 0.2).toFixed(2)}`, summaryX + 5, cursorY + 28);
+        
+        cursorY += 50;
+        doc.setFontSize(8);
+        doc.text('Uvjeti plaćanja: Avans 50%, ostatak prije isporuke. Rok: 10-15 dana.', margin, cursorY);
+        const sigY = cursorY + 25;
+        doc.line(margin, sigY, margin + 60, sigY);
+        doc.text('Potpis kupca', margin, sigY + 5);
+        doc.line(pageWidth - margin - 60, sigY, pageWidth - margin, sigY);
+        doc.text('Za Kamena Galanterija d.o.o.', pageWidth - margin - 60, sigY + 5);
 
-        // --- Footer ---
         const pageCount = (doc as any).internal.getNumberOfPages();
         for (let i = 1; i <= pageCount; i++) {
             doc.setPage(i);
-            doc.setFont('Helvetica', 'normal');
             doc.setFontSize(8);
-            doc.setTextColor(150, 150, 150);
-            doc.text(
-                `Stranica ${i} od ${pageCount} | ${orderNumber}`,
-                pageWidth / 2,
-                pageHeight - 5,
-                { align: 'center' }
-            );
+            doc.setTextColor(150);
+            doc.text(`Stranica ${i} od ${pageCount} | ${orderNumber}`, pageWidth / 2, pageHeight - 5, { align: 'center' });
         }
-
-        // Save PDF
-        doc.save(`Radni_Nalog_${orderNumber}_${new Date().toISOString().split('T')[0]}.pdf`);
-
+        doc.save(`Ponuda_${orderNumber}.pdf`);
     } catch (error) {
-        console.error('PDF generation error:', error);
+        console.error('PDF error:', error);
         throw new Error('Greška pri izradi PDF-a');
     }
 }
 
-// Legacy function for backwards compatibility
 export function generateAndDownloadPdf(orderItems: OrderItem[], edgeNames: EdgeNameMap) {
     const images3D = orderItems.map(() => null);
     return generateEnhancedPdf(orderItems, edgeNames, images3D);
