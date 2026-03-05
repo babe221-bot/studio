@@ -32,7 +32,7 @@ export async function Header(props: HeaderProps) {
             </p>
           </Link>
           
-          {!isGuest && displayUser && (
+          {displayUser && (
             <nav className="hidden lg:flex items-center gap-4">
               <Button variant="ghost" asChild className="flex items-center gap-2">
                 <Link href="/dashboard">

@@ -17,13 +17,21 @@
     - [x] Review the browser-side `generateEnhancedPdf` flow to ensure large base64 strings don't crash mobile browsers, or finalize moving it to an edge function.
 
 ## Bugs & Fixes
-- [ ] **Production Deployment Checks:**
-    - [ ] Validate that the FastAPI `uvicorn` setup works correctly behind a production load balancer (e.g., ensuring `FORWARDED_ALLOW_IPS` is properly set for Railway/Fly.io if needed).
+- [x] **Production Deployment Checks:**
+    - [x] Validate that the FastAPI `uvicorn` setup works correctly behind a production load balancer (e.g., ensuring `FORWARDED_ALLOW_IPS` is properly set for Railway/Fly.io if needed).
 
 ## Documentation
-- [ ] **Clean Up Legacy Docs:**
-    - [ ] Review `docs/archives/google-migration-plan.md` and archive or remove outdated architecture references. Ensure `docs/ai_context/AI_ARCHITECTURE_MAP.md` is accurate to the current state.
+- [x] **Clean Up Legacy Docs:**
+    - [x] Review `docs/archives/google-migration-plan.md` and archive or remove outdated architecture references. Ensure `docs/ai_context/AI_ARCHITECTURE_MAP.md` is accurate to the current state.
 
 ## Tech Debt
-- [ ] **Frontend Test Coverage:**
-    - [ ] Set up tests for critical frontend hooks (e.g., `useElementConfiguration`, `useOrderCalculations`) using Jest/React Testing Library.
+- [x] **Frontend Test Coverage:**
+    - [x] Set up tests for critical frontend hooks (e.g., `useElementConfiguration`, `useOrderCalculations`) using Jest/React Testing Library.
+
+## Phase 3 (New)
+- [x] **User Dashboard:**
+    - [x] Create a dedicated dashboard page for users to view saved history and templates.
+    - [x] Add navigation and deep-linking from Dashboard back to Lab with state restoration.
+- [x] **Advanced CAD Features:**
+    - [x] Enable Blender-powered 3D rendering scripts via the Python API.
+    - [x] Create CLI wrapper for `mcp_visualization.py` for headless execution.
