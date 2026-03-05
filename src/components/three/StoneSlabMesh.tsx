@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * StoneSlabMesh - React Three Fiber component for stone slab geometry
  * 

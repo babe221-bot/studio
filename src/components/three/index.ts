@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * Three.js Components for React Three Fiber
  * 

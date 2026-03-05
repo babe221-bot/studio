@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * StudioLighting - Professional studio lighting setup for R3F
  * 

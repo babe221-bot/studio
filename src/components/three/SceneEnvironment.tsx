@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * SceneEnvironment - Environment and background setup for R3F
  * 

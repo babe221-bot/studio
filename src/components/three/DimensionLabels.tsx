@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * DimensionLabels - 3D dimension labels for the stone slab visualization
  * 
