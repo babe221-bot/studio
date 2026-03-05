@@ -604,6 +604,27 @@ export function Lab() {
             okapnikEdges={okapnikEdges} updateOkapnikEdge={updateOkapnikEdge}
           />
           <CalculationSummary calculations={calculations} />
+          
+          {/* Design Safety Warnings */}
+          {warnings.length > 0 && (
+            <Card className="border-orange-500 bg-orange-50 dark:bg-orange-950/20">
+              <CardHeader className="py-2">
+                <CardTitle className="text-sm text-orange-700 dark:text-orange-300">Strukturna upozorenja</CardTitle>
+              </CardHeader>
+              <CardContent className="py-2 space-y-2">
+                {warnings.map((warn, idx) => (
+                  <div key={idx} className={`text-xs p-2 rounded border ${
+                    warn.severity === 'critical' ? 'border-red-500 bg-red-100 text-red-700' : 
+                    warn.severity === 'warning' ? 'border-orange-500 bg-orange-100 text-orange-700' :
+                    'border-blue-500 bg-blue-100 text-blue-700'
+                  }`}>
+                    <p className="font-bold">{warn.message}</p>
+                    <p className="mt-1 opacity-90">{warn.suggestion}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="lg:col-span-2 xl:col-span-3 lg:order-2 order-1">
