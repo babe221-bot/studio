@@ -9,6 +9,9 @@ type EdgeNameMap = {
     [key: string]: string;
 };
 
+// Helper to yield control to the main thread to prevent UI freezing
+const yieldToMain = () => new Promise(resolve => setTimeout(resolve, 0));
+
 // Helper function to convert SVG data URI to PNG data URI
 async function svgToPng(svgDataUri: string, width: number = 200, height: number = 150): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -16,26 +19,30 @@ async function svgToPng(svgDataUri: string, width: number = 200, height: number 
         img.crossOrigin = 'anonymous';
 
         img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = width * 2; // Higher resolution for better quality
-            canvas.height = height * 2;
-            const ctx = canvas.getContext('2d');
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = width * 2; // Higher resolution for better quality
+                canvas.height = height * 2;
+                const ctx = canvas.getContext('2d');
 
-            if (!ctx) {
-                reject(new Error('Could not get canvas context'));
-                return;
+                if (!ctx) {
+                    reject(new Error('Could not get canvas context'));
+                    return;
+                }
+
+                // Draw white background
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Draw the SVG image
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                // Convert to PNG data URI
+                const pngDataUri = canvas.toDataURL('image/png');
+                resolve(pngDataUri);
+            } catch (e) {
+                reject(e);
             }
-
-            // Draw white background
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw the SVG image
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-            // Convert to PNG data URI
-            const pngDataUri = canvas.toDataURL('image/png');
-            resolve(pngDataUri);
         };
 
         img.onerror = () => {
@@ -281,6 +288,11 @@ export async function generateEnhancedPdf(
         let totalCost = 0;
 
         for (let i = 0; i < orderItems.length; i++) {
+            // Yield to main thread every 2 items to keep UI responsive
+            if (i > 0 && i % 2 === 0) {
+                await yieldToMain();
+            }
+
             const item = orderItems[i];
             totalCost += item.totalCost;
 
