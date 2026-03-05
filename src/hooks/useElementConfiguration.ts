@@ -101,6 +101,23 @@ export function useElementConfiguration(
         updateOkapnikEdge: setOkapnikEdge,
         bunjaEdgeStyle,
         setBunjaEdgeStyle,
+        grainOffset,
+        setGrainOffset,
+        grainRotation,
+        setGrainRotation,
+        handleElementTypeChange
+    } = useLabStore();
+
+    // ...
+
+    return {
+        // ...
+        bunjaEdgeStyle,
+        setBunjaEdgeStyle,
+        grainOffset,
+        setGrainOffset,
+        grainRotation,
+        setGrainRotation,
         handleElementTypeChange
     };
 }
