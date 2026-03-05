@@ -101,12 +101,21 @@ async def process_slab_file(file_path: str) -> Dict[str, Any]:
         return {"success": False, "error": str(exc)}
 
 
+# Global caches
+_materials_cache = None
+_finishes_cache = None
+_profiles_cache = None
+
 async def get_materials(db: Optional[AsyncSession] = None) -> List[Dict[str, Any]]:
     """
     Available stone materials.
     Pulls from Supabase `materials` table if db session provided,
     otherwise falls back to hardcoded list.
     """
+    global _materials_cache
+    if _materials_cache and db is None:
+        return _materials_cache
+
     hardcoded_materials = [
         {"id": "granite_white",  "name": "Granite White",  "color": "#f5f5dc"},
         {"id": "granite_black",  "name": "Granite Black",  "color": "#1a1a1a"},
@@ -117,6 +126,7 @@ async def get_materials(db: Optional[AsyncSession] = None) -> List[Dict[str, Any
     ]
 
     if db is None:
+        _materials_cache = hardcoded_materials
         return hardcoded_materials
 
     try:
@@ -125,7 +135,7 @@ async def get_materials(db: Optional[AsyncSession] = None) -> List[Dict[str, Any
         if not materials:
             return hardcoded_materials
             
-        return [
+        _materials_cache = [
             {
                 "id": str(m.id),  # Return string to match previous expected types
                 "name": m.name,
@@ -146,6 +156,7 @@ async def get_materials(db: Optional[AsyncSession] = None) -> List[Dict[str, Any
             }
             for m in materials
         ]
+        return _materials_cache
     except Exception as e:
         print(f"Error fetching materials from DB: {e}")
         return hardcoded_materials
@@ -154,6 +165,10 @@ async def get_surface_finishes(db: Optional[AsyncSession] = None) -> List[Dict[s
     """
     Available surface finishes.
     """
+    global _finishes_cache
+    if _finishes_cache and db is None:
+        return _finishes_cache
+
     hardcoded_finishes = [
         {"id": "0", "name": "Bez obrade", "cost_sqm": 0},
         {"id": "1", "name": "Poliranje (Polished)", "cost_sqm": 15},
@@ -169,6 +184,7 @@ async def get_surface_finishes(db: Optional[AsyncSession] = None) -> List[Dict[s
     ]
 
     if db is None:
+        _finishes_cache = hardcoded_finishes
         return hardcoded_finishes
 
     try:
@@ -177,7 +193,7 @@ async def get_surface_finishes(db: Optional[AsyncSession] = None) -> List[Dict[s
         if not finishes:
             return hardcoded_finishes
             
-        return [
+        _finishes_cache = [
             {
                 "id": str(f.id),
                 "name": f.name,
@@ -185,6 +201,7 @@ async def get_surface_finishes(db: Optional[AsyncSession] = None) -> List[Dict[s
             }
             for f in finishes
         ]
+        return _finishes_cache
     except Exception as e:
         print(f"Error fetching surface finishes from DB: {e}")
         return hardcoded_finishes
@@ -193,6 +210,10 @@ async def get_edge_profiles(db: Optional[AsyncSession] = None) -> List[Dict[str,
     """
     Available edge profiles.
     """
+    global _profiles_cache
+    if _profiles_cache and db is None:
+        return _profiles_cache
+
     hardcoded_profiles = [
         {"id": "1", "name": "Ravni rez (Pilan)", "cost_m": 2},
         {"id": "10", "name": "Smuš C0.5 (0.5mm 45°)", "cost_m": 5},
@@ -212,6 +233,7 @@ async def get_edge_profiles(db: Optional[AsyncSession] = None) -> List[Dict[str,
     ]
 
     if db is None:
+        _profiles_cache = hardcoded_profiles
         return hardcoded_profiles
 
     try:
@@ -220,7 +242,7 @@ async def get_edge_profiles(db: Optional[AsyncSession] = None) -> List[Dict[str,
         if not profiles:
             return hardcoded_profiles
             
-        return [
+        _profiles_cache = [
             {
                 "id": str(p.id),
                 "name": p.name,
@@ -228,6 +250,7 @@ async def get_edge_profiles(db: Optional[AsyncSession] = None) -> List[Dict[str,
             }
             for p in profiles
         ]
+        return _profiles_cache
     except Exception as e:
         print(f"Error fetching edge profiles from DB: {e}")
         return hardcoded_profiles
