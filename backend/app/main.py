@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import os
 
-from app.api import cad, data, pricing
+from app.api import cad, data, pricing, design_review
 from app.services.database import init_db
 import sentry_sdk
 
