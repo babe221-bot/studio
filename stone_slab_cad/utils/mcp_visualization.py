@@ -681,6 +681,11 @@ if __name__ == "__main__":
     parser.add_argument("--okapnik_left", action="store_true")
     parser.add_argument("--okapnik_right", action="store_true")
 
+    # PBR Maps
+    parser.add_argument("--roughness_map", type=str, help="URL or path to roughness map")
+    parser.add_argument("--normal_map", type=str, help="URL or path to normal map")
+    parser.add_argument("--metallic_map", type=str, help="URL or path to metallic map")
+
     args = parser.parse_args(args_to_parse)
 
     # Build Spec
