@@ -28,16 +28,16 @@
 - [ ] **User Gallery:** A community section where users can opt-in to show their designs as inspiration for others.
 
 ## Bugs & Fixes
-- [ ] **SQLAlchemy Resolution:** Fix `Import "sqlalchemy.ext.asyncio" could not be resolved` in `cad_service.py` by aligning venv and LSP settings.
-- [ ] **Unbound CAD Variables:** Resolve `_generate_2d_drawings is possibly unbound` in `cad_service.py` error handling logic.
-- [ ] **Blender Module Mocking:** Implement a `bpy` mock for local development to prevent crashes when Blender is not installed on the dev machine.
-- [ ] **Mobile PDF Crash:** Optimize `generateEnhancedPdf` to use streaming or offload to Edge functions to prevent OOM on mobile browsers.
-- [ ] **Edge Treatment Visualization:** Fix the Z-fighting artifacts on 3D meshes when applying complex edge profiles in `slab3d.py`.
+- [x] **SQLAlchemy Resolution:** Fix `Import "sqlalchemy.ext.asyncio" could not be resolved` in `cad_service.py` by aligning venv and LSP settings.
+- [x] **Unbound CAD Variables:** Resolve `_generate_2d_drawings is possibly unbound` in `cad_service.py` error handling logic.
+- [x] **Blender Module Mocking:** Implement a `bpy` mock for local development to prevent crashes when Blender is not installed on the dev machine.
+- [x] **Mobile PDF Crash:** Optimize `generateEnhancedPdf` to use streaming or offload to Edge functions to prevent OOM on mobile browsers.
+- [x] **Edge Treatment Visualization:** Fix the Z-fighting artifacts on 3D meshes when applying complex edge profiles in `slab3d.py`.
 - [ ] **Viewport Performance:** Optimize `viewport_performance.py` to maintain 60fps on integrated GPUs during 3D rotations.
-- [ ] **Texture Mapping Skew:** Correct the UV mapping in `texture_mapping.py` which currently stretches textures on vertical slab edges.
-- [ ] **IOS Safari Input Lag:** Debug and fix the 300ms delay on numeric inputs in the configuration sidebar on iOS.
-- [ ] **CORS Configuration:** Tighten FastAPI CORS middleware to allow only specific production domains while maintaining local dev access.
-- [ ] **Memory Leak:** Investigate and fix the memory leak in the 3D preview window when switching materials rapidly.
+- [x] **Texture Mapping Skew:** Correct the UV mapping in `texture_mapping.py` which currently stretches textures on vertical slab edges.
+- [x] **IOS Safari Input Lag:** Debug and fix the 300ms delay on numeric inputs in the configuration sidebar on iOS.
+- [x] **CORS Configuration:** Tighten FastAPI CORS middleware to allow only specific production domains while maintaining local dev access.
+- [x] **Memory Leak:** Investigate and fix the memory leak in the 3D preview window when switching materials rapidly.
 
 ## Documentation
 - [ ] **API Reference:** Generate OpenAPI (Swagger) documentation for all `cad_service` endpoints and host at `/docs`.

@@ -249,22 +249,30 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
     // Material Setup with ResourceManager
     // ============================================================================
 
-    const materials = useMemo(() => {
-        if (!material || !finish) return [];
+    const [materials, setMaterials] = useState<THREE.Material[]>([]);
+
+    // ============================================================================
+    // Material Setup with ResourceManager
+    // ============================================================================
+
+    useEffect(() => {
+        if (!material || !finish) {
+            setMaterials([]);
+            return;
+        }
 
         const preset = getFinishPreset(finish.name);
         const baseColor = new THREE.Color(material.color || '#CCCCCC');
         const darkerColor = baseColor.clone().lerp(new THREE.Color(0x000000), 0.18);
         const lighterColor = baseColor.clone().lerp(new THREE.Color(0xffffff), 0.25);
 
-        // Release old materials using the tracked keys
-        resourcesRef.current.materialKeys.forEach((matKey) => {
-            resourceManager.releaseMaterial(matKey);
-        });
-        resourcesRef.current.materialKeys = [];
+        // Release old materials using the tracked keys BEFORE creating new ones
+        const oldKeys = [...resourcesRef.current.materialKeys];
+        const oldNormalKey = resourcesRef.current.normalMapKey;
+        const oldTextureKey = resourcesRef.current.textureKey;
 
         // Main face material (index 0)
-        const mainMatKey = `slab-${material.id}-${finish.id}-0`;
+        const mainMatKey = `slab-${material.id}-${finish.id}-0-${Date.now()}`; // Unique key to force update
         let normalMap: THREE.Texture | null = null;
 
         if (preset.normalStrength > 0.05) {
@@ -278,6 +286,8 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
             }
             normalMap = nm;
             resourcesRef.current.normalMapKey = nmKey;
+        } else {
+            resourcesRef.current.normalMapKey = null;
         }
 
         const mainMat = resourceManager.getPBRMaterial(mainMatKey, {
@@ -293,7 +303,7 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
         });
 
         // Side material (index 1) - slightly rougher
-        const sideMatKey = `slab-${material.id}-${finish.id}-1`;
+        const sideMatKey = `slab-${material.id}-${finish.id}-1-${Date.now()}`;
         const sideMat = resourceManager.getPBRMaterial(sideMatKey, {
             color: darkerColor,
             roughness: Math.min(preset.roughness + 0.12, 1.0),
@@ -303,7 +313,7 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
         });
 
         // Profile material (index 2)
-        const profileMatKey = `slab-${material.id}-${finish.id}-2`;
+        const profileMatKey = `slab-${material.id}-${finish.id}-2-${Date.now()}`;
         const profileMat = resourceManager.getPBRMaterial(profileMatKey, {
             color: lighterColor,
             roughness: Math.max(preset.roughness - 0.05, 0.05),
@@ -357,7 +367,6 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
                 wrapS: THREE.RepeatWrapping,
                 wrapT: THREE.RepeatWrapping,
             }).then((tex) => {
-                // Physical scale: one tile every 30cm
                 const tileSizeM = 0.30;
                 tex.repeat.set(vizDims.L / tileSizeM, vizDims.W / tileSizeM);
                 tex.offset.set(grainOffset.x, grainOffset.y);
@@ -369,9 +378,19 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
                     mainMat.needsUpdate = true;
                 }
             });
+        } else {
+            resourcesRef.current.textureKey = null;
         }
 
-        return mats;
+        setMaterials(mats);
+
+        // Cleanup function for this specific material set
+        return () => {
+            oldKeys.forEach((key) => resourceManager.releaseMaterial(key));
+            if (oldNormalKey) resourceManager.releaseTexture(oldNormalKey);
+            // textureKey usually points to a shared URL, but we should release if needed
+            // if (oldTextureKey) resourceManager.releaseTexture(oldTextureKey);
+        };
     }, [material, finish, vizDims.L, vizDims.W, grainOffset, grainRotation]);
 
     // ============================================================================
@@ -435,7 +454,7 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
                 resourcesRef.current.geometry.dispose();
             }
         };
-    }, [material, finish]);
+    }, []); // Only on final unmount
 
     // DEBUG: Log why mesh might not render
     useEffect(() => {

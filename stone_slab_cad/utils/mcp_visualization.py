@@ -165,6 +165,27 @@ class MCPVisualizationEngine:
         # Scale to dimensions
         bmesh.ops.scale(bm, verts=bm.verts, vec=(l, h, w))
         
+        # FIX: Texture Mapping Skew
+        # Apply Cube Projection to fix UV stretching on vertical edges
+        # We need to ensure lookup tables are valid for UV operations
+        bm.faces.ensure_lookup_table()
+        
+        # Use a simple box mapping logic for the base slab
+        # This prevents stretching on the sides (height/width ratio)
+        uv_layer = bm.loops.layers.uv.new()
+        for face in bm.faces:
+            # Determine plane orientation for this face
+            no = face.normal
+            if abs(no.x) > 0.5: # YZ Plane (Side)
+                for loop in face.loops:
+                    loop[uv_layer].uv = (loop.vert.co.y, loop.vert.co.z)
+            elif abs(no.y) > 0.5: # XZ Plane (Front/Back)
+                for loop in face.loops:
+                    loop[uv_layer].uv = (loop.vert.co.x, loop.vert.co.z)
+            else: # XY Plane (Top/Bottom)
+                for loop in face.loops:
+                    loop[uv_layer].uv = (loop.vert.co.x, loop.vert.co.y)
+
         # Write to mesh
         bm.to_mesh(mesh)
         bm.free()

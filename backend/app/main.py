@@ -41,17 +41,24 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configure CORS from environment variable
-# Set ALLOWED_ORIGINS as comma-separated string, e.g., "http://localhost:3000,https://your-app.vercel.app"
-allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+# Configure CORS
+# In production, set ALLOWED_ORIGINS to specific domains (e.g., "https://stone-studio.vercel.app")
+# For local development, it defaults to localhost:3000
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001")
 ALLOWED_ORIGINS = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
+
+# Security: Ensure we don't accidentally leave it open if no origins are specified
+if not ALLOWED_ORIGINS:
+    ALLOWED_ORIGINS = ["http://localhost:3000"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,
 )
 
 # Include routers
