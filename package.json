@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
-    "dev:frontend": "next dev --turbopack",
+    "dev:frontend": "next dev",
     "dev:backend": "cd backend && ..\\.venv\\Scripts\\uvicorn.exe app.main:app --reload",
     "build": "next build",
     "start": "next start",
