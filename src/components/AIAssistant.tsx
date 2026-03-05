@@ -1,5 +1,6 @@
 'use client';
 
+import { useToast } from '@/hooks/use-toast';
 import { useChat, type UIMessage as Message } from '@ai-sdk/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,7 +10,16 @@ import { useState, useRef, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function AIAssistant() {
-    const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat() as any;
+    const { toast } = useToast();
+    const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
+        onError: (err) => {
+            toast({
+                title: 'Greška',
+                description: err.message || 'Došlo je do greške u komunikaciji s AI pomoćnikom.',
+                variant: 'destructive',
+            });
+        }
+    }) as any;
     const [isOpen, setIsOpen] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 

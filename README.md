@@ -55,15 +55,26 @@ npm run dev
 ```
 
 ### 3. Backend Development (Python)
-Navigate to the `backend/` directory, set up your virtual environment, and run FastAPI:
+The project uses a Python virtual environment located in the root directory (`.venv`).
+
 ```bash
-cd backend
-python -m venv venv
-# Windows: venv\Scripts\activate
-# macOS/Linux: source venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
+pip install -r backend/requirements.txt
 ```
+
+You can start both frontend and backend concurrently from the root directory:
+```bash
+npm run dev
+```
+
+#### Blender Dependency for CAD Visualization
+The module `stone_slab_cad/utils/mcp_visualization.py` requires Blender's Python API (`bpy`, `bmesh`). 
+This is a standalone utility that must be executed via a Blender instance in background mode, not via the standard Python interpreter.
+To use it:
+1. Ensure Blender 3.x+ is installed and accessible in your system PATH.
+2. Run scripts via: `blender --background --python stone_slab_cad/utils/mcp_visualization.py`
 
 ### 4. Database Setup
 Run the SQL scripts in `scripts/` to set up your Supabase database:

@@ -1,11 +1,13 @@
 import os
 import tempfile
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.schemas import CADResponse, ProcessingRequest
 from app.services import cad_service
+from app.services.database import get_db
 import logging
 
 logger = logging.getLogger(__name__)
@@ -179,6 +181,6 @@ async def process_slab(file: UploadFile = File(...)):
 
 
 @router.get("/materials")
-async def list_materials():
+async def list_materials(db: AsyncSession = Depends(get_db)):
     """Get available stone materials."""
-    return await cad_service.get_materials()
+    return await cad_service.get_materials(db)

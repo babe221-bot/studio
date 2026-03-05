@@ -11,7 +11,10 @@ import base64
 import tempfile
 import shutil
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from app.models.domain import MaterialDB
 
 # ── path injection ────────────────────────────────────────────────────────────
 _CAD_DIR = Path(__file__).resolve().parents[3] / "stone_slab_cad"
@@ -100,12 +103,13 @@ async def process_slab_file(file_path: str) -> Dict[str, Any]:
         return {"success": False, "error": str(exc)}
 
 
-async def get_materials() -> List[Dict[str, Any]]:
+async def get_materials(db: Optional[AsyncSession] = None) -> List[Dict[str, Any]]:
     """
     Available stone materials.
-    TODO Sprint 3: pull from Supabase `materials` table.
+    Pulls from Supabase `materials` table if db session provided,
+    otherwise falls back to hardcoded list.
     """
-    return [
+    hardcoded_materials = [
         {"id": "granite_white",  "name": "Granite White",  "color": "#f5f5dc"},
         {"id": "granite_black",  "name": "Granite Black",  "color": "#1a1a1a"},
         {"id": "marble_white",   "name": "Marble White",   "color": "#f8f8f8"},
@@ -113,3 +117,27 @@ async def get_materials() -> List[Dict[str, Any]]:
         {"id": "quartz",         "name": "Quartz",         "color": "#e8e8e8"},
         {"id": "travertine",     "name": "Travertine",     "color": "#d4b896"},
     ]
+
+    if db is None:
+        return hardcoded_materials
+
+    try:
+        result = await db.execute(select(MaterialDB))
+        materials = result.scalars().all()
+        if not materials:
+            return hardcoded_materials
+            
+        return [
+            {
+                "id": str(m.id),  # Return string to match previous expected types
+                "name": m.name,
+                "color": m.color,
+                "texture": m.texture,
+                "density": float(m.density),
+                "cost_sqm": float(m.cost_sqm)
+            }
+            for m in materials
+        ]
+    except Exception as e:
+        print(f"Error fetching materials from DB: {e}")
+        return hardcoded_materials
