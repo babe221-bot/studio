@@ -176,6 +176,49 @@ async def get_surface_finishes(db: Optional[AsyncSession] = None) -> List[Dict[s
         print(f"Error fetching surface finishes from DB: {e}")
         return hardcoded_finishes
 
+async def get_edge_profiles(db: Optional[AsyncSession] = None) -> List[Dict[str, Any]]:
+    """
+    Available edge profiles.
+    """
+    hardcoded_profiles = [
+        {"id": "1", "name": "Ravni rez (Pilan)", "cost_m": 2},
+        {"id": "10", "name": "Smuš C0.5 (0.5mm 45°)", "cost_m": 5},
+        {"id": "11", "name": "Smuš C1 (1mm 45°)", "cost_m": 7},
+        {"id": "12", "name": "Smuš C2 (2mm 45°)", "cost_m": 8},
+        {"id": "13", "name": "Smuš C5 (5mm 45°)", "cost_m": 10},
+        {"id": "14", "name": "Smuš C7 (7mm 45°)", "manual_cost": 11},
+        {"id": "15", "name": "Smuš C8 (8mm 45°)", "cost_m": 12},
+        {"id": "16", "name": "Smuš C10 (10mm 45°)", "cost_m": 13},
+        {"id": "20", "name": "Polu-zaobljena R1cm", "cost_m": 12},
+        {"id": "21", "name": "Polu-zaobljena R1.5cm", "cost_m": 15},
+        {"id": "22", "name": "Polu-zaobljena R2cm", "cost_m": 18},
+        {"id": "30", "name": "Puno-zaobljena R1.5cm (Half Bullnose)", "cost_m": 20},
+        {"id": "31", "name": "Puno-zaobljena R2cm (Half Bullnose)", "cost_m": 25},
+        {"id": "40", "name": "T-profil", "cost_m": 35},
+        {"id": "41", "name": "Dupli T-profil", "cost_m": 45},
+    ]
+
+    if db is None:
+        return hardcoded_profiles
+
+    try:
+        result = await db.execute(select(EdgeProfileDB))
+        profiles = result.scalars().all()
+        if not materials:
+            return hardcoded_profiles
+            
+        return [
+            {
+                "id": str(p.id),
+                "name": p.name,
+                "cost_m": float(p.cost_m)
+            }
+            for p in profiles
+        ]
+    except Exception as e:
+        print(f"Error fetching edge profiles from DB: {e}")
+        return hardcoded_profiles
+
 async def render_3d_simulation(config: dict) -> Dict[str, Any]:
     """
     Invokes Blender headlessly to generate photorealistic 3D renders.
