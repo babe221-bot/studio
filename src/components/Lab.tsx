@@ -51,6 +51,7 @@ import { useProjectHistory } from '@/hooks/useProjectHistory';
 import { useDesignAnalysis } from '@/hooks/useDesignAnalysis';
 import { VersionHistoryDialog } from './history/VersionHistoryDialog';
 import { TemplateManager } from './history/TemplateManager';
+import { ARPreview } from './ARPreview';
 
 // Memoized Sub-components
 const OrderEntryForm = React.memo(({
@@ -401,6 +402,17 @@ export function Lab() {
   const selectedFinish = useMemo(() => finishes.find(f => f.id.toString() === selectedFinishId), [finishes, selectedFinishId]);
   const selectedProfile = useMemo(() => profiles.find(p => p.id.toString() === selectedProfileId), [profiles, selectedProfileId]);
 
+  const calculations = useOrderCalculations({
+    length, width, height,
+    selectedMaterial, selectedFinish, selectedProfile,
+    processedEdges, okapnikEdges,
+    selectedElement, quantity, bunjaEdgeStyle
+  });
+
+  const { warnings, isAnalyzing: isAnalyzingDesign } = useDesignAnalysis(
+    length, width, height, selectedMaterial, selectedElement
+  );
+
   // Sync with CAD Context for AI
   useEffect(() => {
     setCadData({
@@ -412,17 +424,6 @@ export function Lab() {
       safetyWarnings: warnings
     });
   }, [orderItems, selectedMaterial, selectedFinish, selectedProfile, length, width, height, warnings, setCadData]);
-
-  const calculations = useOrderCalculations({
-    length, width, height,
-    selectedMaterial, selectedFinish, selectedProfile,
-    processedEdges, okapnikEdges,
-    selectedElement, quantity, bunjaEdgeStyle
-  });
-
-  const { warnings, isAnalyzing: isAnalyzingDesign } = useDesignAnalysis(
-    length, width, height, selectedMaterial, selectedElement
-  );
 
   // Inject warnings into AI Context
   useEffect(() => {
@@ -637,10 +638,15 @@ export function Lab() {
                 <Button variant="ghost" size="icon" onClick={() => setRefreshKey(k => k + 1)} aria-label="Refresh"><RefreshCw className="h-4 w-4" /></Button>
               </div>
             </CardHeader>
-            <CardContent className="h-full pb-0">
-              <ErrorBoundary>
-                <VisualizationCanvas ref={canvasRef} key={refreshKey} {...deferredVisualizationState} showDimensions={showDimensions} />
-              </ErrorBoundary>
+            <CardContent className="h-full pb-0 flex flex-col">
+              <div className="flex-1 min-h-[400px]">
+                <ErrorBoundary>
+                  <VisualizationCanvas ref={canvasRef} key={refreshKey} {...deferredVisualizationState} showDimensions={showDimensions} />
+                </ErrorBoundary>
+              </div>
+              <div className="py-4 border-t mt-auto">
+                <ARPreview config={deferredVisualizationState} />
+              </div>
             </CardContent>
           </Card>
         </div>
