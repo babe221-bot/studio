@@ -444,6 +444,16 @@ export function Lab() {
     handleElementTypeChange
   } = config;
 
+  const { isListening, startListening, error: voiceError } = useVoiceCommands({
+    setLength, setWidth, setHeight,
+    addToOrder: () => handleAddToOrder(),
+    downloadPdf: () => handleDownloadPdf(),
+    reset: () => {
+        setOrderItems([]);
+        toast({ title: "Resetirano", description: "Radni nalog je ispraznjen." });
+    }
+  });
+
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
