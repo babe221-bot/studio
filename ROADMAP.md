@@ -8,6 +8,9 @@
 - [x] **Inventory API:** Connect `MaterialDB` to a real-time inventory system (mock or external API) to show "In Stock" labels on materials.
 - [x] **Production-Ready Docker:** Optimize `backend/Dockerfile` using multi-stage builds to reduce image size from ~2GB (Blender included) to <800MB.
 - [x] **Global State Management:** Migration of component-local state in `Lab.tsx` to a robust Zustand or Redux store for better deep-linking support.
+- [x] **Real-time Price Engine:** Move price calculation logic from frontend `useOrderCalculations` to the backend to ensure data integrity for payments.
+- [x] **Sentry Integration:** Set up full-stack error tracking for both Next.js and FastAPI to capture production failures.
+- [x] **PostHog Analytics:** Implement event tracking for the configuration funnel (Selection -> Dimensioning -> Render -> Checkout)
 - [ ] **Real-time Price Engine:** Move price calculation logic from frontend `useOrderCalculations` to the backend to ensure data integrity for payments.
 - [ ] **Sentry Integration:** Set up full-stack error tracking for both Next.js and FastAPI to capture production failures.
 - [ ] **PostHog Analytics:** Implement event tracking for the configuration funnel (Selection -> Dimensioning -> Render -> Checkout).
