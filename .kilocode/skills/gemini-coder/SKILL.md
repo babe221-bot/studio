@@ -15,9 +15,20 @@ This skill provides specialized assistance for coding tasks using Gemini models.
 
 Use this skill to:
 1.  **Refactor Code:** Ask Gemini to refactor specific functions or files.
-2.  **Generate Tests:** Request unit tests for your code.
+2.  **Generate Tests:** Request unit tests for your code using the built-in generator.
 3.  **Explain Code:** Get explanations for complex logic.
 4.  **Debug:** Provide error messages and code snippets for debugging.
+
+### Test Generation
+
+To generate tests for a file:
+```bash
+./.kilocode/skills/gemini-coder/scripts/generate-tests.sh <path-to-file>
+```
+This script will:
+1. Detect the project's testing framework.
+2. Analyze the target file's exports.
+3. Provide a structured prompt to feed into Gemini for high-quality test generation.
 
 ## Guidelines
 
