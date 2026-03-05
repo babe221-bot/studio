@@ -8,9 +8,9 @@
     - [x] Pass the active `cadContext` (current dimensions, selected material, processed edges) from the configurator state into the `useChat` hook body in `AIAssistant.tsx` to provide the LLM with true project awareness.
 
 ## Features
-- [ ] **Blender Containerization (Production CAD):**
-    - [ ] Update `backend/Dockerfile` to install `blender` system packages to support headless execution of `stone_slab_cad` rendering via the API.
-    - [ ] Remove legacy `weasyprint` and `reportlab` system dependencies from the Dockerfile as PDF generation has moved to the frontend/browser.
+- [x] **Blender Containerization (Production CAD):**
+    - [x] Update `backend/Dockerfile` to install `blender` system packages to support headless execution of `stone_slab_cad` rendering via the API.
+    - [x] Remove legacy `weasyprint` and `reportlab` system dependencies from the Dockerfile as PDF generation has moved to the frontend/browser.
 - [ ] **Supabase Auth Polish:**
     - [ ] Review `Header.tsx` and guest session logic (`GUEST_COOKIE_NAME`) to seamlessly bridge anonymous configurator users with authenticated Supabase sessions when saving projects.
 - [ ] **PDF Generation Optimization:**
