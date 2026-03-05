@@ -48,6 +48,7 @@ app.add_middleware(
 app.include_router(cad.router, prefix="/api/cad", tags=["CAD"])
 app.include_router(data.router, prefix="/api/data", tags=["Data"])
 app.include_router(pricing.router, prefix="/api/pricing", tags=["Pricing"])
+app.include_router(design_review.router, prefix="/api/ai", tags=["AI"])
 
 
 @app.get("/")
