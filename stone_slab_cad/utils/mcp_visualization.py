@@ -312,6 +312,57 @@ class MCPVisualizationEngine:
             self.slab_object.data.materials.append(mat)
         
         print("Applied brushed surface texture")
+
+    def apply_pbr_material(self, material_name: str, texture_path: Optional[str] = None, 
+                           roughness_path: Optional[str] = None, normal_path: Optional[str] = None,
+                           metallic_path: Optional[str] = None):
+        """Apply a high-quality PBR material with multiple maps"""
+        if not self.slab_object:
+            return
+
+        mat = bpy.data.materials.new(name=f"PBR_{material_name}")
+        mat.use_nodes = True
+        nodes = mat.node_tree.nodes
+        links = mat.node_tree.links
+        
+        bsdf = nodes.get('Principled BSDF')
+        
+        def add_image_node(path, socket_name, colorspace='Color'):
+            if not path or not os.path.exists(path):
+                return None
+            img = bpy.data.images.load(path)
+            node = nodes.new('ShaderNodeTexImage')
+            node.image = img
+            node.image.colorspace_settings.name = colorspace
+            links.new(node.outputs['Color'], bsdf.inputs[socket_name])
+            return node
+
+        if texture_path:
+            add_image_node(texture_path, 'Base Color', 'sRGB')
+        
+        if roughness_path:
+            add_image_node(roughness_path, 'Roughness', 'Non-Color')
+            
+        if metallic_path:
+            add_image_node(metallic_path, 'Metallic', 'Non-Color')
+            
+        if normal_path:
+            norm_img = bpy.data.images.load(normal_path)
+            norm_node = nodes.new('ShaderNodeTexImage')
+            norm_node.image = norm_img
+            norm_node.image.colorspace_settings.name = 'Non-Color'
+            
+            norm_map = nodes.new('ShaderNodeNormalMap')
+            links.new(norm_node.outputs['Color'], norm_map.inputs['Color'])
+            links.new(norm_map.outputs['Normal'], bsdf.inputs['Normal'])
+
+        # Assign material
+        if self.slab_object.data.materials:
+            self.slab_object.data.materials[0] = mat
+        else:
+            self.slab_object.data.materials.append(mat)
+        
+        print(f"Applied PBR material: {material_name}")
     
     def create_cross_section_view(self, 
                                    config: CrossSectionConfig) -> bpy.types.Object:
