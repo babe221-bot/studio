@@ -17,10 +17,10 @@
 
 ## Features
 - [x] **AI "Design Review":** Enhance `AIAssistant.tsx` to provide structural safety warnings (e.g., "Slab too thin for this length").
-- [ ] **WebXR / AR Preview:** Add a "View in your room" button using `<model-viewer>` for real-world placement of designed slabs.
+- [x] **WebXR / AR Preview:** Add a "View in your room" button using `<model-viewer>` for real-world placement of designed slabs.
 - [ ] **Grain Alignment Tool:** UI for "Bookmatching" where users can align textures/veins across multiple slab joints.
 - [ ] **Advanced PBR Materials:** Implement `pbr_materials.py` to support realistic light reflection, roughness, and normal maps in the 3D viewer.
-- [ ] **GLB/USDZ Export:** Add a "Download 3D Model" button for professional architects to import designs into Revit or AutoCAD.
+- [x] **GLB/USDZ Export:** Add a "Download 3D Model" button for professional architects to import designs into Revit or AutoCAD.
 - [ ] **PDF Quotation 2.0:** Auto-generate branded PDFs containing 3D render snapshots, 2D technical drawings, and itemized costs.
 - [ ] **Voice Commands:** Integrate Web Speech API for "Hands-free" configuration (e.g., "Set length to 120 centimeters").
 - [ ] **Shared Workspaces:** Allow users to generate a "Collab Link" to share a live configuration with a client or contractor.
