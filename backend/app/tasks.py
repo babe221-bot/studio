@@ -7,9 +7,10 @@ from pathlib import Path
 from app.worker import celery_app
 
 @celery_app.task(bind=True)
-def render_3d_task(self, config: dict):
+def render_3d_task(self, config: dict, format: str = "png"):
     """
     Celery task to invoke Blender headlessly.
+    format: "png" (multiple views) or "glb" (AR model)
     """
     dims = config.get("dims", {})
     mat = config.get("material", {})
@@ -22,17 +23,11 @@ def render_3d_task(self, config: dict):
     
     try:
         # Construct Blender CLI command
-        # Adjust path to find stone_slab_cad from backend/app/tasks.py
-        # root is ../.. from here
         root_dir = Path(__file__).resolve().parents[2]
         script_path = root_dir / "stone_slab_cad" / "utils" / "mcp_visualization.py"
         
-        # Verify script exists to avoid obscure blender errors
         if not script_path.exists():
-            return {
-                "success": False,
-                "error": f"Script not found at {script_path}"
-            }
+            return {"success": False, "error": f"Script not found at {script_path}"}
 
         cmd = [
             "blender",
@@ -48,6 +43,9 @@ def render_3d_task(self, config: dict):
             "--output_dir", tmp_dir
         ]
 
+        if format == "glb":
+            cmd.append("--export_glb")
+
         # Add edges
         if edges.get("front"): cmd.append("--edge_front")
         if edges.get("back"): cmd.append("--edge_back")
@@ -60,20 +58,18 @@ def render_3d_task(self, config: dict):
         if okapniks.get("left"): cmd.append("--okapnik_left")
         if okapniks.get("right"): cmd.append("--okapnik_right")
 
-        # Run subprocess synchronously (blocking the worker, which is fine)
-        result = subprocess.run(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True  # capture as string
-        )
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
         if result.returncode != 0:
-            return {
-                "success": False, 
-                "error": f"Blender error: {result.stderr}",
-                "stdout": result.stdout
-            }
+            return {"success": False, "error": f"Blender error: {result.stderr}", "stdout": result.stdout}
+
+        if format == "glb":
+            glb_path = os.path.join(tmp_dir, "model.glb")
+            if os.path.exists(glb_path):
+                with open(glb_path, "rb") as fh:
+                    b64 = base64.b64encode(fh.read()).decode("utf-8")
+                    return {"success": True, "glb": b64}
+            return {"success": False, "error": "GLB file not generated"}
 
         # Collect renders
         renders = []
@@ -84,10 +80,7 @@ def render_3d_task(self, config: dict):
                     b64 = base64.b64encode(fh.read()).decode("utf-8")
                     renders.append({"name": file, "image": b64})
 
-        return {
-            "success": True,
-            "renders": renders
-        }
+        return {"success": True, "renders": renders}
 
     except Exception as exc:
         return {"success": False, "error": str(exc)}

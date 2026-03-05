@@ -526,6 +526,25 @@ class MCPVisualizationEngine:
         bpy.ops.render.render(write_still=True)
         
         print(f"Render saved to: {output_path}")
+
+    def export_glb(self, output_path: str):
+        """Export the scene to GLB format for WebXR/AR"""
+        if not self.slab_object:
+            return
+            
+        # Select the slab object
+        bpy.ops.object.select_all(action='DESELECT')
+        self.slab_object.select_set(True)
+        bpy.context.view_layer.objects.active = self.slab_object
+        
+        # Export as GLB
+        bpy.ops.export_scene.gltf(
+            filepath=output_path,
+            export_format='GLB',
+            use_selection=True,
+            export_apply=True # Apply modifiers (important for edge profiles)
+        )
+        print(f"GLB exported to: {output_path}")
     
     def generate_composite_dashboard(self,
                                       output_dir: str,
@@ -648,6 +667,7 @@ if __name__ == "__main__":
     parser.add_argument("--finish", type=str, default="brushed")
     parser.add_argument("--profile", type=str, default="c8_chamfer")
     parser.add_argument("--output_dir", type=str, default="renders")
+    parser.add_argument("--export_glb", action="store_true", help="Export GLB for AR")
     
     # Edges
     parser.add_argument("--edge_front", action="store_true")
@@ -698,9 +718,25 @@ if __name__ == "__main__":
     spec = builder.build()
     
     # Generate
-    create_standard_visualization(
-        spec=spec,
-        output_dir=args.output_dir,
-        slab_dims=(args.length, args.width, args.height)
-    )
+    os.makedirs(args.output_dir, exist_ok=True)
+    
+    if args.export_glb:
+        engine = MCPVisualizationEngine()
+        engine.initialize_scene(spec)
+        engine.create_base_slab_geometry(args.length, args.width, args.height)
+        for orientation, p in spec.edge_treatments.items():
+            engine.apply_edge_profile_geometry(p, orientation)
+        
+        # Surface treatment
+        if spec.surface_treatment.finish_type == SurfaceFinish.BRUSHED:
+            engine.apply_brushed_surface_texture()
+            
+        glb_path = os.path.join(args.output_dir, "model.glb")
+        engine.export_glb(glb_path)
+    else:
+        create_standard_visualization(
+            spec=spec,
+            output_dir=args.output_dir,
+            slab_dims=(args.length, args.width, args.height)
+        )
 
