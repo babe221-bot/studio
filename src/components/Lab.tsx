@@ -113,15 +113,15 @@ const OrderEntryForm = React.memo(({
         <div className="grid grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="length">Dužina (cm)</Label>
-            <Input id="length" type="number" value={length} onChange={e => setLength(parseFloat(e.target.value) || 0)} disabled={selectedElement?.hasSpecialBunjaEdges} />
+            <Input id="length" type="number" inputMode="decimal" pattern="[0-9]*" value={length} onChange={e => setLength(parseFloat(e.target.value) || 0)} disabled={selectedElement?.hasSpecialBunjaEdges} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="width">Širina (cm)</Label>
-            <Input id="width" type="number" value={width} onChange={e => setWidth(parseFloat(e.target.value) || 0)} />
+            <Input id="width" type="number" inputMode="decimal" pattern="[0-9]*" value={width} onChange={e => setWidth(parseFloat(e.target.value) || 0)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="height">Debljina (cm)</Label>
-            <Input id="height" type="number" value={height} onChange={e => setHeight(parseFloat(e.target.value) || 0)} />
+            <Input id="height" type="number" inputMode="decimal" pattern="[0-9]*" value={height} onChange={e => setHeight(parseFloat(e.target.value) || 0)} />
           </div>
         </div>
         {renderQuantityInput()}
