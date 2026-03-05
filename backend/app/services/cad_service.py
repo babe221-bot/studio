@@ -129,7 +129,11 @@ async def get_materials(db: Optional[AsyncSession] = None) -> List[Dict[str, Any
                 "color": m.color,
                 "texture": m.texture,
                 "density": float(m.density),
-                "cost_sqm": float(m.cost_sqm)
+                "cost_sqm": float(m.cost_sqm),
+                "inventory": {
+                    "count": getattr(m, "inventory_count", 0),
+                    "low_stock": getattr(m, "inventory_count", 0) <= getattr(m, "low_stock_threshold", 5)
+                }
             }
             for m in materials
         ]
@@ -222,6 +226,36 @@ async def get_edge_profiles(db: Optional[AsyncSession] = None) -> List[Dict[str,
 async def render_3d_simulation(config: dict) -> Dict[str, Any]:
     """
     Invokes Blender headlessly to generate photorealistic 3D renders.
+    Offloads to Celery task if available to prevent blocking.
+    """
+    try:
+        from app.tasks import render_3d_task
+        
+        # Dispatch to Celery
+        # Note: In a real async architecture, we'd return the task_id here.
+        # But to maintain frontend compatibility without a rewrite, we'll await the result
+        # in a non-blocking way for the event loop.
+        task = render_3d_task.delay(config)
+        
+        # Helper to wait for celery result without blocking event loop
+        def wait_for_task():
+            return task.get(timeout=60) # 60s timeout
+            
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, wait_for_task)
+
+    except ImportError:
+        # Fallback to local execution if tasks/celery not set up
+        print("Celery not found, running locally")
+        return await _render_3d_local(config)
+    except Exception as e:
+        # If redis/celery fails, try local or return error
+        print(f"Celery execution failed: {e}. Falling back to local.")
+        return await _render_3d_local(config)
+
+async def _render_3d_local(config: dict) -> Dict[str, Any]:
+    """
+    Local implementation of render_3d_simulation (original logic).
     """
     import subprocess
     

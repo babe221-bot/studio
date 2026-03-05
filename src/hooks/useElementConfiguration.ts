@@ -1,94 +1,81 @@
 "use client";
 
-import { useState, useCallback, useEffect } from 'react';
-import type { ConstructionElement, Material, SurfaceFinish, EdgeProfile, ProcessedEdges } from '@/types';
+import { useEffect, useCallback } from 'react';
+import type { Material, SurfaceFinish, EdgeProfile, ProcessedEdges } from '@/types';
 import { constructionElements } from '@/lib/constructionElements';
+import { useLabStore } from '@/store/useLabStore';
 
 export function useElementConfiguration(
     materials: Material[],
     finishes: SurfaceFinish[],
     profiles: EdgeProfile[]
 ) {
-    const [selectedElement, setSelectedElement] = useState<ConstructionElement | undefined>(constructionElements[0]);
-    const [length, setLength] = useState(constructionElements[0].defaultLength);
-    const [width, setWidth] = useState(constructionElements[0].defaultWidth);
-    const [height, setHeight] = useState(constructionElements[0].defaultHeight);
-    const [quantity, setQuantity] = useState(1);
-    const [specimenId, setSpecimenId] = useState(`${constructionElements[0].name} 01`);
-
-    const [selectedMaterialId, setSelectedMaterialId] = useState<string | undefined>();
-    const [selectedFinishId, setSelectedFinishId] = useState<string | undefined>();
-    const [selectedProfileId, setSelectedProfileId] = useState<string | undefined>();
+    const {
+        selectedElement,
+        length,
+        width,
+        height,
+        quantity,
+        specimenId,
+        selectedMaterialId,
+        selectedFinishId,
+        selectedProfileId,
+        processedEdges,
+        okapnikEdges,
+        bunjaEdgeStyle,
+        setSelectedElement,
+        setDimensions,
+        setQuantity,
+        setSpecimenId,
+        setMaterialId,
+        setFinishId,
+        setProfileId,
+        setProcessedEdge,
+        setOkapnikEdge,
+        setBunjaEdgeStyle
+    } = useLabStore();
 
     // Initialize defaults when data becomes available
     useEffect(() => {
         if (materials.length > 0 && !selectedMaterialId) {
-            setSelectedMaterialId(materials[0].id.toString());
+            setMaterialId(materials[0].id.toString());
         }
-    }, [materials, selectedMaterialId]);
+    }, [materials, selectedMaterialId, setMaterialId]);
 
     useEffect(() => {
         if (finishes.length > 0 && !selectedFinishId) {
-            setSelectedFinishId(finishes[0].id.toString());
+            setFinishId(finishes[0].id.toString());
         }
-    }, [finishes, selectedFinishId]);
+    }, [finishes, selectedFinishId, setFinishId]);
 
     useEffect(() => {
         if (profiles.length > 0 && !selectedProfileId) {
-            setSelectedProfileId(profiles[0].id.toString());
+            setProfileId(profiles[0].id.toString());
         }
-    }, [profiles, selectedProfileId]);
-
-    const [processedEdges, setProcessedEdges] = useState<ProcessedEdges>({
-        front: true,
-        back: false,
-        left: false,
-        right: false,
-    });
-
-    const [okapnikEdges, setOkapnikEdges] = useState<ProcessedEdges>({
-        front: false,
-        back: false,
-        left: false,
-        right: false,
-    });
-
-    const [bunjaEdgeStyle, setBunjaEdgeStyle] = useState<'oštre' | 'lomljene'>('lomljene');
+    }, [profiles, selectedProfileId, setProfileId]);
 
     const handleElementTypeChange = useCallback((elementId: string) => {
         const element = constructionElements.find(e => e.id === elementId);
         if (element) {
             setSelectedElement(element);
-            setLength(element.defaultLength);
-            setWidth(element.defaultWidth);
-            setHeight(element.defaultHeight);
-            setSpecimenId(`${element.name} 01`);
-            setQuantity(1);
-
-            if (element.orderUnit === 'sqm' || element.orderUnit === 'lm') {
-                setProcessedEdges({ front: false, back: false, left: false, right: false });
-            } else {
-                setProcessedEdges({ front: true, back: false, left: false, right: false });
-            }
-
-            setOkapnikEdges({ front: false, back: false, left: false, right: false });
         }
-    }, []);
+    }, [setSelectedElement]);
 
-    const updateProcessedEdge = useCallback((edge: keyof ProcessedEdges, checked: boolean) => {
-        setProcessedEdges(prev => {
-            const next = { ...prev, [edge]: checked };
-            // If processed edge is unchecked, okapnik must also be unchecked
-            if (!checked) {
-                setOkapnikEdges(oPrev => ({ ...oPrev, [edge]: false }));
-            }
-            return next;
-        });
-    }, []);
+    // Wrappers to match old signature where setters just took the value
+    const setLength = useCallback((l: number | ((prev: number) => number)) => {
+        const val = typeof l === 'function' ? l(length) : l;
+        setDimensions({ length: val });
+    }, [length, setDimensions]);
 
-    const updateOkapnikEdge = useCallback((edge: keyof ProcessedEdges, checked: boolean) => {
-        setOkapnikEdges(prev => ({ ...prev, [edge]: checked }));
-    }, [processedEdges]);
+    const setWidth = useCallback((w: number | ((prev: number) => number)) => {
+        const val = typeof w === 'function' ? w(width) : w;
+        setDimensions({ width: val });
+    }, [width, setDimensions]);
+
+    const setHeight = useCallback((h: number | ((prev: number) => number)) => {
+        const val = typeof h === 'function' ? h(height) : h;
+        setDimensions({ height: val });
+    }, [height, setDimensions]);
 
     return {
         selectedElement,
@@ -103,15 +90,15 @@ export function useElementConfiguration(
         specimenId,
         setSpecimenId,
         selectedMaterialId,
-        setSelectedMaterialId,
+        setSelectedMaterialId: setMaterialId,
         selectedFinishId,
-        setSelectedFinishId,
+        setSelectedFinishId: setFinishId,
         selectedProfileId,
-        setSelectedProfileId,
+        setSelectedProfileId: setProfileId,
         processedEdges,
-        updateProcessedEdge,
+        updateProcessedEdge: setProcessedEdge,
         okapnikEdges,
-        updateOkapnikEdge,
+        updateOkapnikEdge: setOkapnikEdge,
         bunjaEdgeStyle,
         setBunjaEdgeStyle,
         handleElementTypeChange
