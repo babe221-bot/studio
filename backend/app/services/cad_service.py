@@ -23,6 +23,9 @@ try:
 except ImportError as _e:
     _CAD_AVAILABLE = False
     _CAD_IMPORT_ERROR = str(_e)
+    # Define a dummy function to prevent "unbound variable" errors in static analysis
+    def _generate_2d_drawings(*args, **kwargs):
+        pass
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 

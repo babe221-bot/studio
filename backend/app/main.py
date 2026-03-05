@@ -1,3 +1,13 @@
+# Apply mocks if needed
+import sys
+try:
+    import bpy
+except ImportError:
+    # If we are not running inside Blender, insert mock
+    # This prevents ImportErrors in services that might import bpy at top level
+    from app.mocks import bpy as mock_bpy
+    sys.modules["bpy"] = mock_bpy
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
