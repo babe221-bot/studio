@@ -3,17 +3,29 @@ import subprocess
 import base64
 import tempfile
 import shutil
+import httpx
 from pathlib import Path
 from app.worker import celery_app
+
+async def download_file(url: str, dest: Path):
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(url)
+        if resp.status_code == 200:
+            dest.write_bytes(resp.content)
+            return True
+    return False
 
 @celery_app.task(bind=True)
 def render_3d_task(self, config: dict, format: str = "png"):
     """
     Celery task to invoke Blender headlessly.
-    format: "png" (multiple views) or "glb" (AR model)
     """
+    import asyncio # For running async download in sync worker
+    
     dims = config.get("dims", {})
     mat = config.get("material", {})
+    # ... rest of task logic
+
     finish = config.get("finish", {})
     profile = config.get("profile", {})
     edges = config.get("processedEdges", {})
