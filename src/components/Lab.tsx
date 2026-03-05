@@ -672,6 +672,7 @@ export function Lab() {
             constructionElements={constructionElements} specimenId={specimenId} setSpecimenId={setSpecimenId}
             length={length} setLength={setLength} width={width} setWidth={setWidth} height={height} setHeight={setHeight}
             quantity={quantity} setQuantity={setQuantity} selectedElement={selectedElement} handleElementTypeChange={handleElementTypeChange}
+            isListening={isListening} startListening={startListening}
           />
           <MaterialSelection
             materials={materials} selectedMaterialId={selectedMaterialId} setSelectedMaterialId={setSelectedMaterialId} handleOpenModal={handleOpenModal}
