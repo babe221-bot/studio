@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * VisualizationCanvas - Refactored Three.js Visualization using React Three Fiber
  * 
