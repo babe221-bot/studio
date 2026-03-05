@@ -29,6 +29,8 @@ export interface VisualizationProps {
   profile?: EdgeProfile;
   processedEdges: ProcessedEdges;
   okapnikEdges: ProcessedEdges;
+  grainOffset?: { x: number; y: number };
+  grainRotation?: number;
   showDimensions?: boolean;
   onCapture?: (dataUrl: string) => void;
 }
@@ -98,6 +100,8 @@ const Scene: React.FC<SceneProps> = ({
   profile,
   processedEdges,
   okapnikEdges,
+  grainOffset,
+  grainRotation,
   showDimensions,
   onSceneReady,
 }) => {
@@ -115,8 +119,10 @@ const Scene: React.FC<SceneProps> = ({
       profileId: profile?.id,
       processedEdges,
       okapnikEdges,
+      grainOffset,
+      grainRotation,
     });
-  }, [dims, material, finish, profile, processedEdges, okapnikEdges]);
+  }, [dims, material, finish, profile, processedEdges, okapnikEdges, grainOffset, grainRotation]);
 
   useEffect(() => {
     onSceneReady(scene, camera, gl);
@@ -136,6 +142,8 @@ const Scene: React.FC<SceneProps> = ({
           profile={profile}
           processedEdges={processedEdges}
           okapnikEdges={okapnikEdges}
+          grainOffset={grainOffset}
+          grainRotation={grainRotation}
         />
       )}
 
