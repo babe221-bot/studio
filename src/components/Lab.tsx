@@ -59,7 +59,8 @@ import { ARPreview } from './ARPreview';
 const OrderEntryForm = React.memo(({
   constructionElements, specimenId, setSpecimenId,
   length, setLength, width, setWidth, height, setHeight,
-  quantity, setQuantity, selectedElement, handleElementTypeChange
+  quantity, setQuantity, selectedElement, handleElementTypeChange,
+  isListening, startListening
 }: any) => {
   const renderQuantityInput = () => {
     if (!selectedElement) return null;
@@ -79,7 +80,18 @@ const OrderEntryForm = React.memo(({
 
   return (
     <Card>
-      <CardHeader><CardTitle>1. Unos naloga</CardTitle></CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>1. Unos naloga</CardTitle>
+        <Button 
+          variant={isListening ? "destructive" : "outline"} 
+          size="icon" 
+          onClick={startListening}
+          className={isListening ? "animate-pulse" : ""}
+          title="Glasovne naredbe"
+        >
+          {isListening ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+        </Button>
+      </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="element-type-select">Tip elementa</Label>
