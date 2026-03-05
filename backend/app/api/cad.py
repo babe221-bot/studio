@@ -194,3 +194,29 @@ async def list_finishes(db: AsyncSession = Depends(get_db)):
 async def list_profiles(db: AsyncSession = Depends(get_db)):
     """Get available edge profiles."""
     return await cad_service.get_edge_profiles(db)
+
+@router.post("/render-3d")
+async def render_3d(request: ProcessingRequest):
+    """
+    Generate photorealistic 3D renders using Blender.
+    This is an expensive operation that runs headlessly.
+    """
+    # Create config dict for the service
+    config = {
+        "dims": {
+            "length": request.dimensions.length,
+            "width": request.dimensions.width,
+            "height": request.dimensions.height
+        },
+        "material": {"name": request.material_name or "Granite"},
+        "finish": {"name": request.surface_finish_name or "brushed"},
+        "profile": {"name": request.edge_profile_name or "c8_chamfer"},
+        "processedEdges": {edge: True for edge in request.processed_edges or []},
+        "okapnikEdges": {edge: True for edge in request.okapnik_edges or []},
+    }
+    
+    result = await cad_service.render_3d_simulation(config)
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error"))
+    
+    return result

@@ -204,7 +204,7 @@ async def get_edge_profiles(db: Optional[AsyncSession] = None) -> List[Dict[str,
     try:
         result = await db.execute(select(EdgeProfileDB))
         profiles = result.scalars().all()
-        if not materials:
+        if not profiles:
             return hardcoded_profiles
             
         return [
