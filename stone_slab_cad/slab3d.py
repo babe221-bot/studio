@@ -12,6 +12,7 @@ import bmesh
 import mathutils
 import json
 from typing import Dict, Any
+from core.geometry_logic import get_slab_edge_mapping, calculate_groove_parameters
 from utils.materials import create_material
 from utils.profiles import get_profile_settings
 from utils.mesh_optimizer import (
@@ -83,13 +84,8 @@ def apply_edge_profiles(bm: bmesh.types.BMesh, profile: Dict[Any, Any],
     if not profile_settings['radius']:
         return
     
-    # Map edge names to vertex pairs (for a box)
-    edge_mapping = {
-        'front': [(0, 1), (2, 3)],  # Front face edges
-        'back':  [(4, 5), (6, 7)],  # Back face edges  
-        'left':  [(0, 4), (2, 6)],  # Left face edges
-        'right': [(1, 5), (3, 7)]   # Right face edges
-    }
+    # Decoupled Edge Mapping Logic
+    edge_mapping = get_slab_edge_mapping()
     
     edges_to_bevel = []
     
