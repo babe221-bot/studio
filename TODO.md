@@ -13,8 +13,8 @@
     - [x] Remove legacy `weasyprint` and `reportlab` system dependencies from the Dockerfile as PDF generation has moved to the frontend/browser.
 - [x] **Supabase Auth Polish:**
     - [x] Review `Header.tsx` and guest session logic (`GUEST_COOKIE_NAME`) to seamlessly bridge anonymous configurator users with authenticated Supabase sessions when saving projects.
-- [ ] **PDF Generation Optimization:**
-    - [ ] Review the browser-side `generateEnhancedPdf` flow to ensure large base64 strings don't crash mobile browsers, or finalize moving it to an edge function.
+- [x] **PDF Generation Optimization:**
+    - [x] Review the browser-side `generateEnhancedPdf` flow to ensure large base64 strings don't crash mobile browsers, or finalize moving it to an edge function.
 
 ## Bugs & Fixes
 - [ ] **Production Deployment Checks:**
