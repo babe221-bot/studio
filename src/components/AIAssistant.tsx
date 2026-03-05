@@ -6,12 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { MessageSquare, X, Send } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useCadContext } from '@/contexts/CadContext';
+import { buildCADContext } from '@/lib/cad-context';
 
 export function AIAssistant() {
     const { toast } = useToast();
+    const { cadData } = useCadContext();
+
+    const cadContextString = useMemo(() => buildCADContext(cadData), [cadData]);
+
     const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
+        body: {
+            cadContext: cadContextString
+        },
         onError: (err) => {
             toast({
                 title: 'Greška',

@@ -1,11 +1,11 @@
 # Project TODO List (Phase 2)
 
 ## High Priority
-- [ ] **Dynamic Data Integration:**
-    - [ ] Update frontend `Lab.tsx` and `useElementConfiguration.ts` to fetch `materials`, `surface_finishes`, and `edge_profiles` dynamically from the Python API instead of using hardcoded values in `src/lib/data.ts`.
-    - [ ] Create backend SQLAlchemy models and FastAPI endpoints for `surface_finishes` and `edge_profiles` (similar to `MaterialDB`), mapped to the Supabase tables defined in `scripts/migrate_seed.sql`.
-- [ ] **AI Context Injection:**
-    - [ ] Pass the active `cadContext` (current dimensions, selected material, processed edges) from the configurator state into the `useChat` hook body in `AIAssistant.tsx` to provide the LLM with true project awareness.
+- [x] **Dynamic Data Integration:**
+    - [x] Update frontend `Lab.tsx` and `useElementConfiguration.ts` to fetch `materials`, `surface_finishes`, and `edge_profiles` dynamically from the Python API instead of using hardcoded values in `src/lib/data.ts`.
+    - [x] Create backend SQLAlchemy models and FastAPI endpoints for `surface_finishes` and `edge_profiles` (similar to `MaterialDB`), mapped to the Supabase tables defined in `scripts/migrate_seed.sql`.
+- [x] **AI Context Injection:**
+    - [x] Pass the active `cadContext` (current dimensions, selected material, processed edges) from the configurator state into the `useChat` hook body in `AIAssistant.tsx` to provide the LLM with true project awareness.
 
 ## Features
 - [ ] **Blender Containerization (Production CAD):**
