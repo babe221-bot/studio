@@ -52,12 +52,12 @@
 - [x] **User Manual:** A visually rich guide for end-users on how to get the most out of the "Intelligent Designer" features.
 
 ## Tech Debt
-- [ ] **Decouple CAD Logic:** Refactor `slab3d.py` to separate geometric math from Blender-specific `bpy` API calls.
+- [x] **Decouple CAD Logic:** Refactor `slab3d.py` to separate geometric math from Blender-specific `bpy` API calls.
 - [ ] **Unit Test Coverage:** Aim for >80% coverage on `src/lib/calculations.ts` and `backend/app/logic`.
 - [ ] **End-to-End Tests:** Implement Playwright tests for the critical "Select -> Configure -> Checkout" user journey.
 - [ ] **CI/CD Optimization:** Implement GitHub Actions caching for `node_modules` and `python-venv` to speed up builds.
 - [ ] **TypeScript Strict Mode:** Address all `any` types in `AIAssistant.tsx` and `useChat` hook usage.
-- [ ] **Dependency Audit:** Update outdated packages in `package.json` and `requirements.txt` to mitigate security vulnerabilities.
+- [x] **Dependency Audit:** Update outdated packages in `package.json` and `requirements.txt` to mitigate security vulnerabilities.
 - [ ] **Environment Variable Sync:** Implement a standard `.env.example` and a script to sync secrets between local and production.
 - [ ] **Linters & Formatters:** Standardize `eslint`, `prettier`, and `ruff` configurations across the monorepo.
 - [ ] **Logging Framework:** Replace `print` statements with a structured logging library (e.g., `loguru`) in the backend.

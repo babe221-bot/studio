@@ -28,6 +28,7 @@ from .edge_treatment_specs import (
     ProfileGeometry, ChamferSpecification, DripEdgeSpecification,
     SurfaceFinish, SurfaceTreatmentSpec
 )
+from ..core.geometry_logic import get_uv_projection_orientation
 
 
 class RenderMode(Enum):
@@ -174,12 +175,13 @@ class MCPVisualizationEngine:
         # This prevents stretching on the sides (height/width ratio)
         uv_layer = bm.loops.layers.uv.new()
         for face in bm.faces:
-            # Determine plane orientation for this face
-            no = face.normal
-            if abs(no.x) > 0.5: # YZ Plane (Side)
+            # Decoupled orientation logic
+            orientation = get_uv_projection_orientation(face.normal)
+            
+            if orientation == 'YZ': # Side
                 for loop in face.loops:
                     loop[uv_layer].uv = (loop.vert.co.y, loop.vert.co.z)
-            elif abs(no.y) > 0.5: # XZ Plane (Front/Back)
+            elif orientation == 'XZ': # Front/Back
                 for loop in face.loops:
                     loop[uv_layer].uv = (loop.vert.co.x, loop.vert.co.z)
             else: # XY Plane (Top/Bottom)

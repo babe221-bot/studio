@@ -127,7 +127,6 @@ def create_okapnik_grooves(bm: bmesh.types.BMesh, okapnik_edges: Dict[str, bool]
     
     groove_width = 0.008   # 8mm
     groove_depth = 0.005   # 5mm  
-    offset = 0.02          # 20mm from edge
     
     def create_groove_cutter(groove_length: float, vertical: bool) -> bmesh.types.BMesh:
         """Create a groove cutting tool"""
@@ -143,7 +142,7 @@ def create_okapnik_grooves(bm: bmesh.types.BMesh, okapnik_edges: Dict[str, bool]
         return cutter
     
     def apply_boolean_difference(target_bm: bmesh.types.BMesh, cutter_bm: bmesh.types.BMesh,
-                                location: mathutils.Vector) -> None:
+                                 location: mathutils.Vector) -> None:
         """Apply boolean difference operation"""
         # Move cutter to position
         for vert in cutter_bm.verts:
@@ -162,18 +161,15 @@ def create_okapnik_grooves(bm: bmesh.types.BMesh, okapnik_edges: Dict[str, bool]
         
         cutter_bm.free()
     
-    # Apply grooves based on configuration
-    groove_positions = {
-        'front': (mathutils.Vector((0, -height/2 - groove_depth/2, width/2 - offset)), False),
-        'back':  (mathutils.Vector((0, -height/2 - groove_depth/2, -width/2 + offset)), False),
-        'left':  (mathutils.Vector((-length/2 + offset, -height/2 - groove_depth/2, 0)), True),
-        'right': (mathutils.Vector((length/2 - offset, -height/2 - groove_depth/2, 0)), True)
-    }
+    # Decoupled Groove Positioning Logic
+    groove_params = calculate_groove_parameters(length, width, height)
     
     for edge_name, enabled in okapnik_edges.items():
-        if enabled and edge_name in groove_positions:
-            location, is_vertical = groove_positions[edge_name]
-            groove_length = width if is_vertical else length
+        if enabled and edge_name in groove_params:
+            params = groove_params[edge_name]
+            location = mathutils.Vector(params['location'])
+            is_vertical = params['is_vertical']
+            groove_length = params['length']
             
             cutter = create_groove_cutter(groove_length, is_vertical)
             apply_boolean_difference(bm, cutter, location)

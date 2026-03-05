@@ -1,37 +1,35 @@
 # Core
-fastapi==0.115.0
-uvicorn[standard]==0.27.0
-python-multipart==0.0.6
+fastapi>=0.115.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
 
 # Database
-sqlalchemy==2.0.25
-psycopg[binary]==3.2.1
-asyncpg==0.29.0
-alembic==1.13.1
+sqlalchemy>=2.0.35
+psycopg[binary]>=3.2.1
+asyncpg>=0.29.0
+alembic>=1.13.1
 
 # Data Processing
-numpy==1.26.3
+numpy>=1.26.3
 
 # CAD Engine
 -e ../stone_slab_cad
 
 # AI/ML (optional, heavy — comment out if not needed locally)
-# torch==2.1.2
-# transformers==4.36.2
-pillow==10.2.0
+# torch>=2.1.2
+# transformers>=4.36.2
+pillow>=10.2.0
 
 # Config
-python-dotenv==1.0.1
-pydantic==2.5.3
-pydantic-settings==2.1.0
-httpx==0.26.0
+python-dotenv>=1.0.1
+pydantic>=2.10.0
+pydantic-settings>=2.7.0
+httpx>=0.27.0
 
 # Task Queue
-celery==5.3.6
-redis==5.0.1
+celery>=5.4.0
+redis>=5.0.1
 
 # Observability
-sentry-sdk[fastapi]==1.40.0
-
-# Network
-httpx==0.26.0
+sentry-sdk[fastapi]>=2.0.0
+loguru>=0.7.2
