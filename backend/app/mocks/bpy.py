@@ -33,22 +33,22 @@ class MockObjectCollection:
     def __init__(self):
         self.active = None
 
+class MockOpsObject:
+    def select_all(self, action='SELECT'): pass
+    def delete(self, use_global=False): pass
+    def mode_set(self, mode='OBJECT'): pass
+
+class MockOpsRender:
+    def render(self, write_still=True): pass
+
+class MockOpsMesh:
+    def primitive_cube_add(self, size=1.0): pass
+
 class MockOps:
     def __init__(self):
         self.object = MockOpsObject()
         self.render = MockOpsRender()
         self.mesh = MockOpsMesh()
-
-    class MockOpsObject:
-        def select_all(self, action='SELECT'): pass
-        def delete(self, use_global=False): pass
-        def mode_set(self, mode='OBJECT'): pass
-
-    class MockOpsRender:
-        def render(self, write_still=True): pass
-
-    class MockOpsMesh:
-        def primitive_cube_add(self, size=1.0): pass
 
 # Root module mocks
 context = MockContext()
