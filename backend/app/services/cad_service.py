@@ -176,45 +176,82 @@ async def get_surface_finishes(db: Optional[AsyncSession] = None) -> List[Dict[s
         print(f"Error fetching surface finishes from DB: {e}")
         return hardcoded_finishes
 
-async def get_edge_profiles(db: Optional[AsyncSession] = None) -> List[Dict[str, Any]]:
+async def render_3d_simulation(config: dict) -> Dict[str, Any]:
     """
-    Available edge profiles.
+    Invokes Blender headlessly to generate photorealistic 3D renders.
     """
-    hardcoded_profiles = [
-        {"id": "1", "name": "Ravni rez (Pilan)", "cost_m": 2},
-        {"id": "10", "name": "Smuš C0.5 (0.5mm 45°)", "cost_m": 5},
-        {"id": "11", "name": "Smuš C1 (1mm 45°)", "cost_m": 7},
-        {"id": "12", "name": "Smuš C2 (2mm 45°)", "cost_m": 8},
-        {"id": "13", "name": "Smuš C5 (5mm 45°)", "cost_m": 10},
-        {"id": "14", "name": "Smuš C7 (7mm 45°)", "cost_m": 11},
-        {"id": "15", "name": "Smuš C8 (8mm 45°)", "cost_m": 12},
-        {"id": "16", "name": "Smuš C10 (10mm 45°)", "cost_m": 13},
-        {"id": "20", "name": "Polu-zaobljena R1cm", "cost_m": 12},
-        {"id": "21", "name": "Polu-zaobljena R1.5cm", "cost_m": 15},
-        {"id": "22", "name": "Polu-zaobljena R2cm", "cost_m": 18},
-        {"id": "30", "name": "Puno-zaobljena R1.5cm (Half Bullnose)", "cost_m": 20},
-        {"id": "31", "name": "Puno-zaobljena R2cm (Half Bullnose)", "cost_m": 25},
-        {"id": "40", "name": "T-profil", "cost_m": 35},
-        {"id": "41", "name": "Dupli T-profil", "cost_m": 45},
-    ]
+    import subprocess
+    
+    dims = config.get("dims", {})
+    mat = config.get("material", {})
+    finish = config.get("finish", {})
+    profile = config.get("profile", {})
+    edges = config.get("processedEdges", {})
+    okapniks = config.get("okapnikEdges", {})
 
-    if db is None:
-        return hardcoded_profiles
-
+    tmp_dir = tempfile.mkdtemp(prefix="studio_render_")
+    
     try:
-        result = await db.execute(select(EdgeProfileDB))
-        profiles = result.scalars().all()
-        if not profiles:
-            return hardcoded_profiles
-            
-        return [
-            {
-                "id": str(p.id),
-                "name": p.name,
-                "cost_m": float(p.cost_m)
-            }
-            for p in profiles
+        # Construct Blender CLI command
+        # Assumes 'blender' is in PATH (installed via Dockerfile)
+        script_path = Path(__file__).resolve().parents[3] / "stone_slab_cad" / "utils" / "mcp_visualization.py"
+        
+        cmd = [
+            "blender",
+            "--background",
+            "--python", str(script_path),
+            "--",
+            "--length", str(dims.get("length", 1000)),
+            "--width", str(dims.get("width", 600)),
+            "--height", str(dims.get("height", 30)),
+            "--material", mat.get("name", "Granite"),
+            "--finish", finish.get("name", "brushed"),
+            "--profile", profile.get("name", "c8_chamfer"),
+            "--output_dir", tmp_dir
         ]
-    except Exception as e:
-        print(f"Error fetching edge profiles from DB: {e}")
-        return hardcoded_profiles
+
+        # Add edges
+        if edges.get("front"): cmd.append("--edge_front")
+        if edges.get("back"): cmd.append("--edge_back")
+        if edges.get("left"): cmd.append("--edge_left")
+        if edges.get("right"): cmd.append("--edge_right")
+
+        # Add okapniks
+        if okapniks.get("front"): cmd.append("--okapnik_front")
+        if okapniks.get("back"): cmd.append("--okapnik_back")
+        if okapniks.get("left"): cmd.append("--okapnik_left")
+        if okapniks.get("right"): cmd.append("--okapnik_right")
+
+        # Run subprocess
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+
+        if process.returncode != 0:
+            return {
+                "success": False, 
+                "error": f"Blender error: {stderr.decode()}",
+                "stdout": stdout.decode()
+            }
+
+        # Collect renders
+        renders = []
+        for file in os.listdir(tmp_dir):
+            if file.endswith(".png"):
+                file_path = os.path.join(tmp_dir, file)
+                with open(file_path, "rb") as fh:
+                    b64 = base64.b64encode(fh.read()).decode("utf-8")
+                    renders.append({"name": file, "image": b64})
+
+        return {
+            "success": True,
+            "renders": renders
+        }
+
+    except Exception as exc:
+        return {"success": False, "error": str(exc)}
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)

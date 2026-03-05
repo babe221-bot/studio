@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { initialMaterials, initialSurfaceFinishes, initialEdgeProfiles } from '@/lib/data';
 import { constructionElements } from '@/lib/constructionElements';
 import { useCadContext } from '@/contexts/CadContext';
+import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
 const VisualizationCanvas = dynamic(
@@ -308,6 +309,7 @@ const OrderList = React.memo(({ orderItems, edgeNames, handleRemoveOrderItem }: 
 export function Lab() {
   const { toast } = useToast();
   const { setCadData } = useCadContext();
+  const searchParams = useSearchParams();
 
   const [materials, setMaterials] = useState<Material[]>([]);
   const [finishes, setFinishes] = useState<SurfaceFinish[]>([]);
@@ -349,6 +351,26 @@ export function Lab() {
   const {
     versions, templates, saveVersion, saveTemplate, deleteVersion, deleteTemplate,
   } = useProjectHistory();
+
+  // Load version or template from URL
+  useEffect(() => {
+    const versionId = searchParams.get('version');
+    const templateId = searchParams.get('template');
+
+    if (versionId) {
+      const version = versions.find(v => v.id === versionId);
+      if (version) {
+        setOrderItems(version.items);
+        toast({ title: "Verzija učitana", description: `Učitana je verzija: ${version.name}` });
+      }
+    } else if (templateId) {
+      const template = templates.find(t => t.id === templateId);
+      if (template) {
+        setOrderItems(template.items);
+        toast({ title: "Predložak učitan", description: `Učitan je predložak: ${template.name}` });
+      }
+    }
+  }, [searchParams, versions, templates, toast]);
 
   const config = useElementConfiguration(materials, finishes, profiles);
   const {

@@ -4,7 +4,7 @@ import { SignOutButton } from "./SignOutButton";
 import type { GuestUser } from "@/lib/guest-session";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { UserCircle, LogIn } from "lucide-react";
+import { UserCircle, LogIn, LayoutDashboard } from "lucide-react";
 
 interface HeaderProps {
   guestUser?: GuestUser | null;
@@ -22,13 +22,26 @@ export async function Header(props: HeaderProps) {
   return (
     <header className="border-b bg-card shadow-sm sticky top-0 z-50">
       <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">
-            Upravljač Radova s Kamenom v3.0
-          </h1>
-          <p className="text-sm text-muted-foreground hidden sm:block">
-            Aplikacija za radne naloge s 3D vizualizacijom i PDF izvozom
-          </p>
+        <div className="flex items-center gap-8">
+          <Link href="/">
+            <h1 className="text-2xl font-bold text-primary">
+              Upravljač Radova s Kamenom v3.0
+            </h1>
+            <p className="text-sm text-muted-foreground hidden sm:block">
+              Aplikacija za radne naloge s 3D vizualizacijom i PDF izvozom
+            </p>
+          </Link>
+          
+          {!isGuest && displayUser && (
+            <nav className="hidden lg:flex items-center gap-4">
+              <Button variant="ghost" asChild className="flex items-center gap-2">
+                <Link href="/dashboard">
+                  <LayoutDashboard className="h-4 w-4" />
+                  Upravljačka ploča
+                </Link>
+              </Button>
+            </nav>
+          )}
         </div>
         <div className="flex items-center gap-4">
           {displayUser ? (

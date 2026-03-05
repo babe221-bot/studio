@@ -629,14 +629,78 @@ def create_standard_visualization(spec: ManufacturingProcessSpec,
     return rendered_files
 
 
-__all__ = [
-    'RenderMode',
-    'CrossSectionPlane',
-    'CameraSetup',
-    'LightingSetup',
-    'RenderSettings',
-    'CrossSectionConfig',
-    'ToolpathVisualizationConfig',
-    'MCPVisualizationEngine',
-    'create_standard_visualization'
-]
+if __name__ == "__main__":
+    import sys
+    import argparse
+
+    # Find the separator "--" and parse arguments after it
+    if "--" in sys.argv:
+        idx = sys.argv.index("--")
+        args_to_parse = sys.argv[idx + 1:]
+    else:
+        args_to_parse = []
+
+    parser = argparse.ArgumentParser(description="Generate 3D CAD visualization in Blender")
+    parser.add_argument("--length", type=float, default=1000.0)
+    parser.add_argument("--width", type=float, default=600.0)
+    parser.add_argument("--height", type=float, default=30.0)
+    parser.add_argument("--material", type=str, default="Granite")
+    parser.add_argument("--finish", type=str, default="brushed")
+    parser.add_argument("--profile", type=str, default="c8_chamfer")
+    parser.add_argument("--output_dir", type=str, default="renders")
+    
+    # Edges
+    parser.add_argument("--edge_front", action="store_true")
+    parser.add_argument("--edge_back", action="store_true")
+    parser.add_argument("--edge_left", action="store_true")
+    parser.add_argument("--edge_right", action="store_true")
+    
+    # Okapniks
+    parser.add_argument("--okapnik_front", action="store_true")
+    parser.add_argument("--okapnik_back", action="store_true")
+    parser.add_argument("--okapnik_left", action="store_true")
+    parser.add_argument("--okapnik_right", action="store_true")
+
+    args = parser.parse_args(args_to_parse)
+
+    # Build Spec
+    from .edge_treatment_specs import (
+        ManufacturingSpecBuilder, EdgeOrientation, ProfileType, SurfaceFinish
+    )
+
+    builder = ManufacturingSpecBuilder(
+        spec_id="CLI_GEN",
+        description=f"Generated via CLI: {args.material} {args.profile}"
+    )
+
+    # Map profile type
+    try:
+        p_type = ProfileType(args.profile.lower())
+    except ValueError:
+        p_type = ProfileType.C8_CHAMFER
+
+    # Apply edges
+    if args.edge_front: builder.with_edge_profile(EdgeOrientation.ANTERIOR, p_type)
+    if args.edge_back: builder.with_edge_profile(EdgeOrientation.POSTERIOR, p_type)
+    if args.edge_left: builder.with_edge_profile(EdgeOrientation.PORT, p_type)
+    if args.edge_right: builder.with_edge_profile(EdgeOrientation.STARBOARD, p_type)
+
+    # Apply surface finish
+    s_finish = SurfaceFinish.BRUSHED if args.finish.lower() == "brushed" else SurfaceFinish.POLISHED
+    builder.spec.surface_treatment.finish_type = s_finish
+
+    # Apply okapniks
+    if args.okapnik_front: builder.with_drip_edge(EdgeOrientation.ANTERIOR)
+    if args.okapnik_back: builder.with_drip_edge(EdgeOrientation.POSTERIOR)
+    if args.okapnik_left: builder.with_drip_edge(EdgeOrientation.PORT)
+    if args.okapnik_right: builder.with_drip_edge(EdgeOrientation.STARBOARD)
+
+    spec = builder.build()
+    
+    # Generate
+    create_standard_visualization(
+        spec=spec,
+        output_dir=args.output_dir,
+        slab_dims=(args.length, args.width, args.height)
+    )
+
