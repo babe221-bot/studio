@@ -783,9 +783,18 @@ if __name__ == "__main__":
         for orientation, p in spec.edge_treatments.items():
             engine.apply_edge_profile_geometry(p, orientation)
         
-        # Surface treatment
-        if spec.surface_treatment.finish_type == SurfaceFinish.BRUSHED:
-            engine.apply_brushed_surface_texture()
+    # Surface treatment
+    if args.roughness_map or args.normal_map:
+        # We need a way to handle URLs - for now we assume they are local paths
+        # or have been downloaded by the calling task
+        engine.apply_pbr_material(
+            args.material,
+            roughness_path=args.roughness_map,
+            normal_path=args.normal_map,
+            metallic_path=args.metallic_map
+        )
+    elif spec.surface_treatment.finish_type == SurfaceFinish.BRUSHED:
+        engine.apply_brushed_surface_texture()
             
         glb_path = os.path.join(args.output_dir, "model.glb")
         engine.export_glb(glb_path)
