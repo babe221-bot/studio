@@ -315,22 +315,101 @@ export function Lab() {
   const searchParams = useSearchParams();
 
   const [materials, setMaterials] = useState<Material[]>([]);
-  // ... (rest of state)
+  const [finishes, setFinishes] = useState<SurfaceFinish[]>([]);
+  const [profiles, setProfiles] = useState<EdgeProfile[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
 
-  // ... (fetchData useEffect)
+  // Fetch dynamic data
+  useEffect(() => {
+    const fetchData = async () => {
+      const PYTHON_API_URL = process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:8000';
+      try {
+        const [mRes, fRes, pRes] = await Promise.all([
+          fetch(`${PYTHON_API_URL}/api/cad/materials`),
+          fetch(`${PYTHON_API_URL}/api/cad/finishes`),
+          fetch(`${PYTHON_API_URL}/api/cad/profiles`)
+        ]);
 
-  // ... (useProjectHistory)
+        if (mRes.ok) setMaterials(await mRes.json());
+        else setMaterials(initialMaterials);
 
-  // ... (Load version useEffect)
+        if (fRes.ok) setFinishes(await fRes.json());
+        else setFinishes(initialSurfaceFinishes);
+
+        if (pRes.ok) setProfiles(await pRes.json());
+        else setProfiles(initialEdgeProfiles);
+      } catch (error) {
+        console.error('Error fetching dynamic data:', error);
+        setMaterials(initialMaterials);
+        setFinishes(initialSurfaceFinishes);
+        setProfiles(initialEdgeProfiles);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const {
+    versions, templates, saveVersion, saveTemplate, deleteVersion, deleteTemplate,
+  } = useProjectHistory();
+
+  // Load version or template from URL
+  useEffect(() => {
+    const versionId = searchParams.get('version');
+    const templateId = searchParams.get('template');
+
+    if (versionId) {
+      const version = versions.find(v => v.id === versionId);
+      if (version) {
+        setOrderItems(version.items);
+        toast({ title: "Verzija učitana", description: `Učitana je verzija: ${version.name}` });
+      }
+    } else if (templateId) {
+      const template = templates.find(t => t.id === templateId);
+      if (template) {
+        setOrderItems(template.items);
+        toast({ title: "Predložak učitan", description: `Učitan je predložak: ${template.name}` });
+      }
+    }
+  }, [searchParams, versions, templates, toast]);
 
   const config = useElementConfiguration(materials, finishes, profiles);
-  // ... (destructure config)
+  const {
+    selectedElement, length, setLength, width, setWidth, height, setHeight,
+    quantity, setQuantity, specimenId, setSpecimenId,
+    selectedMaterialId, setSelectedMaterialId,
+    selectedFinishId, setSelectedFinishId,
+    selectedProfileId, setSelectedProfileId,
+    processedEdges, updateProcessedEdge,
+    okapnikEdges, updateOkapnikEdge,
+    bunjaEdgeStyle, setBunjaEdgeStyle,
+    handleElementTypeChange
+  } = config;
 
-  // ... (modal state)
+  const [modalOpen, setModalOpen] = useState<ModalType>(null);
+  const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [isAddingItem, setIsAddingItem] = useState(false);
+  const [announcement, setAnnouncement] = useState<string>('');
+  const [showDimensions, setShowDimensions] = useState(false);
+  const canvasRef = useRef<CanvasHandle>(null);
 
-  // ... (memos)
+  const selectedMaterial = useMemo(() => materials.find(m => m.id.toString() === selectedMaterialId), [materials, selectedMaterialId]);
+  const selectedFinish = useMemo(() => finishes.find(f => f.id.toString() === selectedFinishId), [finishes, selectedFinishId]);
+  const selectedProfile = useMemo(() => profiles.find(p => p.id.toString() === selectedProfileId), [profiles, selectedProfileId]);
 
-  // ... (CAD Context sync)
+  // Sync with CAD Context for AI
+  useEffect(() => {
+    setCadData({
+      currentItems: orderItems,
+      selectedMaterial,
+      selectedFinish,
+      selectedProfile,
+      activeDimensions: { length, width, height }
+    });
+  }, [orderItems, selectedMaterial, selectedFinish, selectedProfile, length, width, height, setCadData]);
 
   const calculations = useOrderCalculations({
     length, width, height,
@@ -339,16 +418,24 @@ export function Lab() {
     selectedElement, quantity, bunjaEdgeStyle
   });
 
-  // Track key interactions
+  const deferredVisualizationState = useDeferredValue(useMemo(() => ({
+    dims: { length, width, height },
+    material: selectedMaterial,
+    finish: selectedFinish,
+    profile: selectedProfile,
+    processedEdges: processedEdges,
+    okapnikEdges: okapnikEdges,
+  }), [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnikEdges]));
+
   useEffect(() => {
     if (calculations.totalCost > 0) {
-        // Debounce tracking for price updates if needed, or track major milestones
+      const parts = [
+        `Kalkulacija ažurirana. Ukupni trošak: ${calculations.totalCost.toFixed(2)} eura. `,
+        `Površina: ${calculations.surfaceArea.toFixed(2)} m². Težina: ${calculations.weight.toFixed(1)} kg.`
+      ];
+      setAnnouncement(parts.join(''));
     }
-  }, [calculations.totalCost]);
-
-  // ... (deferredVisualizationState)
-
-  // ... (announcement useEffect)
+  }, [calculations.totalCost, calculations.surfaceArea, calculations.weight]);
 
   const edgeNames = useMemo(() => ({
     front: 'Prednja', back: 'Zadnja', left: 'Lijeva', right: 'Desna'
@@ -369,14 +456,52 @@ export function Lab() {
 
     setIsAddingItem(true);
     try {
-      // ... (existing logic)
-      
-      // ... (drawing generation loop)
+      const processedEdgesNames = (Object.entries(processedEdges)
+        .filter(([, selected]) => selected)
+        .map(([edge]) => edgeNames[edge as keyof typeof edgeNames]));
 
-      // ... (if !drawingResponse error)
+      const okapnikEdgesNames = (Object.entries(okapnikEdges)
+        .filter(([, selected]) => selected)
+        .map(([edge]) => edgeNames[edge as keyof typeof edgeNames]));
 
-      // ... (newOrderItem creation)
-      
+      let drawingResponse;
+      let retries = 0;
+      const MAX_RETRIES = 2;
+
+      while (retries <= MAX_RETRIES) {
+        try {
+          drawingResponse = await generateTechnicalDrawing({
+            length, width, profileName: selectedProfile.name,
+            surfaceFinishName: selectedFinish.name,
+            processedEdges: processedEdgesNames,
+            okapnikEdges: okapnikEdgesNames,
+            isBunja: !!selectedElement.hasSpecialBunjaEdges,
+            bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges ? bunjaEdgeStyle : undefined,
+          });
+          if (drawingResponse.imageDataUri) break;
+        } catch (err) { console.error(`Attempt ${retries + 1} failed:`, err); }
+        retries++;
+        if (retries <= MAX_RETRIES) await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+      }
+
+      if (!drawingResponse?.imageDataUri) throw new Error("AI nije uspio generirati sliku.");
+
+      const newOrderItem: OrderItem = {
+        orderId: Date.now(),
+        id: specimenId,
+        dims: { length, width, height },
+        material: selectedMaterial,
+        finish: selectedFinish,
+        profile: selectedProfile,
+        processedEdges: processedEdges,
+        okapnikEdges: okapnikEdges,
+        totalCost: calculations.totalCost,
+        planSnapshotDataUri: drawingResponse.imageDataUri,
+        planSnapshotUrl: drawingResponse.imageUrl,
+        orderUnit: selectedElement.orderUnit,
+        quantity: quantity,
+        bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges ? bunjaEdgeStyle : undefined,
+      };
       setOrderItems(prev => [...prev, newOrderItem]);
       toast({ title: "Stavka dodana", description: `${selectedElement.name} uspješno dodan.` });
       
@@ -400,10 +525,10 @@ export function Lab() {
 
   const handleDownloadPdf = useCallback(async () => {
     if (orderItems.length === 0) return;
-
+    
     posthog?.capture('download_pdf_clicked', {
-      item_count: orderItems.length,
-      total_value: orderItems.reduce((sum, item) => sum + item.totalCost, 0)
+        item_count: orderItems.length,
+        total_value: orderItems.reduce((sum, item) => sum + item.totalCost, 0)
     });
 
     try {
@@ -448,10 +573,6 @@ export function Lab() {
 
   return (
     <main className="container mx-auto p-4 md:p-6 lg:p-8 pb-safe px-safe">
-      {/* ... */}
-    </main>
-  );
-}
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">{announcement}</div>
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 xl:grid-cols-4">
         <div className="flex flex-col gap-6 lg:col-span-1 xl:col-span-1 lg:order-1 order-2">
