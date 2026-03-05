@@ -49,6 +49,8 @@ import { useOrderCalculations } from '@/hooks/useOrderCalculations';
 import { useElementConfiguration } from '@/hooks/useElementConfiguration';
 import { useProjectHistory } from '@/hooks/useProjectHistory';
 import { useDesignAnalysis } from '@/hooks/useDesignAnalysis';
+import { useVoiceCommands } from '@/hooks/useVoiceCommands';
+import { Mic, MicOff } from 'lucide-react';
 import { VersionHistoryDialog } from './history/VersionHistoryDialog';
 import { TemplateManager } from './history/TemplateManager';
 import { ARPreview } from './ARPreview';
