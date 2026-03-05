@@ -99,6 +99,14 @@ export function buildCADContext(data: CADContextData): string {
         });
     }
 
+    // Safety Warnings
+    if (data.safetyWarnings && data.safetyWarnings.length > 0) {
+        parts.push(`STRUKTURNA UPOZORENJA:`);
+        data.safetyWarnings.forEach(warn => {
+            parts.push(`  [${warn.severity.toUpperCase()}] ${warn.message} - ${warn.suggestion}`);
+        });
+    }
+
     return parts.length > 0 ? parts.join('\n') : '';
 }
 

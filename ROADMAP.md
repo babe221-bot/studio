@@ -16,7 +16,7 @@
 - [ ] **PostHog Analytics:** Implement event tracking for the configuration funnel (Selection -> Dimensioning -> Render -> Checkout).
 
 ## Features
-- [ ] **AI "Design Review":** Enhance `AIAssistant.tsx` to provide structural safety warnings (e.g., "Slab too thin for this length").
+- [x] **AI "Design Review":** Enhance `AIAssistant.tsx` to provide structural safety warnings (e.g., "Slab too thin for this length").
 - [ ] **WebXR / AR Preview:** Add a "View in your room" button using `<model-viewer>` for real-world placement of designed slabs.
 - [ ] **Grain Alignment Tool:** UI for "Bookmatching" where users can align textures/veins across multiple slab joints.
 - [ ] **Advanced PBR Materials:** Implement `pbr_materials.py` to support realistic light reflection, roughness, and normal maps in the 3D viewer.

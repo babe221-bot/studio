@@ -408,9 +408,10 @@ export function Lab() {
       selectedMaterial,
       selectedFinish,
       selectedProfile,
-      activeDimensions: { length, width, height }
+      activeDimensions: { length, width, height },
+      safetyWarnings: warnings
     });
-  }, [orderItems, selectedMaterial, selectedFinish, selectedProfile, length, width, height, setCadData]);
+  }, [orderItems, selectedMaterial, selectedFinish, selectedProfile, length, width, height, warnings, setCadData]);
 
   const calculations = useOrderCalculations({
     length, width, height,
