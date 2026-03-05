@@ -223,39 +223,34 @@ async def get_edge_profiles(db: Optional[AsyncSession] = None) -> List[Dict[str,
         print(f"Error fetching edge profiles from DB: {e}")
         return hardcoded_profiles
 
-async def render_3d_simulation(config: dict) -> Dict[str, Any]:
+async def render_3d_simulation(config: dict, format: str = "png") -> Dict[str, Any]:
     """
-    Invokes Blender headlessly to generate photorealistic 3D renders.
+    Invokes Blender headlessly to generate photorealistic 3D renders or GLB models.
     Offloads to Celery task if available to prevent blocking.
     """
     try:
         from app.tasks import render_3d_task
         
         # Dispatch to Celery
-        # Note: In a real async architecture, we'd return the task_id here.
-        # But to maintain frontend compatibility without a rewrite, we'll await the result
-        # in a non-blocking way for the event loop.
-        task = render_3d_task.delay(config)
+        task = render_3d_task.delay(config, format=format)
         
         # Helper to wait for celery result without blocking event loop
         def wait_for_task():
-            return task.get(timeout=60) # 60s timeout
+            return task.get(timeout=120) # Increased timeout for GLB/Renders
             
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, wait_for_task)
 
     except ImportError:
-        # Fallback to local execution if tasks/celery not set up
-        print("Celery not found, running locally")
-        return await _render_3d_local(config)
+        # Fallback to local execution
+        return await _render_3d_local(config, format=format)
     except Exception as e:
-        # If redis/celery fails, try local or return error
         print(f"Celery execution failed: {e}. Falling back to local.")
-        return await _render_3d_local(config)
+        return await _render_3d_local(config, format=format)
 
-async def _render_3d_local(config: dict) -> Dict[str, Any]:
+async def _render_3d_local(config: dict, format: str = "png") -> Dict[str, Any]:
     """
-    Local implementation of render_3d_simulation (original logic).
+    Local implementation of render_3d_simulation.
     """
     import subprocess
     
@@ -269,8 +264,6 @@ async def _render_3d_local(config: dict) -> Dict[str, Any]:
     tmp_dir = tempfile.mkdtemp(prefix="studio_render_")
     
     try:
-        # Construct Blender CLI command
-        # Assumes 'blender' is in PATH (installed via Dockerfile)
         script_path = Path(__file__).resolve().parents[3] / "stone_slab_cad" / "utils" / "mcp_visualization.py"
         
         cmd = [
@@ -286,6 +279,9 @@ async def _render_3d_local(config: dict) -> Dict[str, Any]:
             "--profile", profile.get("name", "c8_chamfer"),
             "--output_dir", tmp_dir
         ]
+
+        if format == "glb":
+            cmd.append("--export_glb")
 
         # Add edges
         if edges.get("front"): cmd.append("--edge_front")
@@ -313,6 +309,14 @@ async def _render_3d_local(config: dict) -> Dict[str, Any]:
                 "error": f"Blender error: {stderr.decode()}",
                 "stdout": stdout.decode()
             }
+
+        if format == "glb":
+            glb_path = os.path.join(tmp_dir, "model.glb")
+            if os.path.exists(glb_path):
+                with open(glb_path, "rb") as fh:
+                    b64 = base64.b64encode(fh.read()).decode("utf-8")
+                    return {"success": True, "glb": b64}
+            return {"success": False, "error": "GLB not found"}
 
         # Collect renders
         renders = []

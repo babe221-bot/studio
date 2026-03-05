@@ -220,3 +220,29 @@ async def render_3d(request: ProcessingRequest):
         raise HTTPException(status_code=500, detail=result.get("error"))
     
     return result
+
+@router.post("/export-glb")
+async def export_glb(request: ProcessingRequest):
+    """
+    Generate a GLB 3D model for AR viewing.
+    """
+    config = {
+        "dims": {
+            "length": request.dimensions.length,
+            "width": request.dimensions.width,
+            "height": request.dimensions.height
+        },
+        "material": {"name": request.material_name or "Granite"},
+        "finish": {"name": request.surface_finish_name or "brushed"},
+        "profile": {"name": request.edge_profile_name or "c8_chamfer"},
+        "processedEdges": {edge: True for edge in request.processed_edges or []},
+        "okapnikEdges": {edge: True for edge in request.okapnik_edges or []},
+    }
+    
+    # We call render_3d_simulation but with format="glb"
+    result = await cad_service.render_3d_simulation(config, format="glb")
+    
+    if not result.get("success"):
+        raise HTTPException(status_code=500, detail=result.get("error"))
+    
+    return result
