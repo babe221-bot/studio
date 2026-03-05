@@ -3,8 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import os
 
-from app.api import cad, data
+from app.api import cad, data, pricing
 from app.services.database import init_db
+import sentry_sdk
+
+# Initialize Sentry
+sentry_dsn = os.getenv("SENTRY_DSN")
+if sentry_dsn:
+    sentry_sdk.init(
+        dsn=sentry_dsn,
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+    )
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -37,6 +47,8 @@ app.add_middleware(
 # Include routers
 app.include_router(cad.router, prefix="/api/cad", tags=["CAD"])
 app.include_router(data.router, prefix="/api/data", tags=["Data"])
+app.include_router(pricing.router, prefix="/api/pricing", tags=["Pricing"])
+
 
 @app.get("/")
 async def root():
