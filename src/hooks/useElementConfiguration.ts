@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { ConstructionElement, Material, SurfaceFinish, EdgeProfile, ProcessedEdges } from '@/types';
-import { initialMaterials, initialSurfaceFinishes, initialEdgeProfiles } from '@/lib/data';
 import { constructionElements } from '@/lib/constructionElements';
 
-export function useElementConfiguration() {
+export function useElementConfiguration(
+    materials: Material[],
+    finishes: SurfaceFinish[],
+    profiles: EdgeProfile[]
+) {
     const [selectedElement, setSelectedElement] = useState<ConstructionElement | undefined>(constructionElements[0]);
     const [length, setLength] = useState(constructionElements[0].defaultLength);
     const [width, setWidth] = useState(constructionElements[0].defaultWidth);
@@ -13,9 +16,28 @@ export function useElementConfiguration() {
     const [quantity, setQuantity] = useState(1);
     const [specimenId, setSpecimenId] = useState(`${constructionElements[0].name} 01`);
 
-    const [selectedMaterialId, setSelectedMaterialId] = useState<string | undefined>(initialMaterials[0]?.id.toString());
-    const [selectedFinishId, setSelectedFinishId] = useState<string | undefined>(initialSurfaceFinishes[0]?.id.toString());
-    const [selectedProfileId, setSelectedProfileId] = useState<string | undefined>(initialEdgeProfiles[0]?.id.toString());
+    const [selectedMaterialId, setSelectedMaterialId] = useState<string | undefined>();
+    const [selectedFinishId, setSelectedFinishId] = useState<string | undefined>();
+    const [selectedProfileId, setSelectedProfileId] = useState<string | undefined>();
+
+    // Initialize defaults when data becomes available
+    useEffect(() => {
+        if (materials.length > 0 && !selectedMaterialId) {
+            setSelectedMaterialId(materials[0].id.toString());
+        }
+    }, [materials, selectedMaterialId]);
+
+    useEffect(() => {
+        if (finishes.length > 0 && !selectedFinishId) {
+            setSelectedFinishId(finishes[0].id.toString());
+        }
+    }, [finishes, selectedFinishId]);
+
+    useEffect(() => {
+        if (profiles.length > 0 && !selectedProfileId) {
+            setSelectedProfileId(profiles[0].id.toString());
+        }
+    }, [profiles, selectedProfileId]);
 
     const [processedEdges, setProcessedEdges] = useState<ProcessedEdges>({
         front: true,

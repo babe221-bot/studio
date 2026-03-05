@@ -3,6 +3,7 @@ import { Lab } from '@/components/Lab';
 import { AssistantWrapper } from '@/components/AssistantWrapper';
 import { cookies } from 'next/headers';
 import { GUEST_COOKIE_NAME, deserializeGuestUser, type GuestUser } from '@/lib/guest-session';
+import { CadProvider } from '@/contexts/CadContext';
 
 export default async function Home() {
   const cookieStore = await cookies();
@@ -12,10 +13,12 @@ export default async function Home() {
   const guestUser: GuestUser | null = guestCookie ? deserializeGuestUser(guestCookie.value) : null;
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header guestUser={guestUser} />
-      <Lab />
-      <AssistantWrapper />
-    </div>
+    <CadProvider>
+      <div className="flex min-h-screen flex-col">
+        <Header guestUser={guestUser} />
+        <Lab />
+        <AssistantWrapper />
+      </div>
+    </CadProvider>
   );
 }

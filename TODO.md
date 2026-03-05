@@ -1,43 +1,29 @@
-# Project TODO List
+# Project TODO List (Phase 2)
 
 ## High Priority
-- [x] **Fix Backend Environment:**
-    - [x] Resolve missing `fastapi` dependency in `backend/app/main.py`. Ensure virtual environment is correctly set up and activated.
-    - [x] Investigate `stone_slab_cad/utils/mcp_visualization.py` dependencies (`bpy`, `bmesh`). This code requires a Blender environment.
-        - [x] **Decision:** Determine if this should run in a Docker container with Blender or if it's a standalone utility.
-        - [x] Add instructions for running this code to `README.md`.
-- [x] **Database Integration:**
-    - [x] `backend/app/services/cad_service.py`: Implement fetching materials from Supabase `materials` table (currently hardcoded or mocked). *Search for "TODO Sprint 3"*
+- [ ] **Dynamic Data Integration:**
+    - [ ] Update frontend `Lab.tsx` and `useElementConfiguration.ts` to fetch `materials`, `surface_finishes`, and `edge_profiles` dynamically from the Python API instead of using hardcoded values in `src/lib/data.ts`.
+    - [ ] Create backend SQLAlchemy models and FastAPI endpoints for `surface_finishes` and `edge_profiles` (similar to `MaterialDB`), mapped to the Supabase tables defined in `scripts/migrate_seed.sql`.
+- [ ] **AI Context Injection:**
+    - [ ] Pass the active `cadContext` (current dimensions, selected material, processed edges) from the configurator state into the `useChat` hook body in `AIAssistant.tsx` to provide the LLM with true project awareness.
 
 ## Features
-- [x] **Backend Testing:**
-    - [x] Set up `pytest` for the backend.
-    - [x] Create initial test suite for `backend/app/main.py` (health check, basic endpoints).
-- [x] **CI/CD Pipeline:**
-    - [x] Create `.github/workflows/main.yml` for automated testing and linting.
-    - [x] Configure separate jobs for frontend (Next.js) and backend (FastAPI).
-- [x] **Frontend Polish:**
-    - [x] Verify all UI components have proper loading states.
-    - [x] Ensure error handling is robust (e.g., toast notifications for API failures).
+- [ ] **Blender Containerization (Production CAD):**
+    - [ ] Update `backend/Dockerfile` to install `blender` system packages to support headless execution of `stone_slab_cad` rendering via the API.
+    - [ ] Remove legacy `weasyprint` and `reportlab` system dependencies from the Dockerfile as PDF generation has moved to the frontend/browser.
+- [ ] **Supabase Auth Polish:**
+    - [ ] Review `Header.tsx` and guest session logic (`GUEST_COOKIE_NAME`) to seamlessly bridge anonymous configurator users with authenticated Supabase sessions when saving projects.
+- [ ] **PDF Generation Optimization:**
+    - [ ] Review the browser-side `generateEnhancedPdf` flow to ensure large base64 strings don't crash mobile browsers, or finalize moving it to an edge function.
 
 ## Bugs & Fixes
-- [ ] **Path Injection Hack:**
-    - [ ] Refactor `backend/app/services/cad_service.py` to avoid `sys.path.insert` for `stone_slab_cad`. Consider packaging `stone_slab_cad` as a local installable package (`pip install -e ./stone_slab_cad`).
-- [ ] **LSP Errors:**
-    - [ ] Fix import errors in `backend/app/main.py` (`fastapi`, `fastapi.middleware.cors`).
+- [ ] **Production Deployment Checks:**
+    - [ ] Validate that the FastAPI `uvicorn` setup works correctly behind a production load balancer (e.g., ensuring `FORWARDED_ALLOW_IPS` is properly set for Railway/Fly.io if needed).
 
 ## Documentation
-- [ ] **Update README.md:**
-    - [ ] Document the `stone_slab_cad` module usage and its Blender dependency.
-    - [ ] Add explicit setup instructions for the backend virtual environment.
-- [ ] **Create CONTRIBUTING.md:**
-    - [ ] Add guidelines for code style, commit messages, and PR process.
+- [ ] **Clean Up Legacy Docs:**
+    - [ ] Review `docs/archives/google-migration-plan.md` and archive or remove outdated architecture references. Ensure `docs/ai_context/AI_ARCHITECTURE_MAP.md` is accurate to the current state.
 
 ## Tech Debt
-- [ ] **Dependency Management:**
-    - [ ] Review `backend/requirements.txt` and remove unused dependencies.
-    - [ ] Ensure `package.json` scripts are up-to-date (e.g., `dev:backend` command).
-
-## Notes
-- The project has a hybrid structure (Next.js frontend + FastAPI backend + Blender/Python CAD utils).
-- `stone_slab_cad` appears to be a shared library but is currently just a directory.
+- [ ] **Frontend Test Coverage:**
+    - [ ] Set up tests for critical frontend hooks (e.g., `useElementConfiguration`, `useOrderCalculations`) using Jest/React Testing Library.

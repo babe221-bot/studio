@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { initialMaterials, initialSurfaceFinishes, initialEdgeProfiles } from '@/lib/data';
 import { constructionElements } from '@/lib/constructionElements';
+import { useCadContext } from '@/contexts/CadContext';
 import dynamic from 'next/dynamic';
 
 const VisualizationCanvas = dynamic(
@@ -306,17 +307,50 @@ const OrderList = React.memo(({ orderItems, edgeNames, handleRemoveOrderItem }: 
 
 export function Lab() {
   const { toast } = useToast();
+  const { setCadData } = useCadContext();
 
-  const [materials, setMaterials] = useState<Material[]>(initialMaterials);
-  const [finishes, setFinishes] = useState<SurfaceFinish[]>(initialSurfaceFinishes);
-  const [profiles, setProfiles] = useState<EdgeProfile[]>(initialEdgeProfiles);
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [finishes, setFinishes] = useState<SurfaceFinish[]>([]);
+  const [profiles, setProfiles] = useState<EdgeProfile[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+
+  // Fetch dynamic data
+  useEffect(() => {
+    const fetchData = async () => {
+      const PYTHON_API_URL = process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:8000';
+      try {
+        const [mRes, fRes, pRes] = await Promise.all([
+          fetch(`${PYTHON_API_URL}/api/cad/materials`),
+          fetch(`${PYTHON_API_URL}/api/cad/finishes`),
+          fetch(`${PYTHON_API_URL}/api/cad/profiles`)
+        ]);
+
+        if (mRes.ok) setMaterials(await mRes.json());
+        else setMaterials(initialMaterials);
+
+        if (fRes.ok) setFinishes(await fRes.json());
+        else setFinishes(initialSurfaceFinishes);
+
+        if (pRes.ok) setProfiles(await pRes.json());
+        else setProfiles(initialEdgeProfiles);
+      } catch (error) {
+        console.error('Error fetching dynamic data:', error);
+        setMaterials(initialMaterials);
+        setFinishes(initialSurfaceFinishes);
+        setProfiles(initialEdgeProfiles);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const {
     versions, templates, saveVersion, saveTemplate, deleteVersion, deleteTemplate,
   } = useProjectHistory();
 
-  const config = useElementConfiguration();
+  const config = useElementConfiguration(materials, finishes, profiles);
   const {
     selectedElement, length, setLength, width, setWidth, height, setHeight,
     quantity, setQuantity, specimenId, setSpecimenId,
@@ -340,6 +374,17 @@ export function Lab() {
   const selectedMaterial = useMemo(() => materials.find(m => m.id.toString() === selectedMaterialId), [materials, selectedMaterialId]);
   const selectedFinish = useMemo(() => finishes.find(f => f.id.toString() === selectedFinishId), [finishes, selectedFinishId]);
   const selectedProfile = useMemo(() => profiles.find(p => p.id.toString() === selectedProfileId), [profiles, selectedProfileId]);
+
+  // Sync with CAD Context for AI
+  useEffect(() => {
+    setCadData({
+      currentItems: orderItems,
+      selectedMaterial,
+      selectedFinish,
+      selectedProfile,
+      activeDimensions: { length, width, height }
+    });
+  }, [orderItems, selectedMaterial, selectedFinish, selectedProfile, length, width, height, setCadData]);
 
   const calculations = useOrderCalculations({
     length, width, height,

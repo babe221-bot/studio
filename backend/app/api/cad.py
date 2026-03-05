@@ -184,3 +184,13 @@ async def process_slab(file: UploadFile = File(...)):
 async def list_materials(db: AsyncSession = Depends(get_db)):
     """Get available stone materials."""
     return await cad_service.get_materials(db)
+
+@router.get("/finishes")
+async def list_finishes(db: AsyncSession = Depends(get_db)):
+    """Get available surface finishes."""
+    return await cad_service.get_surface_finishes(db)
+
+@router.get("/profiles")
+async def list_profiles(db: AsyncSession = Depends(get_db)):
+    """Get available edge profiles."""
+    return await cad_service.get_edge_profiles(db)

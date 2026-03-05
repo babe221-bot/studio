@@ -10,21 +10,15 @@ asyncpg==0.29.0
 alembic==1.13.1
 
 # Data Processing
-pandas==2.2.0
 numpy==1.26.3
 
-# CAD Engine (stone_slab_cad dependencies)
-ezdxf>=1.3.0
-drawsvg>=2.3.0
+# CAD Engine
+-e ../stone_slab_cad
 
 # AI/ML (optional, heavy — comment out if not needed locally)
 # torch==2.1.2
 # transformers==4.36.2
 pillow==10.2.0
-
-# PDF Generation
-reportlab==4.0.8
-weasyprint==60.1
 
 # Config
 python-dotenv==1.0.1

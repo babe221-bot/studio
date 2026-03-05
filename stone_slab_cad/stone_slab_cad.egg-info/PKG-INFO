@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: stone_slab_cad
+Version: 0.1.0
+Summary: CAD Engine for Stone Slab Processing
+Requires-Python: >=3.9
+Requires-Dist: ezdxf>=1.0.0
+Requires-Dist: drawsvg>=2.0.0
+Requires-Dist: Pillow>=9.0.0
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

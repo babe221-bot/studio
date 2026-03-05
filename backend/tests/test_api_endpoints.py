@@ -524,3 +524,48 @@ async def test_process_slab_no_file(client):
     """Missing file field should return 422."""
     resp = await client.post("/api/cad/process-slab")
     assert resp.status_code == 422
+
+# ===========================================================================
+# GET /api/cad/finishes
+# ===========================================================================
+
+@pytest.mark.asyncio
+async def test_list_finishes_shape(client):
+    resp = await client.get("/api/cad/finishes")
+    assert resp.status_code == 200
+    finishes = resp.json()
+    assert isinstance(finishes, list)
+    assert len(finishes) > 0
+    for f in finishes:
+        assert "id" in f
+        assert "name" in f
+        assert "cost_sqm" in f
+
+
+@pytest.mark.asyncio
+async def test_list_finishes_all_ids_unique(client):
+    resp = await client.get("/api/cad/finishes")
+    ids = [f["id"] for f in resp.json()]
+    assert len(ids) == len(set(ids)), "Duplicate finish IDs found"
+
+# ===========================================================================
+# GET /api/cad/profiles
+# ===========================================================================
+
+@pytest.mark.asyncio
+async def test_list_profiles_shape(client):
+    resp = await client.get("/api/cad/profiles")
+    assert resp.status_code == 200
+    profiles = resp.json()
+    assert isinstance(profiles, list)
+    assert len(profiles) > 0
+    for p in profiles:
+        assert "id" in p
+        assert "name" in p
+        assert "cost_m" in p
+
+@pytest.mark.asyncio
+async def test_list_profiles_all_ids_unique(client):
+    resp = await client.get("/api/cad/profiles")
+    ids = [p["id"] for p in resp.json()]
+    assert len(ids) == len(set(ids)), "Duplicate profile IDs found"
