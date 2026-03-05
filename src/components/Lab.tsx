@@ -438,6 +438,7 @@ export function Lab() {
     processedEdges, updateProcessedEdge,
     okapnikEdges, updateOkapnikEdge,
     bunjaEdgeStyle, setBunjaEdgeStyle,
+    grainOffset, setGrainOffset, grainRotation, setGrainRotation,
     handleElementTypeChange
   } = config;
 
