@@ -16,6 +16,8 @@ interface LabState {
   processedEdges: ProcessedEdges;
   okapnikEdges: ProcessedEdges;
   bunjaEdgeStyle: 'oštre' | 'lomljene';
+  grainOffset: { x: number; y: number };
+  grainRotation: number;
 
   // Actions
   setSelectedElement: (element: ConstructionElement) => void;
@@ -28,6 +30,8 @@ interface LabState {
   setProcessedEdge: (edge: keyof ProcessedEdges, value: boolean) => void;
   setOkapnikEdge: (edge: keyof ProcessedEdges, value: boolean) => void;
   setBunjaEdgeStyle: (style: 'oštre' | 'lomljene') => void;
+  setGrainOffset: (offset: { x?: number; y?: number }) => void;
+  setGrainRotation: (rotation: number) => void;
   resetToDefaults: (elementId?: string) => void;
 }
 
