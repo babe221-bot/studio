@@ -776,32 +776,37 @@ if __name__ == "__main__":
     # Generate
     os.makedirs(args.output_dir, exist_ok=True)
     
+    engine = MCPVisualizationEngine()
+    engine.initialize_scene(spec)
+    engine.create_base_slab_geometry(args.length, args.width, args.height)
+    for orientation, p in spec.edge_treatments.items():
+        engine.apply_edge_profile_geometry(p, orientation)
+
     if args.export_glb:
-        engine = MCPVisualizationEngine()
-        engine.initialize_scene(spec)
-        engine.create_base_slab_geometry(args.length, args.width, args.height)
-        for orientation, p in spec.edge_treatments.items():
-            engine.apply_edge_profile_geometry(p, orientation)
-        
-    # Surface treatment
-    if args.roughness_map or args.normal_map:
-        # We need a way to handle URLs - for now we assume they are local paths
-        # or have been downloaded by the calling task
-        engine.apply_pbr_material(
-            args.material,
-            roughness_path=args.roughness_map,
-            normal_path=args.normal_map,
-            metallic_path=args.metallic_map
-        )
-    elif spec.surface_treatment.finish_type == SurfaceFinish.BRUSHED:
-        engine.apply_brushed_surface_texture()
+        # Surface treatment
+        if args.roughness_map or args.normal_map:
+            engine.apply_pbr_material(
+                args.material,
+                roughness_path=args.roughness_map,
+                normal_path=args.normal_map,
+                metallic_path=args.metallic_map
+            )
+        elif spec.surface_treatment.finish_type == SurfaceFinish.BRUSHED:
+            engine.apply_brushed_surface_texture()
             
         glb_path = os.path.join(args.output_dir, "model.glb")
         engine.export_glb(glb_path)
     else:
-        create_standard_visualization(
-            spec=spec,
-            output_dir=args.output_dir,
-            slab_dims=(args.length, args.width, args.height)
-        )
+        # Set up lighting and camera
+        engine.setup_studio_lighting(LightingSetup())
+        engine.setup_camera(CameraSetup())
+        # ... rest is handled by create_standard_visualization? 
+        # Actually I should just use the engine directly here to be consistent
+        engine.configure_render_settings(RenderSettings())
+        
+        # Surface treatment
+        if spec.surface_treatment.finish_type == SurfaceFinish.BRUSHED:
+            engine.apply_brushed_surface_texture()
+            
+        rendered_files = engine.generate_composite_dashboard(args.output_dir)
 
