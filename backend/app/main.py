@@ -36,9 +36,19 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Studio API",
-    description="Python backend for CAD processing and data operations",
+    description="""
+    Python backend for CAD processing, photorealistic 3D rendering, and AI-powered stone design optimization.
+    
+    ### Core Capabilities:
+    * **CAD Operations:** DXF and SVG generation for stone slab manufacturing.
+    * **3D Rendering:** Headless Blender integration for high-quality production renders and AR models.
+    * **AI Analysis:** Structural integrity verification and layout optimization.
+    * **Pricing Engine:** Real-time cost calculation based on materials and processing.
+    """,
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # Configure CORS
