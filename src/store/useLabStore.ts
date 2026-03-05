@@ -62,6 +62,8 @@ export const useLabStore = create<LabState>()(
         right: false,
       },
       bunjaEdgeStyle: 'lomljene',
+      grainOffset: { x: 0, y: 0 },
+      grainRotation: 0,
 
       setSelectedElement: (element) => {
         set({
@@ -74,7 +76,9 @@ export const useLabStore = create<LabState>()(
           processedEdges: (element.orderUnit === 'sqm' || element.orderUnit === 'lm')
             ? { front: false, back: false, left: false, right: false }
             : { front: true, back: false, left: false, right: false },
-          okapnikEdges: { front: false, back: false, left: false, right: false }
+          okapnikEdges: { front: false, back: false, left: false, right: false },
+          grainOffset: { x: 0, y: 0 },
+          grainRotation: 0
         });
       },
 
@@ -106,6 +110,15 @@ export const useLabStore = create<LabState>()(
 
       setBunjaEdgeStyle: (bunjaEdgeStyle) => set({ bunjaEdgeStyle }),
 
+      setGrainOffset: (offset) => set((state) => ({
+        grainOffset: {
+          x: offset.x ?? state.grainOffset.x,
+          y: offset.y ?? state.grainOffset.y
+        }
+      })),
+
+      setGrainRotation: (grainRotation) => set({ grainRotation }),
+
       resetToDefaults: (elementId) => {
         const element = elementId 
           ? constructionElements.find(e => e.id === elementId) || DEFAULT_ELEMENT
@@ -130,6 +143,8 @@ export const useLabStore = create<LabState>()(
         processedEdges: state.processedEdges,
         okapnikEdges: state.okapnikEdges,
         bunjaEdgeStyle: state.bunjaEdgeStyle,
+        grainOffset: state.grainOffset,
+        grainRotation: state.grainRotation,
       }),
     }
   )

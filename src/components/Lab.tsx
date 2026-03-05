@@ -228,6 +228,57 @@ const ProcessingConfig = React.memo(({
   </Card>
 ));
 
+const GrainAlignmentConfig = React.memo(({
+  grainOffset, setGrainOffset, grainRotation, setGrainRotation
+}: any) => (
+  <Card>
+    <CardHeader className="flex flex-row items-center justify-between pb-2">
+      <CardTitle className="text-base">4. Poravnanje teksture (Grain)</CardTitle>
+    </CardHeader>
+    <CardContent className="space-y-4 pt-2">
+      <div className="space-y-2">
+        <div className="flex justify-between text-xs">
+          <Label>Pomak X: {grainOffset.x.toFixed(2)}m</Label>
+        </div>
+        <input 
+          type="range" min="-1" max="1" step="0.01" 
+          value={grainOffset.x} 
+          onChange={(e) => setGrainOffset({ x: parseFloat(e.target.value) })}
+          className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
+        />
+      </div>
+      <div className="space-y-2">
+        <div className="flex justify-between text-xs">
+          <Label>Pomak Y: {grainOffset.y.toFixed(2)}m</Label>
+        </div>
+        <input 
+          type="range" min="-1" max="1" step="0.01" 
+          value={grainOffset.y} 
+          onChange={(e) => setGrainOffset({ y: parseFloat(e.target.value) })}
+          className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
+        />
+      </div>
+      <div className="space-y-2">
+        <div className="flex justify-between text-xs">
+          <Label>Rotacija: {grainRotation}°</Label>
+        </div>
+        <input 
+          type="range" min="0" max="360" step="90" 
+          value={grainRotation} 
+          onChange={(e) => setGrainRotation(parseInt(e.target.value))}
+          className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer"
+        />
+      </div>
+      <Button 
+        variant="ghost" size="sm" className="w-full text-xs h-7"
+        onClick={() => { setGrainOffset({ x: 0, y: 0 }); setGrainRotation(0); }}
+      >
+        Resetiraj teksturu
+      </Button>
+    </CardContent>
+  </Card>
+));
+
 const CalculationSummary = React.memo(({ calculations }: any) => (
   <Card>
     <CardHeader><CardTitle>4. Kalkulacija</CardTitle></CardHeader>
