@@ -221,10 +221,10 @@ export async function generateEnhancedPdf(
         let cursorY = margin;
 
         const {
-            companyName = 'Kamena Galanterija',
-            companyAddress = 'Industrijska zona 1, 21000 Split',
-            companyPhone = '+385 21 000 000',
-            companyEmail = 'info@kamen-studio.hr',
+            companyName = 'Kamen Studio d.o.o.',
+            companyAddress = 'Put Kamena 42, 21000 Split, Hrvatska',
+            companyPhone = '+385 21 555 123',
+            companyEmail = 'prodaja@kamen-studio.hr',
             companyIban = 'HR12 2340 0091 1100 2233 4',
             orderNumber = `RN-${new Date().toISOString().split('T')[0].replace(/-/g, '')}`,
             customerName = '',
@@ -232,43 +232,65 @@ export async function generateEnhancedPdf(
             isQuotation = true
         } = options;
 
-        doc.setFillColor(44, 62, 80);
-        doc.rect(0, 0, pageWidth, 40, 'F');
+        // Header Background
+        doc.setFillColor(30, 41, 59); // Slate 800
+        doc.rect(0, 0, pageWidth, 45, 'F');
+        
+        // Branded Accent
+        doc.setFillColor(245, 158, 11); // Amber 500
+        doc.rect(0, 45, pageWidth, 2, 'F');
+
         doc.setTextColor(255, 255, 255);
         doc.setFont('Helvetica', 'bold');
-        doc.setFontSize(24);
-        doc.text(isQuotation ? 'PONUDA / QUOTATION' : 'RADNI NALOG', margin, 25);
+        doc.setFontSize(28);
+        doc.text(isQuotation ? 'PONUDA' : 'RADNI NALOG', margin, 28);
+        
         doc.setFontSize(10);
         doc.setFont('Helvetica', 'normal');
-        doc.text(`Broj: ${orderNumber}`, pageWidth - margin - 50, 20);
-        doc.text(`Datum: ${new Date().toLocaleDateString('hr-HR')}`, pageWidth - margin - 50, 27);
+        doc.text(`ID: ${orderNumber}`, pageWidth - margin - 60, 20);
+        doc.text(`DATUM: ${new Date().toLocaleDateString('hr-HR')}`, pageWidth - margin - 60, 27);
+        doc.text(`VALUTA: 15 dana`, pageWidth - margin - 60, 34);
 
-        cursorY = 50;
-        doc.setTextColor(44, 62, 80);
-        doc.setFontSize(12);
+        cursorY = 60;
+        doc.setTextColor(30, 41, 59);
+        doc.setFontSize(14);
         doc.setFont('Helvetica', 'bold');
         doc.text(companyName, margin, cursorY);
         doc.setFontSize(9);
         doc.setFont('Helvetica', 'normal');
+        doc.setTextColor(100, 116, 139); // Slate 500
         cursorY += 6;
         doc.text(companyAddress, margin, cursorY);
         cursorY += 5;
         doc.text(`Tel: ${companyPhone} | Email: ${companyEmail}`, margin, cursorY);
         cursorY += 5;
         doc.text(`IBAN: ${companyIban}`, margin, cursorY);
-        doc.setDrawColor(44, 62, 80);
-        doc.setLineWidth(0.5);
-        doc.line(margin, cursorY + 4, pageWidth - margin, cursorY + 4);
-        cursorY += 15;
+        
+        // Customer Info Card
+        const customerBoxY = 55;
+        const customerBoxX = pageWidth / 2 + 10;
+        doc.setFillColor(248, 250, 252); // Slate 50
+        doc.setDrawColor(226, 232, 240); // Slate 200
+        doc.roundedRect(customerBoxX, customerBoxY, pageWidth - customerBoxX - margin, 35, 2, 2, 'FD');
+        
+        doc.setTextColor(100, 116, 139);
+        doc.setFontSize(8);
+        doc.setFont('Helvetica', 'bold');
+        doc.text('KLIJENT / PRIMATELJ:', customerBoxX + 5, customerBoxY + 8);
+        
+        doc.setTextColor(30, 41, 59);
+        doc.setFontSize(11);
+        doc.setFont('Helvetica', 'bold');
+        doc.text(customerName || 'Veleprodajni kupac', customerBoxX + 5, customerBoxY + 18);
+        doc.setFontSize(9);
+        doc.setFont('Helvetica', 'normal');
+        doc.text('Identifikacijski broj: ---', customerBoxX + 5, customerBoxY + 26);
 
-        if (customerName) {
-            doc.setFont('Helvetica', 'bold');
-            doc.setFontSize(11);
-            doc.text(`PRIMA:`, margin, cursorY);
-            doc.setFont('Helvetica', 'normal');
-            doc.text(customerName, margin + 20, cursorY);
-            cursorY += 10;
-        }
+        cursorY = 105;
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.5);
+        doc.line(margin, cursorY, pageWidth - margin, cursorY);
+        cursorY += 10;
 
         let totalCost = 0;
         let totalWeight = 0;
@@ -333,36 +355,58 @@ export async function generateEnhancedPdf(
 
             autoTable(doc, {
                 startY: cursorY,
-                head: [['Stavka', 'Detalji', 'Cijena']],
+                head: [['STAVKA', 'DETALJI OBRADE', 'IZNOS']],
                 body: itemTableData,
-                theme: 'striped',
+                theme: 'grid',
                 margin: { left: margin },
                 tableWidth: pageWidth - margin * 2,
-                styles: { fontSize: 8 },
-                headStyles: { fillColor: [44, 62, 80] },
-                columnStyles: { 2: { halign: 'right', cellWidth: 30 } }
+                styles: { 
+                    fontSize: 8,
+                    cellPadding: 3,
+                    lineColor: [226, 232, 240],
+                    lineWidth: 0.1,
+                },
+                headStyles: { 
+                    fillColor: [51, 65, 85], // Slate 700
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold'
+                },
+                alternateRowStyles: {
+                    fillColor: [248, 250, 252]
+                },
+                columnStyles: { 
+                    2: { halign: 'right', cellWidth: 35, fontStyle: 'bold' } 
+                }
             });
             cursorY = (doc as any).lastAutoTable.finalY + 15;
         }
 
         if (cursorY > pageHeight - 80) { doc.addPage(); cursorY = margin + 10; }
-        const summaryX = pageWidth - margin - 80;
-        doc.setFillColor(245, 247, 249);
-        doc.rect(summaryX, cursorY, 80, 40, 'F');
-        doc.setFontSize(10);
-        doc.setTextColor(44, 62, 80);
-        doc.text('UKUPNO ZA PLATITI:', summaryX + 5, cursorY + 10);
-        doc.setFontSize(16);
-        doc.setFont('Helvetica', 'bold');
-        doc.text(`€${totalCost.toFixed(2)}`, pageWidth - margin - 5, cursorY + 10, { align: 'right' });
-        doc.setFontSize(9);
-        doc.setFont('Helvetica', 'normal');
-        doc.text(`Masa: ${totalWeight.toFixed(1)} kg`, summaryX + 5, cursorY + 20);
-        doc.text(`PDV (uključen): €${(totalCost * 0.2).toFixed(2)}`, summaryX + 5, cursorY + 28);
+        const summaryX = pageWidth - margin - 85;
+        doc.setFillColor(30, 41, 59);
+        doc.rect(summaryX, cursorY, 85, 45, 'F');
         
-        cursorY += 50;
+        doc.setFontSize(9);
+        doc.setTextColor(203, 213, 225); // Slate 300
+        doc.text('UKUPNO ZA NAPLATU:', summaryX + 5, cursorY + 12);
+        
+        doc.setFontSize(18);
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('Helvetica', 'bold');
+        doc.text(`€ ${totalCost.toLocaleString('hr-HR', { minimumFractionDigits: 2 })}`, pageWidth - margin - 5, cursorY + 25, { align: 'right' });
+        
         doc.setFontSize(8);
-        doc.text('Uvjeti plaćanja: Avans 50%, ostatak prije isporuke. Rok: 10-15 dana.', margin, cursorY);
+        doc.setFont('Helvetica', 'normal');
+        doc.setTextColor(148, 163, 184); // Slate 400
+        doc.text(`Ukupna masa: ${totalWeight.toFixed(1)} kg`, summaryX + 5, cursorY + 35);
+        doc.text(`PDV (25%) uključen: € ${(totalCost * 0.2).toFixed(2)}`, summaryX + 5, cursorY + 40);
+        
+        cursorY += 55;
+        doc.setTextColor(100, 116, 139);
+        doc.setFontSize(8);
+        doc.text('Napomena: Ova ponuda je informativnog karaktera. Rok izrade počinje teći od uplate avansa.', margin, cursorY);
+        cursorY += 4;
+        doc.text('Uvjeti plaćanja: 50% avans, 50% prije isporuke. Svi proizvodi ostaju u vlasništvu prodavatelja do potpune isplate.', margin, cursorY);
         const sigY = cursorY + 25;
         doc.line(margin, sigY, margin + 60, sigY);
         doc.text('Potpis kupca', margin, sigY + 5);

@@ -82,11 +82,13 @@ class ViewportConfig:
     use_viewport_denoising: bool = True
     texture_cache_size_mb: int = 512
     viewport_resolution_scale: float = 1.0
+    use_extreme_optimization: bool = False  # New: specifically for integrated GPUs
     
     # Profiling
     enable_statistics_overlay: bool = True
     profile_gpu: bool = False
     profile_memory: bool = True
+
 
 
 @dataclass
@@ -138,8 +140,13 @@ class ViewportOptimizer:
         # Store original settings for restoration
         self._store_original_settings()
         
+        # Extreme optimization for integrated GPUs
+        if self.config.use_extreme_optimization:
+            settings_applied['extreme_optimization'] = self._apply_extreme_optimization()
+
         # Configure viewport display mode
         if self.config.display_mode == ViewportDisplayMode.SOLID:
+
             settings_applied['viewport_shade'] = self._set_solid_shading()
         elif self.config.display_mode == ViewportDisplayMode.WIREFRAME:
             settings_applied['viewport_shade'] = self._set_wireframe_shading()
@@ -167,7 +174,39 @@ class ViewportOptimizer:
             
         return settings_applied
     
+    def _apply_extreme_optimization(self) -> Dict[str, Any]:
+        """Apply aggressive optimizations for low-end/integrated GPUs"""
+        settings = {}
+        # Force all objects to bounding box if they are not active
+        for obj in bpy.context.scene.objects:
+            if obj.type == 'MESH' and obj != bpy.context.active_object:
+                obj.display_type = 'BOUNDS'
+                settings['display_type_bounds'] = True
+        
+        # Disable shadow rendering in viewport
+        for area in bpy.context.screen.areas:
+            if area.type == 'VIEW_3D':
+                space = area.spaces.active
+                if hasattr(space.shading, 'show_shadows'):
+                    space.shading.show_shadows = False
+                    settings['shadows_off'] = True
+                if hasattr(space.shading, 'show_cavity'):
+                    space.shading.show_cavity = False
+                    settings['cavity_off'] = True
+        
+        # Simplify geometry with decimation if too complex
+        for obj in bpy.context.scene.objects:
+            if obj.type == 'MESH' and len(obj.data.polygons) > 50000:
+                mod = obj.modifiers.new(name="VP_DECIMATE", type='DECIMATE')
+                mod.ratio = 0.1
+                mod.show_viewport = True
+                mod.show_render = False
+                settings['geometry_decimated'] = True
+                
+        return settings
+
     def _store_original_settings(self):
+
         """Store current viewport settings for later restoration"""
         for area in bpy.context.screen.areas:
             if area.type == 'VIEW_3D':
@@ -955,6 +994,27 @@ def optimize_for_texturing() -> Dict[str, Any]:
         subdivision_preview_levels=1
     )
     return setup_performance_viewport(config)
+
+
+def optimize_for_integrated_gpu() -> Dict[str, Any]:
+    """
+    Maximum optimization for integrated/low-end GPUs.
+    Maintains 60fps during rotation by aggressively simplifying scene.
+    """
+    config = ViewportConfig(
+        use_extreme_optimization=True,
+        display_mode=ViewportDisplayMode.SOLID,
+        shading_type=ShadingType.MATCAP,
+        use_matcap=True,
+        matcap_preset=MatcapPreset.CLAY,
+        enable_backface_culling=True,
+        disable_textures=True,
+        hide_distant_objects=True,
+        distant_object_distance=30.0,
+        use_bounding_box_for_distant=True
+    )
+    return setup_performance_viewport(config)
+
 
 
 # Software-specific profiling tool mappings (for reference)

@@ -31,9 +31,11 @@ export interface VisualizationProps {
   okapnikEdges: ProcessedEdges;
   grainOffset?: { x: number; y: number };
   grainRotation?: number;
+  mirrorGrain?: boolean;
   showDimensions?: boolean;
   onCapture?: (dataUrl: string) => void;
 }
+
 
 export type CanvasHandle = {
   captureImage: () => string | null;
@@ -91,6 +93,8 @@ const CameraController: React.FC<CameraControllerProps> = ({ dims }) => {
 
 interface SceneProps extends VisualizationProps {
   onSceneReady: (scene: THREE.Scene, camera: THREE.Camera, gl: THREE.WebGLRenderer) => void;
+  onInteractionStart: () => void;
+  onInteractionEnd: () => void;
 }
 
 const Scene: React.FC<SceneProps> = ({
@@ -102,9 +106,13 @@ const Scene: React.FC<SceneProps> = ({
   okapnikEdges,
   grainOffset,
   grainRotation,
+  mirrorGrain,
   showDimensions,
   onSceneReady,
+  onInteractionStart,
+  onInteractionEnd,
 }) => {
+
   const { scene, camera, gl } = useThree();
 
   // DEBUG: Log props to diagnose blank screen
@@ -144,6 +152,7 @@ const Scene: React.FC<SceneProps> = ({
           okapnikEdges={okapnikEdges}
           grainOffset={grainOffset}
           grainRotation={grainRotation}
+          mirrorGrain={mirrorGrain}
         />
       )}
 
@@ -154,7 +163,11 @@ const Scene: React.FC<SceneProps> = ({
         dampingFactor={0.07}
         minDistance={0.5}
         maxDistance={30}
+        onStart={onInteractionStart}
+        onEnd={onInteractionEnd}
       />
+
+
     </>
   );
 };
@@ -164,14 +177,16 @@ const Scene: React.FC<SceneProps> = ({
 // ============================================================================
 
 const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
-  ({ dims, material, finish, profile, processedEdges, okapnikEdges, showDimensions = false, onCapture }, ref) => {
+  ({ dims, material, finish, profile, processedEdges, okapnikEdges, grainOffset, grainRotation, mirrorGrain, showDimensions = false, onCapture }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
     const sceneRef = useRef<THREE.Scene | null>(null);
     const cameraRef = useRef<THREE.Camera | null>(null);
+    const [isInteracting, setIsInteracting] = useState(false);
 
     // Expose capture method
     useImperativeHandle(ref, () => ({
+
       captureImage: () => {
         if (rendererRef.current && sceneRef.current && cameraRef.current) {
           rendererRef.current.render(sceneRef.current, cameraRef.current);
@@ -195,14 +210,16 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       >
         <Canvas
           shadows
-          dpr={[1, 2]}
+          dpr={isInteracting ? 1 : [1, 2]}
           gl={{
-            antialias: true,
+            antialias: !isInteracting,
             preserveDrawingBuffer: true,
             toneMapping: THREE.ACESFilmicToneMapping,
             toneMappingExposure: 1.4,
             outputColorSpace: THREE.SRGBColorSpace,
+            powerPreference: 'high-performance',
           }}
+
           camera={{
             fov: 42,
             near: 0.05,
@@ -218,9 +235,15 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
             profile={profile}
             processedEdges={processedEdges}
             okapnikEdges={okapnikEdges}
+            grainOffset={grainOffset}
+            grainRotation={grainRotation}
+            mirrorGrain={mirrorGrain}
             showDimensions={showDimensions}
             onSceneReady={handleSceneReady}
+            onInteractionStart={() => setIsInteracting(true)}
+            onInteractionEnd={() => setIsInteracting(false)}
           />
+
         </Canvas>
       </div>
     );

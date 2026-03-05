@@ -18,6 +18,7 @@ interface LabState {
   bunjaEdgeStyle: 'oštre' | 'lomljene';
   grainOffset: { x: number; y: number };
   grainRotation: number;
+  mirrorGrain: boolean;
 
   // Actions
   setSelectedElement: (element: ConstructionElement) => void;
@@ -32,6 +33,7 @@ interface LabState {
   setBunjaEdgeStyle: (style: 'oštre' | 'lomljene') => void;
   setGrainOffset: (offset: { x?: number; y?: number }) => void;
   setGrainRotation: (rotation: number) => void;
+  setMirrorGrain: (mirror: boolean) => void;
   resetToDefaults: (elementId?: string) => void;
 }
 
@@ -64,6 +66,7 @@ export const useLabStore = create<LabState>()(
       bunjaEdgeStyle: 'lomljene',
       grainOffset: { x: 0, y: 0 },
       grainRotation: 0,
+      mirrorGrain: false,
 
       setSelectedElement: (element) => {
         set({
@@ -78,7 +81,8 @@ export const useLabStore = create<LabState>()(
             : { front: true, back: false, left: false, right: false },
           okapnikEdges: { front: false, back: false, left: false, right: false },
           grainOffset: { x: 0, y: 0 },
-          grainRotation: 0
+          grainRotation: 0,
+          mirrorGrain: false
         });
       },
 
@@ -119,6 +123,8 @@ export const useLabStore = create<LabState>()(
 
       setGrainRotation: (grainRotation) => set({ grainRotation }),
 
+      setMirrorGrain: (mirrorGrain) => set({ mirrorGrain }),
+
       resetToDefaults: (elementId) => {
         const element = elementId 
           ? constructionElements.find(e => e.id === elementId) || DEFAULT_ELEMENT
@@ -145,6 +151,7 @@ export const useLabStore = create<LabState>()(
         bunjaEdgeStyle: state.bunjaEdgeStyle,
         grainOffset: state.grainOffset,
         grainRotation: state.grainRotation,
+        mirrorGrain: state.mirrorGrain,
       }),
     }
   )

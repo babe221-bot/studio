@@ -25,6 +25,7 @@ interface StoneSlabMeshProps {
     okapnikEdges: ProcessedEdges;
     grainOffset?: { x: number; y: number };
     grainRotation?: number;
+    mirrorGrain?: boolean;
     onGeometryGenerated?: () => void;
 }
 
@@ -126,6 +127,7 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
     okapnikEdges,
     grainOffset = { x: 0, y: 0 },
     grainRotation = 0,
+    mirrorGrain = false,
     onGeometryGenerated,
 }) => {
     const meshRef = useRef<THREE.Mesh>(null);
@@ -343,7 +345,10 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
                         wrapT: THREE.RepeatWrapping,
                     }).then(tex => {
                         const tileSizeM = 0.30;
-                        tex.repeat.set(vizDims.L / tileSizeM, vizDims.W / tileSizeM);
+                        tex.repeat.set(
+                            (vizDims.L / tileSizeM) * (mirrorGrain ? -1 : 1), 
+                            vizDims.W / tileSizeM
+                        );
                         tex.offset.set(grainOffset.x, grainOffset.y);
                         tex.rotation = (grainRotation * Math.PI) / 180;
                         tex.needsUpdate = true;
@@ -368,7 +373,10 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
                 wrapT: THREE.RepeatWrapping,
             }).then((tex) => {
                 const tileSizeM = 0.30;
-                tex.repeat.set(vizDims.L / tileSizeM, vizDims.W / tileSizeM);
+                tex.repeat.set(
+                    (vizDims.L / tileSizeM) * (mirrorGrain ? -1 : 1), 
+                    vizDims.W / tileSizeM
+                );
                 tex.offset.set(grainOffset.x, grainOffset.y);
                 tex.rotation = (grainRotation * Math.PI) / 180;
                 tex.needsUpdate = true;
@@ -391,7 +399,7 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
             // textureKey usually points to a shared URL, but we should release if needed
             // if (oldTextureKey) resourceManager.releaseTexture(oldTextureKey);
         };
-    }, [material, finish, vizDims.L, vizDims.W, grainOffset, grainRotation]);
+    }, [material, finish, vizDims.L, vizDims.W, grainOffset, grainRotation, mirrorGrain]);
 
     // ============================================================================
     // Geometry Construction
