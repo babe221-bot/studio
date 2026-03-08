@@ -25,5 +25,6 @@ Done
 9. [x] Immediate Config Fixes
 
 ## Notes
+
 - Completed initial execution of enterprise-upgrade-plan.md.
 - Summary available in plans/enterprise-upgrade-SUMMARY.md.
