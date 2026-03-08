@@ -1,0 +1,10 @@
+
+> nextn@0.1.0 dev:backend
+> cd backend && ..\.venv\Scripts\uvicorn.exe app.main:app --reload
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\Administrator\Documents\GitHub\studio\.venv\Scripts\uvicorn.exe\__main__.py", line 2, in <module>
+    from uvicorn.main import main
+ModuleNotFoundError: No module named 'uvicorn'
