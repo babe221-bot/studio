@@ -764,6 +764,8 @@ export function Lab() {
       // Just for debugging/feedback in console if needed
     }
   }, [transcript, isListening]);
+
+  const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isAddingItem, setIsAddingItem] = useState(false);
