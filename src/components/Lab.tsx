@@ -443,7 +443,15 @@ const ProcessingConfig = React.memo(
 );
 
 const CalculationSummary = React.memo(
-  ({ calculations }: { calculations: CalculationsResult }) => (
+  ({
+    calculations,
+    onCheckout,
+    isCheckoutDisabled,
+  }: {
+    calculations: CalculationsResult;
+    onCheckout: () => void;
+    isCheckoutDisabled: boolean;
+  }) => (
     <Card>
       <CardHeader>
         <CardTitle>4. Kalkulacija</CardTitle>
@@ -487,6 +495,15 @@ const CalculationSummary = React.memo(
           <span>Ukupni trošak</span>
           <span>€{calculations.totalCost.toFixed(2)}</span>
         </div>
+        <Button
+          onClick={onCheckout}
+          className="w-full mt-2"
+          variant="default"
+          disabled={isCheckoutDisabled}
+        >
+          <CreditCard className="h-4 w-4 mr-2" />
+          Plati depozit
+        </Button>
       </CardContent>
     </Card>
   )
@@ -929,6 +946,7 @@ export function Lab() {
         bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges
           ? bunjaEdgeStyle
           : undefined,
+        textureOffset: { ...config.grainOffset },
       };
       setOrderItems((prev) => [...prev, newOrderItem]);
       toast({
@@ -1016,6 +1034,54 @@ export function Lab() {
   const handleRemoveOrderItem = useCallback((orderId: number) => {
     setOrderItems((prev) => prev.filter((item) => item.orderId !== orderId));
   }, []);
+
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  const handleCheckout = useCallback(async () => {
+    if (orderItems.length === 0) {
+      toast({
+        title: 'Prazan nalog',
+        description:
+          'Dodajte stavke u nalog prije nego što nastavite na plaćanje.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsCheckingOut(true);
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ items: orderItems }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || 'Neuspjelo kreiranje sesije za plaćanje'
+        );
+      }
+
+      const { url } = await response.json();
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast({
+        title: 'Greška pri naplati',
+        description:
+          error.message ||
+          'Došlo je do greške prilikom povezivanja sa servisom za plaćanje.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCheckingOut(false);
+    }
+  }, [orderItems, toast]);
 
   const handleOpenModal = useCallback(
     (type: ModalType, item?: EditableItem) => {
@@ -1115,7 +1181,11 @@ export function Lab() {
             updateOkapnikEdge={updateOkapnikEdge}
           />
           <GrainAlignmentTool />
-          <CalculationSummary calculations={calculations} />
+          <CalculationSummary
+            calculations={calculations}
+            onCheckout={handleCheckout}
+            isCheckoutDisabled={isCheckingOut || orderItems.length === 0}
+          />
 
           {/* Design Safety Warnings */}
           {warnings.length > 0 && (
