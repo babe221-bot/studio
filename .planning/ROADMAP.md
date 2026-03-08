@@ -46,6 +46,11 @@
 - [x] 04-02-PLAN.md - Shared Workspaces
 - [x] 04-03-PLAN.md - User Gallery
 
-- [ ] 04-01-PLAN.md - Voice Commands
-- [ ] 04-02-PLAN.md - Shared Workspaces
-- [ ] 04-03-PLAN.md - User Gallery
+### Phase 5: Debugging & CAD Stability
+
+**Goal:** Deep instrumentation and stress testing of the CAD engine and worker pool.
+**Status:** In Progress
+**Requirements:** [DEV-04, DEV-05]
+**Plans:** 1 plan
+
+- [ ] 05-01-PLAN.md - Diagnostic Logging & Instrumentation
