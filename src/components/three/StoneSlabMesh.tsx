@@ -1,498 +1,495 @@
-"use client";
+'use client';
 
 /**
  * StoneSlabMesh - React Three Fiber component for stone slab geometry
- * 
+ *
  * Uses Worker Pool for geometry generation and ResourceManager for materials.
  * Features automatic disposal and reference counting.
  */
 
-import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
+import React, {
+  useRef,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+} from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
-import type { Material as MaterialType, SurfaceFinish, EdgeProfile, ProcessedEdges } from '@/types';
+import type {
+  Material as MaterialType,
+  SurfaceFinish,
+  EdgeProfile,
+  ProcessedEdges,
+} from '@/types';
 import { resourceManager } from '@/lib/ResourceManager';
-import { useGeometryWorkerPool, type GeometryJobOutput } from '@/lib/WorkerPool';
+import {
+  useGeometryWorkerPool,
+  type GeometryJobOutput,
+} from '@/lib/WorkerPool';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface StoneSlabMeshProps {
-    dims: { length: number; width: number; height: number };
-    material?: MaterialType;
-    finish?: SurfaceFinish;
-    profile?: EdgeProfile;
-    processedEdges: ProcessedEdges;
-    okapnikEdges: ProcessedEdges;
-    grainOffset?: { x: number; y: number };
-    grainRotation?: number;
-    mirrorGrain?: boolean;
-    onGeometryGenerated?: () => void;
+  dims: { length: number; width: number; height: number };
+  material?: MaterialType;
+  finish?: SurfaceFinish;
+  profile?: EdgeProfile;
+  processedEdges: ProcessedEdges;
+  okapnikEdges: ProcessedEdges;
+  grainOffset?: { x: number; y: number };
+  grainRotation?: number;
+  mirrorGrain?: boolean;
+  position?: [number, number, number];
 }
-
-interface FinishPreset {
-    roughness: number;
-    metalness: number;
-    clearcoat: number;
-    clearcoatRoughness: number;
-    sheen: number;
-    sheenRoughness: number;
-    normalStrength: number;
-}
-
-// ============================================================================
-// Finish Presets
-// ============================================================================
-
-const getFinishPreset = (finishName: string): FinishPreset => {
-    const n = finishName.toLowerCase();
-    if (n.includes('poliran') || n.includes('polished')) {
-        return { roughness: 0.05, metalness: 0.05, clearcoat: 1.0, clearcoatRoughness: 0.02, sheen: 0.0, sheenRoughness: 0.5, normalStrength: 0.0 };
-    }
-    if (n.includes('bruš') || n.includes('honed')) {
-        return { roughness: 0.35, metalness: 0.05, clearcoat: 0.4, clearcoatRoughness: 0.2, sheen: 0.0, sheenRoughness: 0.5, normalStrength: 0.3 };
-    }
-    if (n.includes('četk') || n.includes('brushed')) {
-        return { roughness: 0.45, metalness: 0.1, clearcoat: 0.2, clearcoatRoughness: 0.4, sheen: 0.3, sheenRoughness: 0.5, normalStrength: 0.4 };
-    }
-    if (n.includes('plamen') || n.includes('flamed')) {
-        return { roughness: 0.92, metalness: 0.0, clearcoat: 0.0, clearcoatRoughness: 1.0, sheen: 0.0, sheenRoughness: 1.0, normalStrength: 0.9 };
-    }
-    if (n.includes('pjeskaren') || n.includes('sandblast')) {
-        return { roughness: 0.88, metalness: 0.0, clearcoat: 0.0, clearcoatRoughness: 1.0, sheen: 0.0, sheenRoughness: 1.0, normalStrength: 0.8 };
-    }
-    if (n.includes('bućardan') || n.includes('bush')) {
-        return { roughness: 0.85, metalness: 0.0, clearcoat: 0.0, clearcoatRoughness: 1.0, sheen: 0.2, sheenRoughness: 0.8, normalStrength: 0.85 };
-    }
-    if (n.includes('štokovan') || n.includes('tooled')) {
-        return { roughness: 0.8, metalness: 0.0, clearcoat: 0.0, clearcoatRoughness: 1.0, sheen: 0.1, sheenRoughness: 0.9, normalStrength: 0.75 };
-    }
-    if (n.includes('antico') || n.includes('antiqued')) {
-        return { roughness: 0.5, metalness: 0.05, clearcoat: 0.3, clearcoatRoughness: 0.5, sheen: 0.3, sheenRoughness: 0.6, normalStrength: 0.5 };
-    }
-    if (n.includes('martelan') || n.includes('martellina')) {
-        return { roughness: 0.75, metalness: 0.0, clearcoat: 0.05, clearcoatRoughness: 0.8, sheen: 0.2, sheenRoughness: 0.7, normalStrength: 0.7 };
-    }
-    if (n.includes('pilano') || n.includes('sawn')) {
-        return { roughness: 0.7, metalness: 0.0, clearcoat: 0.0, clearcoatRoughness: 1.0, sheen: 0.0, sheenRoughness: 1.0, normalStrength: 0.55 };
-    }
-    // Default / bez obrade
-    return { roughness: 0.65, metalness: 0.05, clearcoat: 0.1, clearcoatRoughness: 0.5, sheen: 0.0, sheenRoughness: 0.5, normalStrength: 0.2 };
-};
-
-// ============================================================================
-// Procedural Normal Map Generator
-// ============================================================================
-
-const generateProceduralNormalMap = (roughnessLevel: number, seed: number): THREE.CanvasTexture => {
-    const size = 512;
-    const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = size;
-    const ctx = canvas.getContext('2d')!;
-
-    // Neutral normal (flat surface) = RGB(128, 128, 255)
-    ctx.fillStyle = 'rgb(128,128,255)';
-    ctx.fillRect(0, 0, size, size);
-
-    // Add noise bumps proportional to roughness
-    const numBumps = Math.floor(roughnessLevel * 2000);
-    for (let i = 0; i < numBumps; i++) {
-        const t = i / numBumps;
-        const x = ((Math.sin(seed * 12.9898 + i * 78.233) * 43758.5453) % 1 + 1) % 1 * size;
-        const z = ((Math.cos(seed * 39.3468 + i * 21.441) * 12345.678) % 1 + 1) % 1 * size;
-        const r = 1 + roughnessLevel * 5;
-        const nx = Math.sin(i * 1.234) * roughnessLevel * 40 + 128;
-        const ny = Math.cos(i * 2.678) * roughnessLevel * 40 + 128;
-        ctx.fillStyle = `rgb(${Math.round(nx)},${Math.round(ny)},255)`;
-        ctx.beginPath();
-        ctx.ellipse(x, z, r, r * (0.5 + t * 0.5), i * 0.5, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(6, 6);
-    return tex;
-};
-
-// ============================================================================
-// Component
-// ============================================================================
 
 export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
-    dims,
-    material,
-    finish,
+  dims,
+  material,
+  finish,
+  profile,
+  processedEdges,
+  okapnikEdges,
+  grainOffset = { x: 0, y: 0 },
+  grainRotation = 0,
+  mirrorGrain = false,
+  position = [0, 0, 0],
+}) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const { camera, controls } = useThree();
+  const { executeJob } = useGeometryWorkerPool();
+
+  // State for geometry
+  const [geometryData, setGeometryData] = useState<GeometryJobOutput | null>(
+    null
+  );
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // DEBUG: Log component state
+  useEffect(() => {
+    console.log('[StoneSlabMesh] Props received:', {
+      dims,
+      hasMaterial: !!material,
+      hasFinish: !!finish,
+      hasProfile: !!profile,
+    });
+  }, [dims, material, finish, profile]);
+
+  // Track resources for cleanup
+  const resourcesRef = useRef<{
+    geometry: THREE.BufferGeometry | null;
+    materialKeys: string[];
+    textureKey: string | null;
+    normalMapKey: string | null;
+  }>({
+    geometry: null,
+    materialKeys: [],
+    textureKey: null,
+    normalMapKey: null,
+  });
+
+  // Visualization dimensions
+  const vizDims = useMemo(
+    () => ({
+      L: dims.length / 100,
+      W: dims.width / 100,
+      H: dims.height / 100,
+    }),
+    [dims]
+  );
+
+  // ============================================================================
+  // Geometry Generation via Worker Pool
+  // ============================================================================
+
+  useEffect(() => {
+    if (!profile) {
+      console.log(
+        '[StoneSlabMesh] Skipping geometry generation: no profile provided'
+      );
+      return;
+    }
+
+    console.log(
+      '[StoneSlabMesh] Starting geometry generation for profile:',
+      profile.name
+    );
+    setIsGenerating(true);
+    const jobId = `slab-${dims.length}-${dims.width}-${dims.height}-${profile.name}`;
+
+    const generateGeometry = async () => {
+      try {
+        const result = await executeJob(
+          {
+            L: vizDims.L,
+            W: vizDims.W,
+            H: vizDims.H,
+            profile,
+            processedEdges,
+            okapnikEdges,
+          },
+          jobId
+        );
+
+        console.log(
+          '[StoneSlabMesh] Geometry generated successfully:',
+          result ? 'has data' : 'no data',
+          {
+            positions: result?.positions?.length,
+            indices: result?.indices?.length,
+          }
+        );
+        setGeometryData(result);
+        setIsGenerating(false);
+        onGeometryGenerated?.();
+      } catch (error) {
+        console.error('[StoneSlabMesh] Geometry generation failed:', error);
+        setIsGenerating(false);
+      }
+    };
+
+    generateGeometry();
+
+    // Cleanup on dependency change
+    return () => {
+      // Old geometry will be replaced, disposal handled by R3F
+    };
+  }, [
+    vizDims.L,
+    vizDims.W,
+    vizDims.H,
     profile,
     processedEdges,
     okapnikEdges,
-    grainOffset = { x: 0, y: 0 },
-    grainRotation = 0,
-    mirrorGrain = false,
+    executeJob,
     onGeometryGenerated,
-}) => {
-    const meshRef = useRef<THREE.Mesh>(null);
-    const { camera, controls } = useThree();
-    const { executeJob } = useGeometryWorkerPool();
+  ]);
 
-    // State for geometry
-    const [geometryData, setGeometryData] = useState<GeometryJobOutput | null>(null);
-    const [isGenerating, setIsGenerating] = useState(false);
+  // ============================================================================
+  // Camera Positioning
+  // ============================================================================
 
-    // DEBUG: Log component state
-    useEffect(() => {
-        console.log('[StoneSlabMesh] Props received:', {
-            dims,
-            hasMaterial: !!material,
-            hasFinish: !!finish,
-            hasProfile: !!profile,
-        });
-    }, [dims, material, finish, profile]);
+  useEffect(() => {
+    if (!camera || !controls) return;
 
-    // Track resources for cleanup
-    const resourcesRef = useRef<{
-        geometry: THREE.BufferGeometry | null;
-        materialKeys: string[];
-        textureKey: string | null;
-        normalMapKey: string | null;
-    }>({
-        geometry: null,
-        materialKeys: [],
-        textureKey: null,
-        normalMapKey: null,
-    });
+    const { L, W, H } = vizDims;
 
-    // Visualization dimensions
-    const vizDims = useMemo(() => ({
-        L: dims.length / 100,
-        W: dims.width / 100,
-        H: dims.height / 100,
-    }), [dims]);
+    // Centre of the stone
+    const target = new THREE.Vector3(0, H / 2, 0);
+    (controls as any).target.copy(target);
 
-    // ============================================================================
-    // Geometry Generation via Worker Pool
-    // ============================================================================
+    // Drive distance from the DIAGONAL of the stone's top face + height contribution
+    const diagonal = Math.sqrt(L * L + W * W);
+    const fitDist = Math.max(diagonal, H * 10) * 1.0 + 0.8;
 
-    useEffect(() => {
-        if (!profile) {
-            console.log('[StoneSlabMesh] Skipping geometry generation: no profile provided');
-            return;
-        }
+    // 38° elevation, 40° azimuth gives a classic 3/4 product-shot perspective
+    const elev = THREE.MathUtils.degToRad(38);
+    const azim = THREE.MathUtils.degToRad(40);
 
-        console.log('[StoneSlabMesh] Starting geometry generation for profile:', profile.name);
-        setIsGenerating(true);
-        const jobId = `slab-${dims.length}-${dims.width}-${dims.height}-${profile.name}`;
+    camera.position.set(
+      fitDist * Math.cos(elev) * Math.sin(azim),
+      H / 2 + fitDist * Math.sin(elev),
+      fitDist * Math.cos(elev) * Math.cos(azim)
+    );
+    camera.lookAt(target);
 
-        const generateGeometry = async () => {
-            try {
-                const result = await executeJob({
-                    L: vizDims.L,
-                    W: vizDims.W,
-                    H: vizDims.H,
-                    profile,
-                    processedEdges,
-                    okapnikEdges,
-                }, jobId);
+    (controls as any).minDistance = fitDist * 0.08;
+    (controls as any).maxDistance = fitDist * 6;
+    (controls as any).update();
+  }, [vizDims, camera, controls]);
 
-                console.log('[StoneSlabMesh] Geometry generated successfully:', result ? 'has data' : 'no data', {
-                    positions: result?.positions?.length,
-                    indices: result?.indices?.length,
-                });
-                setGeometryData(result);
-                setIsGenerating(false);
-                onGeometryGenerated?.();
-            } catch (error) {
-                console.error('[StoneSlabMesh] Geometry generation failed:', error);
-                setIsGenerating(false);
-            }
-        };
+  // ============================================================================
+  // Material Setup with ResourceManager
+  // ============================================================================
 
-        generateGeometry();
+  const [materials, setMaterials] = useState<THREE.Material[]>([]);
 
-        // Cleanup on dependency change
-        return () => {
-            // Old geometry will be replaced, disposal handled by R3F
-        };
-    }, [vizDims.L, vizDims.W, vizDims.H, profile, processedEdges, okapnikEdges, executeJob, onGeometryGenerated]);
+  // ============================================================================
+  // Material Setup with ResourceManager
+  // ============================================================================
 
-    // ============================================================================
-    // Camera Positioning
-    // ============================================================================
-
-    useEffect(() => {
-        if (!camera || !controls) return;
-
-        const { L, W, H } = vizDims;
-
-        // Centre of the stone
-        const target = new THREE.Vector3(0, H / 2, 0);
-        (controls as any).target.copy(target);
-
-        // Drive distance from the DIAGONAL of the stone's top face + height contribution
-        const diagonal = Math.sqrt(L * L + W * W);
-        const fitDist = Math.max(diagonal, H * 10) * 1.0 + 0.8;
-
-        // 38° elevation, 40° azimuth gives a classic 3/4 product-shot perspective
-        const elev = THREE.MathUtils.degToRad(38);
-        const azim = THREE.MathUtils.degToRad(40);
-
-        camera.position.set(
-            fitDist * Math.cos(elev) * Math.sin(azim),
-            H / 2 + fitDist * Math.sin(elev),
-            fitDist * Math.cos(elev) * Math.cos(azim)
-        );
-        camera.lookAt(target);
-
-        (controls as any).minDistance = fitDist * 0.08;
-        (controls as any).maxDistance = fitDist * 6;
-        (controls as any).update();
-    }, [vizDims, camera, controls]);
-
-    // ============================================================================
-    // Material Setup with ResourceManager
-    // ============================================================================
-
-    const [materials, setMaterials] = useState<THREE.Material[]>([]);
-
-    // ============================================================================
-    // Material Setup with ResourceManager
-    // ============================================================================
-
-    useEffect(() => {
-        if (!material || !finish) {
-            setMaterials([]);
-            return;
-        }
-
-        const preset = getFinishPreset(finish.name);
-        const baseColor = new THREE.Color(material.color || '#CCCCCC');
-        const darkerColor = baseColor.clone().lerp(new THREE.Color(0x000000), 0.18);
-        const lighterColor = baseColor.clone().lerp(new THREE.Color(0xffffff), 0.25);
-
-        // Release old materials using the tracked keys BEFORE creating new ones
-        const oldKeys = [...resourcesRef.current.materialKeys];
-        const oldNormalKey = resourcesRef.current.normalMapKey;
-        const oldTextureKey = resourcesRef.current.textureKey;
-
-        // Main face material (index 0)
-        const mainMatKey = `slab-${material.id}-${finish.id}-0-${Date.now()}`; // Unique key to force update
-        let normalMap: THREE.Texture | null = null;
-
-        if (preset.normalStrength > 0.05) {
-            const nmKey = `normal-${material.id}-${finish.id}`;
-            let nm = resourceManager.getTexture(nmKey);
-            if (!nm) {
-                nm = generateProceduralNormalMap(preset.normalStrength, material.id);
-                resourceManager.addTexture(nmKey, nm, 1);
-            } else {
-                resourceManager.acquireTexture(nmKey);
-            }
-            normalMap = nm;
-            resourcesRef.current.normalMapKey = nmKey;
-        } else {
-            resourcesRef.current.normalMapKey = null;
-        }
-
-        const mainMat = resourceManager.getPBRMaterial(mainMatKey, {
-            color: baseColor,
-            roughness: preset.roughness,
-            metalness: preset.metalness,
-            clearcoat: preset.clearcoat,
-            clearcoatRoughness: preset.clearcoatRoughness,
-            sheen: preset.sheen,
-            sheenRoughness: preset.sheenRoughness,
-            normalMap,
-            normalScale: [preset.normalStrength, preset.normalStrength],
-        });
-
-        // Side material (index 1) - slightly rougher
-        const sideMatKey = `slab-${material.id}-${finish.id}-1-${Date.now()}`;
-        const sideMat = resourceManager.getPBRMaterial(sideMatKey, {
-            color: darkerColor,
-            roughness: Math.min(preset.roughness + 0.12, 1.0),
-            metalness: preset.metalness * 0.5,
-            clearcoat: preset.clearcoat * 0.4,
-            clearcoatRoughness: preset.clearcoatRoughness,
-        });
-
-        // Profile material (index 2)
-        const profileMatKey = `slab-${material.id}-${finish.id}-2-${Date.now()}`;
-        const profileMat = resourceManager.getPBRMaterial(profileMatKey, {
-            color: lighterColor,
-            roughness: Math.max(preset.roughness - 0.05, 0.05),
-            metalness: preset.metalness,
-            clearcoat: preset.clearcoat * 0.8,
-            clearcoatRoughness: preset.clearcoatRoughness,
-        });
-
-        const mats = [mainMat, sideMat, profileMat];
-        resourcesRef.current.materialKeys = [mainMatKey, sideMatKey, profileMatKey];
-
-        // Load advanced PBR maps if available
-        const pbrMaps = (material as any).pbr_maps;
-        if (pbrMaps) {
-            const mapEntries = [
-                { type: 'roughnessMap', url: pbrMaps.roughness, colorSpace: THREE.NoColorSpace },
-                { type: 'normalMap', url: pbrMaps.normal, colorSpace: THREE.NoColorSpace },
-                { type: 'metalnessMap', url: pbrMaps.metallic, colorSpace: THREE.NoColorSpace },
-                { type: 'aoMap', url: pbrMaps.ao, colorSpace: THREE.NoColorSpace }
-            ];
-
-            mapEntries.forEach(entry => {
-                if (entry.url) {
-                    resourceManager.loadTexture(entry.url, {
-                        colorSpace: entry.colorSpace,
-                        wrapS: THREE.RepeatWrapping,
-                        wrapT: THREE.RepeatWrapping,
-                    }).then(tex => {
-                        const tileSizeM = 0.30;
-                        tex.repeat.set(
-                            (vizDims.L / tileSizeM) * (mirrorGrain ? -1 : 1), 
-                            vizDims.W / tileSizeM
-                        );
-                        tex.offset.set(grainOffset.x, grainOffset.y);
-                        tex.rotation = (grainRotation * Math.PI) / 180;
-                        tex.needsUpdate = true;
-                        
-                        mats.forEach(m => {
-                            (m as any)[entry.type] = tex;
-                            m.needsUpdate = true;
-                        });
-                    });
-                }
-            });
-        }
-
-        // Load base texture if available
-        if (material.texture) {
-            const texKey = material.texture;
-            resourcesRef.current.textureKey = texKey;
-
-            resourceManager.loadTexture(texKey, {
-                colorSpace: THREE.SRGBColorSpace,
-                wrapS: THREE.RepeatWrapping,
-                wrapT: THREE.RepeatWrapping,
-            }).then((tex) => {
-                const tileSizeM = 0.30;
-                tex.repeat.set(
-                    (vizDims.L / tileSizeM) * (mirrorGrain ? -1 : 1), 
-                    vizDims.W / tileSizeM
-                );
-                tex.offset.set(grainOffset.x, grainOffset.y);
-                tex.rotation = (grainRotation * Math.PI) / 180;
-                tex.needsUpdate = true;
-
-                if (mainMat.map !== tex) {
-                    mainMat.map = tex;
-                    mainMat.needsUpdate = true;
-                }
-            });
-        } else {
-            resourcesRef.current.textureKey = null;
-        }
-
-        setMaterials(mats);
-
-        // Cleanup function for this specific material set
-        return () => {
-            oldKeys.forEach((key) => resourceManager.releaseMaterial(key));
-            if (oldNormalKey) resourceManager.releaseTexture(oldNormalKey);
-            // textureKey usually points to a shared URL, but we should release if needed
-            // if (oldTextureKey) resourceManager.releaseTexture(oldTextureKey);
-        };
-    }, [material, finish, vizDims.L, vizDims.W, grainOffset, grainRotation, mirrorGrain]);
-
-    // ============================================================================
-    // Geometry Construction
-    // ============================================================================
-
-    const geometry = useMemo(() => {
-        if (!geometryData) return null;
-
-        const geo = new THREE.BufferGeometry();
-        geo.setAttribute('position', new THREE.BufferAttribute(geometryData.positions, 3));
-        if (geometryData.uvs) {
-            geo.setAttribute('uv', new THREE.BufferAttribute(geometryData.uvs, 2));
-        }
-        geo.setIndex(new THREE.BufferAttribute(geometryData.indices, 1));
-
-        geometryData.groups.forEach((g) => {
-            geo.addGroup(g.start, g.count, g.materialIndex);
-        });
-
-        geo.computeVertexNormals();
-
-        return geo;
-    }, [geometryData]);
-
-    // Handle geometry disposal safely in an effect
-    useEffect(() => {
-        if (geometry) {
-            // Clean up old geometry if replacing
-            if (resourcesRef.current.geometry && resourcesRef.current.geometry !== geometry) {
-                resourcesRef.current.geometry.dispose();
-            }
-            resourcesRef.current.geometry = geometry;
-        }
-    }, [geometry]);
-
-    // ============================================================================
-    // Cleanup on Unmount
-    // ============================================================================
-
-    useEffect(() => {
-        return () => {
-            // Release materials using tracked keys
-            resourcesRef.current.materialKeys.forEach((matKey) => {
-                resourceManager.releaseMaterial(matKey);
-            });
-            resourcesRef.current.materialKeys = [];
-
-            // Release normal map
-            if (resourcesRef.current.normalMapKey) {
-                resourceManager.releaseTexture(resourcesRef.current.normalMapKey);
-            }
-
-            // Release texture
-            if (resourcesRef.current.textureKey) {
-                resourceManager.releaseTexture(resourcesRef.current.textureKey);
-            }
-
-            // Dispose geometry
-            if (resourcesRef.current.geometry) {
-                resourcesRef.current.geometry.dispose();
-            }
-        };
-    }, []); // Only on final unmount
-
-    // DEBUG: Log why mesh might not render
-    useEffect(() => {
-        if (!geometry) {
-            console.log('[StoneSlabMesh] Not rendering: geometry is null (geometryData:', geometryData, ')');
-        }
-        if (materials.length === 0) {
-            console.log('[StoneSlabMesh] Not rendering: materials array is empty (material:', material, ', finish:', finish, ')');
-        }
-        if (geometry && materials.length > 0) {
-            console.log('[StoneSlabMesh] Rendering mesh with geometry and', materials.length, 'materials');
-        }
-    }, [geometry, materials, geometryData, material, finish]);
-
-    if (!geometry || materials.length === 0) {
-        return null;
+  useEffect(() => {
+    if (!material || !finish) {
+      setMaterials([]);
+      return;
     }
 
-    return (
-        <mesh
-            ref={meshRef}
-            geometry={geometry}
-            material={materials}
-            castShadow
-            receiveShadow
-            position={[0, 0, 0]}
-        />
+    const preset = getFinishPreset(finish.name);
+    const baseColor = new THREE.Color(material.color || '#CCCCCC');
+    const darkerColor = baseColor.clone().lerp(new THREE.Color(0x000000), 0.18);
+    const lighterColor = baseColor
+      .clone()
+      .lerp(new THREE.Color(0xffffff), 0.25);
+
+    // Release old materials using the tracked keys BEFORE creating new ones
+    const oldKeys = [...resourcesRef.current.materialKeys];
+    const oldNormalKey = resourcesRef.current.normalMapKey;
+    const oldTextureKey = resourcesRef.current.textureKey;
+
+    // Main face material (index 0)
+    const mainMatKey = `slab-${material.id}-${finish.id}-0-${Date.now()}`; // Unique key to force update
+    let normalMap: THREE.Texture | null = null;
+
+    if (preset.normalStrength > 0.05) {
+      const nmKey = `normal-${material.id}-${finish.id}`;
+      let nm = resourceManager.getTexture(nmKey);
+      if (!nm) {
+        nm = generateProceduralNormalMap(preset.normalStrength, material.id);
+        resourceManager.addTexture(nmKey, nm, 1);
+      } else {
+        resourceManager.acquireTexture(nmKey);
+      }
+      normalMap = nm;
+      resourcesRef.current.normalMapKey = nmKey;
+    } else {
+      resourcesRef.current.normalMapKey = null;
+    }
+
+    const mainMat = resourceManager.getPBRMaterial(mainMatKey, {
+      color: baseColor,
+      roughness: preset.roughness,
+      metalness: preset.metalness,
+      clearcoat: preset.clearcoat,
+      clearcoatRoughness: preset.clearcoatRoughness,
+      sheen: preset.sheen,
+      sheenRoughness: preset.sheenRoughness,
+      normalMap,
+      normalScale: [preset.normalStrength, preset.normalStrength],
+    });
+
+    // Side material (index 1) - slightly rougher
+    const sideMatKey = `slab-${material.id}-${finish.id}-1-${Date.now()}`;
+    const sideMat = resourceManager.getPBRMaterial(sideMatKey, {
+      color: darkerColor,
+      roughness: Math.min(preset.roughness + 0.12, 1.0),
+      metalness: preset.metalness * 0.5,
+      clearcoat: preset.clearcoat * 0.4,
+      clearcoatRoughness: preset.clearcoatRoughness,
+    });
+
+    // Profile material (index 2)
+    const profileMatKey = `slab-${material.id}-${finish.id}-2-${Date.now()}`;
+    const profileMat = resourceManager.getPBRMaterial(profileMatKey, {
+      color: lighterColor,
+      roughness: Math.max(preset.roughness - 0.05, 0.05),
+      metalness: preset.metalness,
+      clearcoat: preset.clearcoat * 0.8,
+      clearcoatRoughness: preset.clearcoatRoughness,
+    });
+
+    const mats = [mainMat, sideMat, profileMat];
+    resourcesRef.current.materialKeys = [mainMatKey, sideMatKey, profileMatKey];
+
+    // Load advanced PBR maps if available
+    const pbrMaps = (material as any).pbr_maps;
+    if (pbrMaps) {
+      const mapEntries = [
+        {
+          type: 'roughnessMap',
+          url: pbrMaps.roughness,
+          colorSpace: THREE.NoColorSpace,
+        },
+        {
+          type: 'normalMap',
+          url: pbrMaps.normal,
+          colorSpace: THREE.NoColorSpace,
+        },
+        {
+          type: 'metalnessMap',
+          url: pbrMaps.metallic,
+          colorSpace: THREE.NoColorSpace,
+        },
+        { type: 'aoMap', url: pbrMaps.ao, colorSpace: THREE.NoColorSpace },
+      ];
+
+      mapEntries.forEach((entry) => {
+        if (entry.url) {
+          resourceManager
+            .loadTexture(entry.url, {
+              colorSpace: entry.colorSpace,
+              wrapS: THREE.RepeatWrapping,
+              wrapT: THREE.RepeatWrapping,
+            })
+            .then((tex) => {
+              const tileSizeM = 0.3;
+              tex.repeat.set(
+                (vizDims.L / tileSizeM) * (mirrorGrain ? -1 : 1),
+                vizDims.W / tileSizeM
+              );
+              tex.offset.set(grainOffset.x, grainOffset.y);
+              tex.rotation = (grainRotation * Math.PI) / 180;
+              tex.needsUpdate = true;
+
+              mats.forEach((m) => {
+                (m as any)[entry.type] = tex;
+                m.needsUpdate = true;
+              });
+            });
+        }
+      });
+    }
+
+    // Load base texture if available
+    if (material.texture) {
+      const texKey = material.texture;
+      resourcesRef.current.textureKey = texKey;
+
+      resourceManager
+        .loadTexture(texKey, {
+          colorSpace: THREE.SRGBColorSpace,
+          wrapS: THREE.RepeatWrapping,
+          wrapT: THREE.RepeatWrapping,
+        })
+        .then((tex) => {
+          const tileSizeM = 0.3;
+          tex.repeat.set(
+            (vizDims.L / tileSizeM) * (mirrorGrain ? -1 : 1),
+            vizDims.W / tileSizeM
+          );
+          tex.offset.set(grainOffset.x, grainOffset.y);
+          tex.rotation = (grainRotation * Math.PI) / 180;
+          tex.needsUpdate = true;
+
+          if (mainMat.map !== tex) {
+            mainMat.map = tex;
+            mainMat.needsUpdate = true;
+          }
+        });
+    } else {
+      resourcesRef.current.textureKey = null;
+    }
+
+    setMaterials(mats);
+
+    // Cleanup function for this specific material set
+    return () => {
+      oldKeys.forEach((key) => resourceManager.releaseMaterial(key));
+      if (oldNormalKey) resourceManager.releaseTexture(oldNormalKey);
+      // textureKey usually points to a shared URL, but we should release if needed
+      // if (oldTextureKey) resourceManager.releaseTexture(oldTextureKey);
+    };
+  }, [
+    material,
+    finish,
+    vizDims.L,
+    vizDims.W,
+    grainOffset,
+    grainRotation,
+    mirrorGrain,
+  ]);
+
+  // ============================================================================
+  // Geometry Construction
+  // ============================================================================
+
+  const geometry = useMemo(() => {
+    if (!geometryData) return null;
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute(
+      'position',
+      new THREE.BufferAttribute(geometryData.positions, 3)
     );
+    if (geometryData.uvs) {
+      geo.setAttribute('uv', new THREE.BufferAttribute(geometryData.uvs, 2));
+    }
+    geo.setIndex(new THREE.BufferAttribute(geometryData.indices, 1));
+
+    geometryData.groups.forEach((g) => {
+      geo.addGroup(g.start, g.count, g.materialIndex);
+    });
+
+    geo.computeVertexNormals();
+
+    return geo;
+  }, [geometryData]);
+
+  // Handle geometry disposal safely in an effect
+  useEffect(() => {
+    if (geometry) {
+      // Clean up old geometry if replacing
+      if (
+        resourcesRef.current.geometry &&
+        resourcesRef.current.geometry !== geometry
+      ) {
+        resourcesRef.current.geometry.dispose();
+      }
+      resourcesRef.current.geometry = geometry;
+    }
+  }, [geometry]);
+
+  // ============================================================================
+  // Cleanup on Unmount
+  // ============================================================================
+
+  useEffect(() => {
+    return () => {
+      // Release materials using tracked keys
+      resourcesRef.current.materialKeys.forEach((matKey) => {
+        resourceManager.releaseMaterial(matKey);
+      });
+      resourcesRef.current.materialKeys = [];
+
+      // Release normal map
+      if (resourcesRef.current.normalMapKey) {
+        resourceManager.releaseTexture(resourcesRef.current.normalMapKey);
+      }
+
+      // Release texture
+      if (resourcesRef.current.textureKey) {
+        resourceManager.releaseTexture(resourcesRef.current.textureKey);
+      }
+
+      // Dispose geometry
+      if (resourcesRef.current.geometry) {
+        resourcesRef.current.geometry.dispose();
+      }
+    };
+  }, []); // Only on final unmount
+
+  // DEBUG: Log why mesh might not render
+  useEffect(() => {
+    if (!geometry) {
+      console.log(
+        '[StoneSlabMesh] Not rendering: geometry is null (geometryData:',
+        geometryData,
+        ')'
+      );
+    }
+    if (materials.length === 0) {
+      console.log(
+        '[StoneSlabMesh] Not rendering: materials array is empty (material:',
+        material,
+        ', finish:',
+        finish,
+        ')'
+      );
+    }
+    if (geometry && materials.length > 0) {
+      console.log(
+        '[StoneSlabMesh] Rendering mesh with geometry and',
+        materials.length,
+        'materials'
+      );
+    }
+  }, [geometry, materials, geometryData, material, finish]);
+
+  if (!geometry || materials.length === 0) {
+    return null;
+  }
+
+  return (
+    <mesh
+      ref={meshRef}
+      geometry={geometry}
+      material={materials}
+      castShadow
+      receiveShadow
+      position={[0, 0, 0]}
+    />
+  );
 };
 
 export default StoneSlabMesh;
