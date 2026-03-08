@@ -21,6 +21,7 @@ export function useOrderCalculations({
   selectedElement,
   quantity,
   bunjaEdgeStyle,
+  textureOffset,
 }: CalculationParams): CalculationsResult {
   return useMemo(
     () =>
@@ -36,6 +37,7 @@ export function useOrderCalculations({
         selectedElement,
         quantity,
         bunjaEdgeStyle,
+        textureOffset,
       }),
     [
       length,
@@ -49,6 +51,7 @@ export function useOrderCalculations({
       selectedElement,
       quantity,
       bunjaEdgeStyle,
+      textureOffset,
     ]
   );
 }

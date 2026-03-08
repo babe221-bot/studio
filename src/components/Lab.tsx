@@ -83,7 +83,7 @@ import { generateTechnicalDrawing } from '@/ai/flows/imageGenerationFlow';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useOrderCalculations } from '@/hooks/useOrderCalculations';
 import { useElementConfiguration } from '@/hooks/useElementConfiguration';
-import { useProjectHistory } from '@/hooks/useProjectHistory';
+import { useSupabasePersistence } from '@/hooks/useSupabasePersistence';
 import { useDesignAnalysis } from '@/hooks/useDesignAnalysis';
 import { useVoiceCommands } from '@/hooks/useVoiceCommands';
 import { Mic, MicOff } from 'lucide-react';
@@ -667,7 +667,8 @@ export function Lab() {
     saveTemplate,
     deleteVersion,
     deleteTemplate,
-  } = useProjectHistory();
+    isLoading: isLoadingHistory,
+  } = useSupabasePersistence();
 
   // Load version or template from URL
   useEffect(() => {
@@ -1299,12 +1300,28 @@ export function Lab() {
                   <FileDown className="mr-2 h-4 w-4" /> Preuzmi Nalog (PDF)
                 </Button>
                 <Button
-                  onClick={() =>
-                    saveVersion(`Verzija ${versions.length + 1}`, orderItems)
-                  }
+                  onClick={async () => {
+                    try {
+                      await saveVersion(
+                        `Verzija ${versions.length + 1}`,
+                        orderItems
+                      );
+                      toast({
+                        title: 'Verzija spremljena',
+                        description:
+                          'Vaša verzija je uspješno spremljena u oblak.',
+                      });
+                    } catch (err: any) {
+                      toast({
+                        title: 'Greška pri spremanju',
+                        description: err.message || 'Došlo je do greške.',
+                        variant: 'destructive',
+                      });
+                    }
+                  }}
                   variant="ghost"
                   className="w-full md:w-auto flex-1 h-11 border-dashed border-2"
-                  disabled={orderItems.length === 0}
+                  disabled={orderItems.length === 0 || isLoadingHistory}
                 >
                   Spremi trenutnu verziju
                 </Button>
