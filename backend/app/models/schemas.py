@@ -39,6 +39,9 @@ class ProcessingRequest(BaseModel):
     profile: Profile
     processedEdges: EdgeFlags = EdgeFlags()
     okapnikEdges: EdgeFlags = EdgeFlags()
+    grainOffset: Dict[str, float] = {"x": 0.0, "y": 0.0}
+    grainRotation: float = 0.0
+    mirrorGrain: bool = False
 
 
 class CADResponse(BaseModel):
