@@ -172,6 +172,12 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
             indices: result?.indices?.length,
           }
         );
+
+        // Validation Checkpoint
+        if (!result || !result.positions || result.positions.length === 0) {
+          throw new Error('Invalid mesh generated: No positions returned');
+        }
+
         setGeometryData(result);
         setIsGenerating(false);
         onGeometryGenerated?.();
