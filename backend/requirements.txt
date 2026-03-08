@@ -13,7 +13,7 @@ alembic>=1.13.1
 numpy>=1.26.3
 
 # CAD Engine
--e ../stone_slab_cad
+# -e ../stone_slab_cad
 
 # AI/ML (optional, heavy — comment out if not needed locally)
 # torch>=2.1.2
