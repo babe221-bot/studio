@@ -44,10 +44,7 @@
 
 ## Phase 4 (Next)
 
-- [ ] **Stripe Payments:**
-  - [ ] Implement a "Secure Deposit" flow using Stripe Elements.
-  - [ ] Allow users to reserve slabs directly from the configurator.
-- [x] **Grain Alignment Tool:**
+- [ ] **Grain Alignment Tool:**
   - [x] Add UI for "Bookmatching" to align textures/veins across multiple slab joints.
 - [x] **Viewport Performance:**
   - [x] Optimize `viewport_performance.py` to maintain 60fps on integrated GPUs during 3D rotations.
