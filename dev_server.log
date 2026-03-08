@@ -1,0 +1,25 @@
+
+> nextn@0.1.0 dev
+> concurrently "npm run dev:frontend" "npm run dev:backend"
+
+[0] 
+[0] > nextn@0.1.0 dev:frontend
+[0] > next dev --webpack
+[0] 
+[1] 
+[1] > nextn@0.1.0 dev:backend
+[1] > cd backend && ..\.venv\Scripts\uvicorn.exe app.main:app --reload
+[1] 
+[1] INFO:     Will watch for changes in these directories: ['C:\\Users\\Administrator\\Documents\\GitHub\\studio\\backend']
+[1] INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+[1] INFO:     Started reloader process [21700] using WatchFiles
+[0] ▲ Next.js 16.1.6 (webpack)
+[0] - Local:         http://localhost:3000
+[0] - Network:       http://172.31.32.1:3000
+[0] - Environments: .env.local
+[0] 
+[0] ✓ Starting...
+[0] ✓ Ready in 4.7s
+[1] INFO:     Started server process [2984]
+[1] INFO:     Waiting for application startup.
+[1] INFO:     Application startup complete.
