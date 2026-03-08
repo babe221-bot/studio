@@ -1,37 +1,56 @@
 # Project TODO List (Phase 2)
 
 ## High Priority
+
 - [x] **Dynamic Data Integration:**
-    - [x] Update frontend `Lab.tsx` and `useElementConfiguration.ts` to fetch `materials`, `surface_finishes`, and `edge_profiles` dynamically from the Python API instead of using hardcoded values in `src/lib/data.ts`.
-    - [x] Create backend SQLAlchemy models and FastAPI endpoints for `surface_finishes` and `edge_profiles` (similar to `MaterialDB`), mapped to the Supabase tables defined in `scripts/migrate_seed.sql`.
+  - [x] Update frontend `Lab.tsx` and `useElementConfiguration.ts` to fetch `materials`, `surface_finishes`, and `edge_profiles` dynamically from the Python API instead of using hardcoded values in `src/lib/data.ts`.
+  - [x] Create backend SQLAlchemy models and FastAPI endpoints for `surface_finishes` and `edge_profiles` (similar to `MaterialDB`), mapped to the Supabase tables defined in `scripts/migrate_seed.sql`.
 - [x] **AI Context Injection:**
-    - [x] Pass the active `cadContext` (current dimensions, selected material, processed edges) from the configurator state into the `useChat` hook body in `AIAssistant.tsx` to provide the LLM with true project awareness.
+  - [x] Pass the active `cadContext` (current dimensions, selected material, processed edges) from the configurator state into the `useChat` hook body in `AIAssistant.tsx` to provide the LLM with true project awareness.
 
 ## Features
+
 - [x] **Blender Containerization (Production CAD):**
-    - [x] Update `backend/Dockerfile` to install `blender` system packages to support headless execution of `stone_slab_cad` rendering via the API.
-    - [x] Remove legacy `weasyprint` and `reportlab` system dependencies from the Dockerfile as PDF generation has moved to the frontend/browser.
+  - [x] Update `backend/Dockerfile` to install `blender` system packages to support headless execution of `stone_slab_cad` rendering via the API.
+  - [x] Remove legacy `weasyprint` and `reportlab` system dependencies from the Dockerfile as PDF generation has moved to the frontend/browser.
 - [x] **Supabase Auth Polish:**
-    - [x] Review `Header.tsx` and guest session logic (`GUEST_COOKIE_NAME`) to seamlessly bridge anonymous configurator users with authenticated Supabase sessions when saving projects.
+  - [x] Review `Header.tsx` and guest session logic (`GUEST_COOKIE_NAME`) to seamlessly bridge anonymous configurator users with authenticated Supabase sessions when saving projects.
 - [x] **PDF Generation Optimization:**
-    - [x] Review the browser-side `generateEnhancedPdf` flow to ensure large base64 strings don't crash mobile browsers, or finalize moving it to an edge function.
+  - [x] Review the browser-side `generateEnhancedPdf` flow to ensure large base64 strings don't crash mobile browsers, or finalize moving it to an edge function.
 
 ## Bugs & Fixes
+
 - [x] **Production Deployment Checks:**
-    - [x] Validate that the FastAPI `uvicorn` setup works correctly behind a production load balancer (e.g., ensuring `FORWARDED_ALLOW_IPS` is properly set for Railway/Fly.io if needed).
+  - [x] Validate that the FastAPI `uvicorn` setup works correctly behind a production load balancer (e.g., ensuring `FORWARDED_ALLOW_IPS` is properly set for Railway/Fly.io if needed).
 
 ## Documentation
+
 - [x] **Clean Up Legacy Docs:**
-    - [x] Review `docs/archives/google-migration-plan.md` and archive or remove outdated architecture references. Ensure `docs/ai_context/AI_ARCHITECTURE_MAP.md` is accurate to the current state.
+  - [x] Review `docs/archives/google-migration-plan.md` and archive or remove outdated architecture references. Ensure `docs/ai_context/AI_ARCHITECTURE_MAP.md` is accurate to the current state.
 
 ## Tech Debt
+
 - [x] **Frontend Test Coverage:**
-    - [x] Set up tests for critical frontend hooks (e.g., `useElementConfiguration`, `useOrderCalculations`) using Jest/React Testing Library.
+  - [x] Set up tests for critical frontend hooks (e.g., `useElementConfiguration`, `useOrderCalculations`) using Jest/React Testing Library.
 
 ## Phase 3 (New)
+
 - [x] **User Dashboard:**
-    - [x] Create a dedicated dashboard page for users to view saved history and templates.
-    - [x] Add navigation and deep-linking from Dashboard back to Lab with state restoration.
+  - [x] Create a dedicated dashboard page for users to view saved history and templates.
+  - [x] Add navigation and deep-linking from Dashboard back to Lab with state restoration.
 - [x] **Advanced CAD Features:**
-    - [x] Enable Blender-powered 3D rendering scripts via the Python API.
-    - [x] Create CLI wrapper for `mcp_visualization.py` for headless execution.
+  - [x] Enable Blender-powered 3D rendering scripts via the Python API.
+  - [x] Create CLI wrapper for `mcp_visualization.py` for headless execution.
+
+## Phase 4 (Next)
+
+- [ ] **Stripe Payments:**
+  - [ ] Implement a "Secure Deposit" flow using Stripe Elements.
+  - [ ] Allow users to reserve slabs directly from the configurator.
+- [ ] **Grain Alignment Tool:**
+  - [ ] Add UI for "Bookmatching" to align textures/veins across multiple slab joints.
+- [x] **Viewport Performance:**
+  - [x] Optimize `viewport_performance.py` to maintain 60fps on integrated GPUs during 3D rotations.
+- [ ] **Test Coverage & E2E:**
+  - [ ] Aim for >80% unit test coverage on `src/lib/calculations.ts` and `backend/app/logic`.
+  - [ ] Implement Playwright tests for the critical "Select -> Configure -> Checkout" user journey.

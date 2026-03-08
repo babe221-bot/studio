@@ -45,7 +45,8 @@ from utils.viewport_performance import (
     setup_performance_viewport, create_profiling_overlay,
     ViewportOptimizer, SceneDisplayManager,
     GPUAccelerator, PerformanceBudgetManager,
-    ViewportConfig, optimize_for_texturing
+    ViewportConfig, optimize_for_texturing,
+    ViewportDisplayMode, MatcapPreset
 )
 from utils.workflow_efficiency import (
     setup_project_structure, batch_export_selected,
@@ -276,18 +277,21 @@ def generate_3d_model(config: Dict[Any, Any], output_path: str) -> None:
     
     # Setup Viewport Performance Tuning (Section 8)
     print("\n🖥️  Setting up Viewport Performance Tuning...")
+    is_low_end = platform in ['mobile', 'tablet', 'pc_low_end']
+    
     vp_config = ViewportConfig(
-        display_mode='MATERIAL',
+        display_mode=ViewportDisplayMode.MATERIAL,
         disable_textures=False,
-        use_matcap=True,
-        matcap_preset='CLAY',
+        use_matcap=is_low_end,
+        matcap_preset=MatcapPreset.CLAY,
         enable_backface_culling=True,
-        subdivision_preview_levels=1,
+        subdivision_preview_levels=0 if is_low_end else 1,
         enable_hardware_shading=True,
-        texture_cache_size_mb=512,
+        texture_cache_size_mb=256 if is_low_end else 512,
         hide_distant_objects=True,
-        distant_object_distance=50.0,
-        use_bounding_box_for_distant=True
+        distant_object_distance=30.0 if is_low_end else 50.0,
+        use_bounding_box_for_distant=True,
+        use_extreme_optimization=is_low_end
     )
     vp_results = setup_performance_viewport(vp_config)
     print(f"✅ Viewport optimization complete")

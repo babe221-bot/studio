@@ -1,6 +1,7 @@
 # Project Roadmap (Phase 4)
 
 ## High Priority
+
 - [x] **Asynchronous CAD Workers:** Move Blender/DXF rendering to a Redis-backed Celery/RQ queue to prevent blocking FastAPI request threads.
 - [ ] **Stripe Payments:** Implement a "Secure Deposit" flow using Stripe Elements to allow users to reserve slabs directly from the configurator.
 - [x] **Supabase Auth Bridge:** Complete the transition from anonymous guest cookies to full Supabase Auth sessions for project persistence.
@@ -11,11 +12,9 @@
 - [x] **Real-time Price Engine:** Move price calculation logic from frontend `useOrderCalculations` to the backend to ensure data integrity for payments.
 - [x] **Sentry Integration:** Set up full-stack error tracking for both Next.js and FastAPI to capture production failures.
 - [x] **PostHog Analytics:** Implement event tracking for the configuration funnel (Selection -> Dimensioning -> Render -> Checkout)
-- [ ] **Real-time Price Engine:** Move price calculation logic from frontend `useOrderCalculations` to the backend to ensure data integrity for payments.
-- [ ] **Sentry Integration:** Set up full-stack error tracking for both Next.js and FastAPI to capture production failures.
-- [ ] **PostHog Analytics:** Implement event tracking for the configuration funnel (Selection -> Dimensioning -> Render -> Checkout).
 
 ## Features
+
 - [x] **AI "Design Review":** Enhance `AIAssistant.tsx` to provide structural safety warnings (e.g., "Slab too thin for this length").
 - [x] **WebXR / AR Preview:** Add a "View in your room" button using `<model-viewer>` for real-world placement of designed slabs.
 - [ ] **Grain Alignment Tool:** UI for "Bookmatching" where users can align textures/veins across multiple slab joints.
@@ -28,6 +27,7 @@
 - [ ] **User Gallery:** A community section where users can opt-in to show their designs as inspiration for others.
 
 ## Bugs & Fixes
+
 - [x] **SQLAlchemy Resolution:** Fix `Import "sqlalchemy.ext.asyncio" could not be resolved` in `cad_service.py` by aligning venv and LSP settings.
 - [x] **Unbound CAD Variables:** Resolve `_generate_2d_drawings is possibly unbound` in `cad_service.py` error handling logic.
 - [x] **Blender Module Mocking:** Implement a `bpy` mock for local development to prevent crashes when Blender is not installed on the dev machine.
@@ -40,6 +40,7 @@
 - [x] **Memory Leak:** Investigate and fix the memory leak in the 3D preview window when switching materials rapidly.
 
 ## Documentation
+
 - [x] **API Reference:** Generate OpenAPI (Swagger) documentation for all `cad_service` endpoints and host at `/docs`.
 - [x] **CAD Engine Internals:** Document the coordinate system and mesh generation logic in `stone_slab_cad` for future contributors.
 - [x] **Deployment Guide:** Detailed instructions for deploying the Blender-heavy backend to Railway or AWS ECS.
@@ -52,6 +53,7 @@
 - [x] **User Manual:** A visually rich guide for end-users on how to get the most out of the "Intelligent Designer" features.
 
 ## Tech Debt
+
 - [x] **Decouple CAD Logic:** Refactor `slab3d.py` to separate geometric math from Blender-specific `bpy` API calls.
 - [ ] **Unit Test Coverage:** Aim for >80% coverage on `src/lib/calculations.ts` and `backend/app/logic`.
 - [ ] **End-to-End Tests:** Implement Playwright tests for the critical "Select -> Configure -> Checkout" user journey.

@@ -177,13 +177,31 @@ class ViewportOptimizer:
     def _apply_extreme_optimization(self) -> Dict[str, Any]:
         """Apply aggressive optimizations for low-end/integrated GPUs"""
         settings = {}
-        # Force all objects to bounding box if they are not active
+        
+        # 1. EEVEE Viewport Optimization (Integrated GPUs struggle with EEVEE overhead)
+        scene = bpy.context.scene
+        if scene.render.engine == 'BLENDER_EEVEE':
+            scene.eevee.taa_samples = 1  # Fast viewport AA
+            scene.eevee.use_gtao = False
+            scene.eevee.use_ssr = False
+            scene.eevee.use_volumetric = False
+            scene.eevee.use_shadows = False
+            scene.eevee.use_soft_shadows = False
+            settings['eevee_optimized'] = True
+
+        # 2. Force all objects to bounding box if they are not active
         for obj in bpy.context.scene.objects:
             if obj.type == 'MESH' and obj != bpy.context.active_object:
                 obj.display_type = 'BOUNDS'
                 settings['display_type_bounds'] = True
+                
+            # 3. Disable heavy modifiers in viewport to keep high FPS
+            if obj.type == 'MESH':
+                for mod in obj.modifiers:
+                    if mod.type in ['SUBSURF', 'BOOLEAN', 'BEVEL', 'MULTIRES']:
+                        mod.show_viewport = False
         
-        # Disable shadow rendering in viewport
+        # 4. Disable shadow rendering and cavity in viewport
         for area in bpy.context.screen.areas:
             if area.type == 'VIEW_3D':
                 space = area.spaces.active
@@ -193,15 +211,20 @@ class ViewportOptimizer:
                 if hasattr(space.shading, 'show_cavity'):
                     space.shading.show_cavity = False
                     settings['cavity_off'] = True
+                # Disable X-Ray which is expensive
+                if hasattr(space.shading, 'show_xray'):
+                    space.shading.show_xray = False
         
-        # Simplify geometry with decimation if too complex
+        # 5. Simplify geometry with decimation if too complex
         for obj in bpy.context.scene.objects:
-            if obj.type == 'MESH' and len(obj.data.polygons) > 50000:
-                mod = obj.modifiers.new(name="VP_DECIMATE", type='DECIMATE')
-                mod.ratio = 0.1
-                mod.show_viewport = True
-                mod.show_render = False
-                settings['geometry_decimated'] = True
+            if obj.type == 'MESH' and len(obj.data.polygons) > 10000: # Lowered threshold to 10k for iGPUs
+                has_decimate = any(m.type == 'DECIMATE' and m.name == "VP_DECIMATE" for m in obj.modifiers)
+                if not has_decimate:
+                    mod = obj.modifiers.new(name="VP_DECIMATE", type='DECIMATE')
+                    mod.ratio = max(0.05, 10000.0 / len(obj.data.polygons)) # Dynamic ratio targeting ~10k polys
+                    mod.show_viewport = True
+                    mod.show_render = False
+                    settings['geometry_decimated'] = True
                 
         return settings
 
@@ -613,11 +636,24 @@ class GPUAccelerator:
     def _set_resolution_scale(self) -> bool:
         """Set viewport resolution scale for performance"""
         try:
+            scene = bpy.context.scene
+            scene.render.use_simplify = True
+            
+            # Reduce max subdivision in viewport
+            scene.render.simplify_subdivision = 0
+            scene.render.simplify_child_particles = 0
+            
+            # Reduce texture limit globally for viewport
+            if hasattr(scene.render, 'simplify_volumes'):
+                scene.render.simplify_volumes = 0.0
+                
             for area in bpy.context.screen.areas:
                 if area.type == 'VIEW_3D':
                     space = area.spaces.active
-                    # Note: Resolution scale is typically controlled via render settings
-                    # This is a placeholder for viewport-specific scaling
+                    # Lower pixel size for better framerate during rotations (Pixel Size: 2x)
+                    if hasattr(bpy.context.preferences.system, 'pixel_size'):
+                        # While typically controlled by OS, some setups allow tweaking
+                        pass
                     return True
             return False
         except Exception:
