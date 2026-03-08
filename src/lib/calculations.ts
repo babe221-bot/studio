@@ -18,6 +18,7 @@ export interface CalculationParams {
   selectedElement?: ConstructionElement;
   quantity: number;
   bunjaEdgeStyle: 'oštre' | 'lomljene';
+  textureOffset?: { x: number; y: number };
 }
 
 export interface CalculationsResult {

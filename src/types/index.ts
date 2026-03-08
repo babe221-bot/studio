@@ -1,4 +1,7 @@
-export type { TechnicalDrawingInput, TechnicalDrawingOutput } from '@/lib/schemas';
+export type {
+  TechnicalDrawingInput,
+  TechnicalDrawingOutput,
+} from '@/lib/schemas';
 
 export interface Material {
   id: number;
@@ -47,6 +50,7 @@ export interface OrderItem {
   orderUnit: 'piece' | 'sqm' | 'lm';
   quantity: number;
   bunjaEdgeStyle?: 'oštre' | 'lomljene';
+  textureOffset?: { x: number; y: number };
 }
 
 export interface ProjectVersion {
@@ -104,7 +108,11 @@ export interface AIChatResponse {
  * Request payload for CAD-specific AI operations via Python backend.
  */
 export interface CADAIRequest {
-  operation: 'analyze_geometry' | 'suggest_dimensions' | 'check_constraints' | 'optimize_layout';
+  operation:
+    | 'analyze_geometry'
+    | 'suggest_dimensions'
+    | 'check_constraints'
+    | 'optimize_layout';
   payload: {
     dimensions?: { length: number; width: number; height: number };
     material?: string;
