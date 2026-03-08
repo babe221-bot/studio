@@ -51,6 +51,8 @@
   - [x] Add UI for "Bookmatching" to align textures/veins across multiple slab joints.
 - [x] **Viewport Performance:**
   - [x] Optimize `viewport_performance.py` to maintain 60fps on integrated GPUs during 3D rotations.
+- [x] **Test Coverage & E2E:**
+  - [x] Implement Playwright tests for the critical "Select -> Configure -> Checkout" user journey.
 - [ ] **Test Coverage & E2E:**
   - [ ] Aim for >80% unit test coverage on `src/lib/calculations.ts` and `backend/app/logic`.
   - [ ] Implement Playwright tests for the critical "Select -> Configure -> Checkout" user journey.
