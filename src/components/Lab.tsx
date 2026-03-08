@@ -78,6 +78,7 @@ import {
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Textarea } from '@/components/ui/textarea';
 import { generateAndDownloadPdf } from '@/lib/pdf';
 import { generateTechnicalDrawing } from '@/ai/flows/imageGenerationFlow';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -627,6 +628,7 @@ export function Lab() {
   const [profiles, setProfiles] = useState<EdgeProfile[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [projectNotes, setProjectNotes] = useState('');
 
   // Fetch dynamic data
   useEffect(() => {
@@ -1018,6 +1020,7 @@ export function Lab() {
       await generateEnhancedPdf(orderItems, edgeNames, images3D, {
         companyName: 'Kamena Galanterija',
         orderNumber: `RN-${new Date().toISOString().split('T')[0].replace(/-/g, '')}`,
+        notes: projectNotes,
       });
       toast({
         title: 'PDF generiran',
@@ -1327,6 +1330,16 @@ export function Lab() {
                 </Button>
               </div>
               <Separator className="my-4" />
+              <div className="space-y-2 mb-4">
+                <Label htmlFor="project-notes">Napomene uz projekt</Label>
+                <Textarea
+                  id="project-notes"
+                  placeholder="Unesite dodatne napomene za radni nalog..."
+                  value={projectNotes}
+                  onChange={(e) => setProjectNotes(e.target.value)}
+                  className="min-h-[80px]"
+                />
+              </div>
               <OrderList
                 orderItems={orderItems}
                 edgeNames={edgeNames}

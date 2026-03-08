@@ -1,11 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { createClient } from '@/utils/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { ProjectVersion, ProjectTemplate, OrderItem } from '@/types';
 
 export function useSupabasePersistence() {
-  const supabase = createClient();
   const [versions, setVersions] = useState<ProjectVersion[]>([]);
   const [templates, setTemplates] = useState<ProjectTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
