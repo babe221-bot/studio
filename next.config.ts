@@ -3,7 +3,7 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   /* config options here */
   typescript: {
-    ignoreBuildErrors: true,
+    // ignoreBuildErrors: true,
   },
   images: {
     remotePatterns: [
@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
   // Keep webpack config for backwards compatibility when not using Turbopack
   webpack: (config, { isServer }) => {
     if (isServer) {
-      config.externals = [...(config.externals as string[]), "handlebars"];
+      config.externals = [...(config.externals as string[]), 'handlebars'];
     }
     return config;
   },
