@@ -1,73 +1,89 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 interface VoiceCommandHandlers {
-    setLength: (val: number) => void;
-    setWidth: (val: number) => void;
-    setHeight: (val: number) => void;
-    addToOrder: () => void;
-    downloadPdf: () => void;
-    reset: () => void;
+  setLength: (val: number) => void;
+  setWidth: (val: number) => void;
+  setHeight: (val: number) => void;
+  addToOrder: () => void;
+  downloadPdf: () => void;
+  reset: () => void;
 }
 
 export function useVoiceCommands(handlers: VoiceCommandHandlers) {
-    const [isListening, setIsListening] = useState(false);
-    const [transcript, setTranscript] = useState('');
-    const [error, setError] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-    const startListening = useCallback(() => {
-        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-        
-        if (!SpeechRecognition) {
-            setError("Speech recognition not supported in this browser.");
-            return;
-        }
+  const processCommand = useCallback(
+    (cmd: string) => {
+      console.log('Voice Command:', cmd);
 
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'hr-HR'; // Croatian
-        recognition.continuous = true;
-        recognition.interimResults = true;
+      // Regex for numbers
+      const numMatch = cmd.match(/\d+/);
+      const val = numMatch ? parseInt(numMatch[0]) : null;
 
-        recognition.onstart = () => setIsListening(true);
-        recognition.onend = () => setIsListening(false);
-        recognition.onerror = (event: any) => setError(event.error);
+      if (cmd.includes('dužina') || cmd.includes('dužinu')) {
+        if (val) handlers.setLength(val);
+      } else if (cmd.includes('širina') || cmd.includes('širinu')) {
+        if (val) handlers.setWidth(val);
+      } else if (cmd.includes('debljina') || cmd.includes('debljinu')) {
+        if (val) handlers.setHeight(val);
+      } else if (cmd.includes('dodaj') || cmd.includes('ubaci')) {
+        handlers.addToOrder();
+      } else if (
+        cmd.includes('pdf') ||
+        cmd.includes('preuzmi') ||
+        cmd.includes('nalog')
+      ) {
+        handlers.downloadPdf();
+      } else if (cmd.includes('reset') || cmd.includes('obriši')) {
+        handlers.reset();
+      }
+    },
+    [handlers]
+  );
 
-        recognition.onresult = (event: any) => {
-            const current = event.resultIndex;
-            const result = event.results[current][0].transcript.toLowerCase();
-            setTranscript(result);
+  const startListening = useCallback(() => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
 
-            if (event.results[current].isFinal) {
-                processCommand(result);
-            }
-        };
+    if (!SpeechRecognition) {
+      setError('Speech recognition not supported in this browser.');
+      return;
+    }
 
-        recognition.start();
-        return recognition;
-    }, [handlers]);
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'hr-HR'; // Croatian
+    recognition.continuous = true;
+    recognition.interimResults = true;
 
-    const processCommand = (cmd: string) => {
-        console.log("Voice Command:", cmd);
-
-        // Regex for numbers
-        const numMatch = cmd.match(/\d+/);
-        const val = numMatch ? parseInt(numMatch[0]) : null;
-
-        if (cmd.includes('dužina') || cmd.includes('dužinu')) {
-            if (val) handlers.setLength(val);
-        } else if (cmd.includes('širina') || cmd.includes('širinu')) {
-            if (val) handlers.setWidth(val);
-        } else if (cmd.includes('debljina') || cmd.includes('debljinu')) {
-            if (val) handlers.setHeight(val);
-        } else if (cmd.includes('dodaj') || cmd.includes('ubaci')) {
-            handlers.addToOrder();
-        } else if (cmd.includes('pdf') || cmd.includes('preuzmi') || cmd.includes('nalog')) {
-            handlers.downloadPdf();
-        } else if (cmd.includes('reset') || cmd.includes('obriši')) {
-            handlers.reset();
-        }
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = (event: any) => {
+      setError(event.error);
+      setIsListening(false);
     };
 
-    return { isListening, transcript, error, startListening };
+    recognition.onresult = (event: any) => {
+      const current = event.resultIndex;
+      const result = event.results[current][0].transcript.toLowerCase();
+      setTranscript(result);
+
+      if (event.results[current].isFinal) {
+        processCommand(result);
+      }
+    };
+
+    recognition.start();
+    return recognition;
+  }, [processCommand]);
+
+  const stopListening = useCallback(() => {
+    setIsListening(false);
+  }, []);
+
+  return { isListening, transcript, error, startListening, stopListening };
 }

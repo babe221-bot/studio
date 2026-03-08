@@ -75,6 +75,8 @@ import {
   Eye,
   Ruler,
   CreditCard,
+  Mic,
+  MicOff,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -87,7 +89,6 @@ import { useElementConfiguration } from '@/hooks/useElementConfiguration';
 import { useSupabasePersistence } from '@/hooks/useSupabasePersistence';
 import { useDesignAnalysis } from '@/hooks/useDesignAnalysis';
 import { useVoiceCommands } from '@/hooks/useVoiceCommands';
-import { Mic, MicOff } from 'lucide-react';
 import { VersionHistoryDialog } from './history/VersionHistoryDialog';
 import { TemplateManager } from './history/TemplateManager';
 import { ARPreview } from './ARPreview';
@@ -733,6 +734,8 @@ export function Lab() {
   const {
     isListening,
     startListening,
+    stopListening,
+    transcript,
     error: voiceError,
   } = useVoiceCommands({
     setLength,
@@ -746,7 +749,21 @@ export function Lab() {
     },
   });
 
-  const [modalOpen, setModalOpen] = useState<ModalType>(null);
+  useEffect(() => {
+    if (voiceError) {
+      toast({
+        title: 'Glasovna kontrola',
+        description: voiceError,
+        variant: 'destructive',
+      });
+    }
+  }, [voiceError, toast]);
+
+  useEffect(() => {
+    if (transcript && isListening) {
+      // Just for debugging/feedback in console if needed
+    }
+  }, [transcript, isListening]);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isAddingItem, setIsAddingItem] = useState(false);
