@@ -1,10 +1,10 @@
-import { ThemeToggle } from "./ThemeToggle";
-import { createClient } from "@/utils/supabase/server";
-import { SignOutButton } from "./SignOutButton";
-import type { GuestUser } from "@/lib/guest-session";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { UserCircle, LogIn, LayoutDashboard } from "lucide-react";
+import { ThemeToggle } from './ThemeToggle';
+import { createClient } from '@/utils/supabase/server';
+import { SignOutButton } from './SignOutButton';
+import type { GuestUser } from '@/lib/guest-session';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { UserCircle, LogIn, LayoutDashboard, LayoutGrid } from 'lucide-react';
 
 interface HeaderProps {
   guestUser?: GuestUser | null;
@@ -13,7 +13,9 @@ interface HeaderProps {
 export async function Header(props: HeaderProps) {
   const { guestUser } = props;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // Determine if we have any user (authenticated or guest)
   const isGuest = guestUser && guestUser.isGuest && !user;
@@ -31,13 +33,27 @@ export async function Header(props: HeaderProps) {
               Aplikacija za radne naloge s 3D vizualizacijom i PDF izvozom
             </p>
           </Link>
-          
+
           {displayUser && (
             <nav className="hidden lg:flex items-center gap-4">
-              <Button variant="ghost" asChild className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                asChild
+                className="flex items-center gap-2"
+              >
                 <Link href="/dashboard">
                   <LayoutDashboard className="h-4 w-4" />
                   Upravljačka ploča
+                </Link>
+              </Button>
+              <Button
+                variant="ghost"
+                asChild
+                className="flex items-center gap-2"
+              >
+                <Link href="/gallery">
+                  <LayoutGrid className="h-4 w-4" />
+                  Galerija
                 </Link>
               </Button>
             </nav>
@@ -53,8 +69,15 @@ export async function Header(props: HeaderProps) {
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
                     </span>
-                    <span className="text-sm font-medium text-muted-foreground hidden md:inline-block">Gost</span>
-                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs ml-1" asChild>
+                    <span className="text-sm font-medium text-muted-foreground hidden md:inline-block">
+                      Gost
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs ml-1"
+                      asChild
+                    >
                       <Link href="/login">
                         <LogIn className="h-3 w-3 mr-1" />
                         Prijava

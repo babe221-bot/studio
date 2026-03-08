@@ -59,6 +59,8 @@ export interface ProjectVersion {
   timestamp: number;
   items: OrderItem[];
   notes?: string;
+  share_token?: string;
+  is_public?: boolean;
 }
 
 export interface ProjectTemplate {

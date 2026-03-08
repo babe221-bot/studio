@@ -1408,6 +1408,7 @@ export function Lab() {
                   currentItems={orderItems}
                   onRestore={setOrderItems}
                   onDelete={deleteVersion}
+                  onShare={shareProject}
                 />
               </div>
             </CardHeader>

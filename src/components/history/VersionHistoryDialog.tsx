@@ -12,7 +12,15 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { History, ArrowLeftRight, Check, Trash2, Clock } from 'lucide-react';
+import {
+  History,
+  ArrowLeftRight,
+  Check,
+  Trash2,
+  Clock,
+  Share2,
+  Loader2,
+} from 'lucide-react';
 import { DiffViewer } from './DiffViewer';
 import { format } from 'date-fns';
 import { hr } from 'date-fns/locale';
@@ -114,6 +122,24 @@ export function VersionHistoryDialog({
                           )}
                         </div>
                         <div className="flex items-center gap-2">
+                          {onShare && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-primary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleShare(version.id);
+                              }}
+                              disabled={isSharing === version.id}
+                            >
+                              {isSharing === version.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Share2 className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
