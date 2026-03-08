@@ -34,6 +34,7 @@ import { constructionElements } from '@/lib/constructionElements';
 import { useCadContext } from '@/contexts/CadContext';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { CalculationsResult } from '@/lib/calculations';
 
 const VisualizationCanvas = dynamic(
   () => import('@/components/VisualizationCanvas'),
@@ -440,56 +441,66 @@ const ProcessingConfig = React.memo(
   )
 );
 
-const CalculationSummary = React.memo(({ calculations }: any) => (
-  <Card>
-    <CardHeader>
-      <CardTitle>4. Kalkulacija</CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-3">
-      <div className="flex justify-between text-sm">
-        <span className="text-muted-foreground">Površina</span>
-        <span className="font-medium font-code">
-          {calculations.surfaceArea.toFixed(2)} m²
-        </span>
-      </div>
-      <div className="flex justify-between text-sm">
-        <span className="text-muted-foreground">Težina</span>
-        <span className="font-medium font-code">
-          {calculations.weight.toFixed(1)} kg
-        </span>
-      </div>
-      <Separator />
-      <div className="flex justify-between text-sm">
-        <span className="text-muted-foreground">Trošak materijala</span>
-        <span className="font-medium font-code">
-          €{calculations.materialCost.toFixed(2)}
-        </span>
-      </div>
-      <div className="flex justify-between text-sm">
-        <span className="text-muted-foreground">Trošak obrade</span>
-        <span className="font-medium font-code">
-          €{calculations.processingCost.toFixed(2)}
-        </span>
-      </div>
-      {calculations.okapnikCost > 0 && (
+const CalculationSummary = React.memo(
+  ({ calculations }: { calculations: CalculationsResult }) => (
+    <Card>
+      <CardHeader>
+        <CardTitle>4. Kalkulacija</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Trošak okapnika</span>
+          <span className="text-muted-foreground">Površina</span>
           <span className="font-medium font-code">
-            €{calculations.okapnikCost.toFixed(2)}
+            {calculations.surfaceArea.toFixed(2)} m²
           </span>
         </div>
-      )}
-      <Separator />
-      <div className="flex justify-between text-lg font-bold text-primary">
-        <span>Ukupni trošak</span>
-        <span>€{calculations.totalCost.toFixed(2)}</span>
-      </div>
-    </CardContent>
-  </Card>
-));
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">Težina</span>
+          <span className="font-medium font-code">
+            {calculations.weight.toFixed(1)} kg
+          </span>
+        </div>
+        <Separator />
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">Trošak materijala</span>
+          <span className="font-medium font-code">
+            €{calculations.materialCost.toFixed(2)}
+          </span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">Trošak obrade</span>
+          <span className="font-medium font-code">
+            €{calculations.processingCost.toFixed(2)}
+          </span>
+        </div>
+        {calculations.okapnikCost > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Trošak okapnika</span>
+            <span className="font-medium font-code">
+              €{calculations.okapnikCost.toFixed(2)}
+            </span>
+          </div>
+        )}
+        <Separator />
+        <div className="flex justify-between text-lg font-bold text-primary">
+          <span>Ukupni trošak</span>
+          <span>€{calculations.totalCost.toFixed(2)}</span>
+        </div>
+      </CardContent>
+    </Card>
+  )
+);
 
 const OrderList = React.memo(
-  ({ orderItems, edgeNames, handleRemoveOrderItem }: any) => (
+  ({
+    orderItems,
+    edgeNames,
+    handleRemoveOrderItem,
+  }: {
+    orderItems: OrderItem[];
+    edgeNames: Record<string, string>;
+    handleRemoveOrderItem: (id: number) => void;
+  }) => (
     <ScrollArea className="h-64">
       <div className="space-y-3 pr-4">
         {orderItems.length === 0 ? (
@@ -497,7 +508,7 @@ const OrderList = React.memo(
             Nema stavkih u nalogu.
           </p>
         ) : (
-          orderItems.map((item: any) => {
+          orderItems.map((item: OrderItem) => {
             let quantityString = '';
             switch (item.orderUnit) {
               case 'piece':

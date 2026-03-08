@@ -9,10 +9,12 @@ const __dirname = path.dirname(__filename);
 const compat = new FlatCompat({
   baseDirectory: __dirname,
   recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
 });
 
 export default [
+  {
+    ignores: ['.next/**', 'node_modules/**', 'dist/**', 'backend/**'],
+  },
   ...compat.extends('next/core-web-vitals'),
   ...compat.extends('prettier'),
   {
@@ -21,6 +23,7 @@ export default [
     },
     rules: {
       'prettier/prettier': 'error',
+      'no-unused-vars': 'warn',
     },
   },
 ];
