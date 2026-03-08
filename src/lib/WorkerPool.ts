@@ -129,6 +129,7 @@ export class WorkerPool<TInput = unknown, TOutput = unknown> {
 
     private createWorker(id: number): WorkerState {
         try {
+            console.debug(`[WorkerPool] Worker ${id} created`);
             const worker = new Worker(this.config.workerUrl, { type: 'module' });
 
             const state: WorkerState = {
@@ -213,6 +214,7 @@ export class WorkerPool<TInput = unknown, TOutput = unknown> {
 
             // Insert job into queue based on priority
             this.insertJobByPriority(job);
+            console.debug(`[WorkerPool] Job ${job.id} submitted, queue length: ${this.jobQueue.length}`);
             this.log(`[JOB QUEUED] Job ${job.id} queued, queue length: ${this.jobQueue.length}`);
 
             // Log queue warning at 80% capacity
@@ -255,6 +257,7 @@ export class WorkerPool<TInput = unknown, TOutput = unknown> {
 
         // Log stats periodically for debugging
         if (this.config.debug && this.stats.totalProcessed % 10 === 0 && this.stats.totalProcessed > 0) {
+            console.debug(`[WorkerPool] Stats:`, stats);
             this.log('[STATS]', JSON.stringify(stats));
         }
 
@@ -359,6 +362,7 @@ export class WorkerPool<TInput = unknown, TOutput = unknown> {
     private executeJob(state: WorkerState, job: QueuedJob<TInput, TOutput>): void {
         state.busy = true;
         state.currentJob = job.id;
+            console.debug(`[WorkerPool] Job ${job.id} started on worker ${state.id}`);
         state.lastActivity = Date.now();
 
         const timeoutId = setTimeout(() => {
@@ -435,6 +439,7 @@ export class WorkerPool<TInput = unknown, TOutput = unknown> {
     }
 
     private handleWorkerError(state: WorkerState, error: ErrorEvent | Error): void {
+        console.error(`[WorkerPool] Worker ${state.id} crashed:`, error);
         this.log(`[WORKER ERROR] Worker ${state.id} error:`, error);
 
         // Calculate failure rate
@@ -482,6 +487,7 @@ export class WorkerPool<TInput = unknown, TOutput = unknown> {
         try {
             state.worker.removeEventListener('error', state.errorHandler);
             state.worker.terminate();
+            console.debug(`[WorkerPool] Worker ${state.id} terminated`);
             this.log(`Worker ${state.id} terminated`);
         } catch (error) {
             this.log(`Error terminating worker ${state.id}:`, error);
