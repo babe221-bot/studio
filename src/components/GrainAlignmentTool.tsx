@@ -6,25 +6,31 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 export const GrainAlignmentTool: React.FC = () => {
-  const { 
-    grainOffset, 
-    grainRotation, 
+  const {
+    grainOffset,
+    grainRotation,
     mirrorGrain,
-    setGrainOffset, 
+    showBookmatchPreview,
+    setGrainOffset,
     setGrainRotation,
-    setMirrorGrain
+    setMirrorGrain,
+    setShowBookmatchPreview,
   } = useLabStore();
 
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-sm font-medium">Grain Alignment (Bookmatching)</CardTitle>
+        <CardTitle className="text-sm font-medium">
+          Grain Alignment (Bookmatching)
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
           <div className="flex justify-between">
             <Label htmlFor="offset-x">X Offset</Label>
-            <span className="text-xs text-muted-foreground">{grainOffset.x.toFixed(2)}m</span>
+            <span className="text-xs text-muted-foreground">
+              {grainOffset.x.toFixed(2)}m
+            </span>
           </div>
           <Slider
             id="offset-x"
@@ -39,7 +45,9 @@ export const GrainAlignmentTool: React.FC = () => {
         <div className="space-y-2">
           <div className="flex justify-between">
             <Label htmlFor="offset-y">Y Offset</Label>
-            <span className="text-xs text-muted-foreground">{grainOffset.y.toFixed(2)}m</span>
+            <span className="text-xs text-muted-foreground">
+              {grainOffset.y.toFixed(2)}m
+            </span>
           </div>
           <Slider
             id="offset-y"
@@ -54,7 +62,9 @@ export const GrainAlignmentTool: React.FC = () => {
         <div className="space-y-2">
           <div className="flex justify-between">
             <Label htmlFor="rotation">Rotation</Label>
-            <span className="text-xs text-muted-foreground">{grainRotation}°</span>
+            <span className="text-xs text-muted-foreground">
+              {grainRotation}°
+            </span>
           </div>
           <Slider
             id="rotation"
@@ -67,11 +77,20 @@ export const GrainAlignmentTool: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-between">
-          <Label htmlFor="mirror-mode">Mirror Mode (Bookmatch)</Label>
-          <Switch 
-            id="mirror-mode" 
+          <Label htmlFor="mirror-mode">Mirror Mode</Label>
+          <Switch
+            id="mirror-mode"
             checked={mirrorGrain}
             onCheckedChange={setMirrorGrain}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <Label htmlFor="bookmatch-preview">Show Bookmatch Preview</Label>
+          <Switch
+            id="bookmatch-preview"
+            checked={showBookmatchPreview}
+            onCheckedChange={setShowBookmatchPreview}
           />
         </div>
       </CardContent>

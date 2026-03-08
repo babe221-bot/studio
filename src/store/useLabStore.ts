@@ -19,6 +19,7 @@ interface LabState {
   grainOffset: { x: number; y: number };
   grainRotation: number;
   mirrorGrain: boolean;
+  showBookmatchPreview: boolean;
 
   // Actions
   setSelectedElement: (element: ConstructionElement) => void;
@@ -34,6 +35,7 @@ interface LabState {
   setGrainOffset: (offset: { x?: number; y?: number }) => void;
   setGrainRotation: (rotation: number) => void;
   setMirrorGrain: (mirror: boolean) => void;
+  setShowBookmatchPreview: (show: boolean) => void;
   resetToDefaults: (elementId?: string) => void;
 }
 
@@ -67,6 +69,7 @@ export const useLabStore = create<LabState>()(
       grainOffset: { x: 0, y: 0 },
       grainRotation: 0,
       mirrorGrain: false,
+      showBookmatchPreview: false,
 
       setSelectedElement: (element) => {
         set({
@@ -125,6 +128,8 @@ export const useLabStore = create<LabState>()(
 
       setMirrorGrain: (mirrorGrain) => set({ mirrorGrain }),
 
+      setShowBookmatchPreview: (showBookmatchPreview) => set({ showBookmatchPreview }),
+
       resetToDefaults: (elementId) => {
         const element = elementId 
           ? constructionElements.find(e => e.id === elementId) || DEFAULT_ELEMENT
@@ -152,6 +157,7 @@ export const useLabStore = create<LabState>()(
         grainOffset: state.grainOffset,
         grainRotation: state.grainRotation,
         mirrorGrain: state.mirrorGrain,
+        showBookmatchPreview: state.showBookmatchPreview,
       }),
     }
   )
