@@ -487,7 +487,7 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
       material={materials}
       castShadow
       receiveShadow
-      position={[0, 0, 0]}
+      position={position}
     />
   );
 };

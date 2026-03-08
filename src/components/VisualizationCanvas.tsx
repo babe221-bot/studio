@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
 /**
  * VisualizationCanvas - Refactored Three.js Visualization using React Three Fiber
- * 
+ *
  * Architecture Improvements:
  * - Uses centralized ResourceManager with reference counting
  * - Worker Pool for geometry generation (2 persistent workers)
@@ -11,13 +11,30 @@
  * - Optimized rendering with visibility detection
  */
 
-import React, { useRef, useImperativeHandle, forwardRef, useCallback, useState, useEffect } from 'react';
+import React, {
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+  useCallback,
+  useState,
+  useEffect,
+} from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 
-import type { Material as MaterialType, SurfaceFinish, EdgeProfile, ProcessedEdges } from '@/types';
-import { StoneSlabMesh, StudioLighting, DimensionLabels, SceneEnvironment } from './three';
+import type {
+  Material as MaterialType,
+  SurfaceFinish,
+  EdgeProfile,
+  ProcessedEdges,
+} from '@/types';
+import {
+  StoneSlabMesh,
+  StudioLighting,
+  DimensionLabels,
+  SceneEnvironment,
+} from './three';
 import { resourceManager } from '@/lib/ResourceManager';
 
 // ============================================================================
@@ -34,10 +51,10 @@ export interface VisualizationProps {
   grainOffset?: { x: number; y: number };
   grainRotation?: number;
   mirrorGrain?: boolean;
+  showBookmatchPreview?: boolean;
   showDimensions?: boolean;
   onCapture?: (dataUrl: string) => void;
 }
-
 
 export type CanvasHandle = {
   captureImage: () => string | null;
@@ -94,7 +111,11 @@ const CameraController: React.FC<CameraControllerProps> = ({ dims }) => {
 // ============================================================================
 
 interface SceneProps extends VisualizationProps {
-  onSceneReady: (scene: THREE.Scene, camera: THREE.Camera, gl: THREE.WebGLRenderer) => void;
+  onSceneReady: (
+    scene: THREE.Scene,
+    camera: THREE.Camera,
+    gl: THREE.WebGLRenderer
+  ) => void;
   onInteractionStart: () => void;
   onInteractionEnd: () => void;
 }
@@ -109,12 +130,12 @@ const Scene: React.FC<SceneProps> = ({
   grainOffset,
   grainRotation,
   mirrorGrain,
+  showBookmatchPreview,
   showDimensions,
   onSceneReady,
   onInteractionStart,
   onInteractionEnd,
 }) => {
-
   const { scene, camera, gl } = useThree();
 
   // DEBUG: Log props to diagnose blank screen
@@ -132,7 +153,16 @@ const Scene: React.FC<SceneProps> = ({
       grainOffset,
       grainRotation,
     });
-  }, [dims, material, finish, profile, processedEdges, okapnikEdges, grainOffset, grainRotation]);
+  }, [
+    dims,
+    material,
+    finish,
+    profile,
+    processedEdges,
+    okapnikEdges,
+    grainOffset,
+    grainRotation,
+  ]);
 
   useEffect(() => {
     onSceneReady(scene, camera, gl);
@@ -145,17 +175,38 @@ const Scene: React.FC<SceneProps> = ({
       <StudioLighting />
 
       {profile && (
-        <StoneSlabMesh
-          dims={dims}
-          material={material}
-          finish={finish}
-          profile={profile}
-          processedEdges={processedEdges}
-          okapnikEdges={okapnikEdges}
-          grainOffset={grainOffset}
-          grainRotation={grainRotation}
-          mirrorGrain={mirrorGrain}
-        />
+        <group>
+          <StoneSlabMesh
+            dims={dims}
+            material={material}
+            finish={finish}
+            profile={profile}
+            processedEdges={processedEdges}
+            okapnikEdges={okapnikEdges}
+            grainOffset={grainOffset}
+            grainRotation={grainRotation}
+            mirrorGrain={mirrorGrain}
+            position={
+              showBookmatchPreview
+                ? [-((dims.length || 0) / 1000) / 2 - 0.02, 0, 0]
+                : [0, 0, 0]
+            }
+          />
+          {showBookmatchPreview && (
+            <StoneSlabMesh
+              dims={dims}
+              material={material}
+              finish={finish}
+              profile={profile}
+              processedEdges={processedEdges}
+              okapnikEdges={okapnikEdges}
+              grainOffset={grainOffset}
+              grainRotation={grainRotation}
+              mirrorGrain={!mirrorGrain}
+              position={[(dims.length || 0) / 1000 / 2 + 0.02, 0, 0]}
+            />
+          )}
+        </group>
       )}
 
       <DimensionLabels dims={dims} visible={showDimensions ?? false} />
@@ -168,8 +219,6 @@ const Scene: React.FC<SceneProps> = ({
         onStart={onInteractionStart}
         onEnd={onInteractionEnd}
       />
-
-
     </>
   );
 };
@@ -179,7 +228,23 @@ const Scene: React.FC<SceneProps> = ({
 // ============================================================================
 
 const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
-  ({ dims, material, finish, profile, processedEdges, okapnikEdges, grainOffset, grainRotation, mirrorGrain, showDimensions = false, onCapture }, ref) => {
+  (
+    {
+      dims,
+      material,
+      finish,
+      profile,
+      processedEdges,
+      okapnikEdges,
+      grainOffset,
+      grainRotation,
+      mirrorGrain,
+      showBookmatchPreview,
+      showDimensions = false,
+      onCapture,
+    },
+    ref
+  ) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
     const sceneRef = useRef<THREE.Scene | null>(null);
@@ -188,7 +253,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
 
     // Expose capture method
     useImperativeHandle(ref, () => ({
-
       captureImage: () => {
         if (rendererRef.current && sceneRef.current && cameraRef.current) {
           rendererRef.current.render(sceneRef.current, cameraRef.current);
@@ -198,11 +262,14 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       },
     }));
 
-    const handleSceneReady = useCallback((scene: THREE.Scene, camera: THREE.Camera, gl: THREE.WebGLRenderer) => {
-      sceneRef.current = scene;
-      cameraRef.current = camera;
-      rendererRef.current = gl;
-    }, []);
+    const handleSceneReady = useCallback(
+      (scene: THREE.Scene, camera: THREE.Camera, gl: THREE.WebGLRenderer) => {
+        sceneRef.current = scene;
+        cameraRef.current = camera;
+        rendererRef.current = gl;
+      },
+      []
+    );
 
     return (
       <div
@@ -221,7 +288,6 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
             outputColorSpace: THREE.SRGBColorSpace,
             powerPreference: 'high-performance',
           }}
-
           camera={{
             fov: 42,
             near: 0.05,
@@ -240,12 +306,12 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
             grainOffset={grainOffset}
             grainRotation={grainRotation}
             mirrorGrain={mirrorGrain}
+            showBookmatchPreview={showBookmatchPreview}
             showDimensions={showDimensions}
             onSceneReady={handleSceneReady}
             onInteractionStart={() => setIsInteracting(true)}
             onInteractionEnd={() => setIsInteracting(false)}
           />
-
         </Canvas>
       </div>
     );

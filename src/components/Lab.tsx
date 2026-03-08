@@ -1,18 +1,35 @@
-"use client";
+'use client';
 
-import React, { useState, useMemo, useEffect, useRef, useDeferredValue, useCallback } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useDeferredValue,
+  useCallback,
+} from 'react';
 // import { generateEnhancedPdf } from '@/lib/pdf-enhanced'; // Moved to dynamic import
 import type { CanvasHandle } from '@/components/VisualizationCanvas';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { initialMaterials, initialSurfaceFinishes, initialEdgeProfiles } from '@/lib/data';
+import {
+  initialMaterials,
+  initialSurfaceFinishes,
+  initialEdgeProfiles,
+} from '@/lib/data';
 import { constructionElements } from '@/lib/constructionElements';
 import { useCadContext } from '@/contexts/CadContext';
 import { useSearchParams } from 'next/navigation';
@@ -38,10 +55,27 @@ const VisualizationCanvas = dynamic(
 import MaterialModal from '@/components/modals/MaterialModal';
 import FinishModal from '@/components/modals/FinishModal';
 import ProfileModal from '@/components/modals/ProfileModal';
-import type { Material, SurfaceFinish, EdgeProfile, OrderItem, ModalType, EditableItem, ProcessedEdges, ConstructionElement } from '@/types';
-import { PlusIcon, Trash2, RefreshCw, FileDown, Loader2, Eye, Ruler } from 'lucide-react';
+import type {
+  Material,
+  SurfaceFinish,
+  EdgeProfile,
+  OrderItem,
+  ModalType,
+  EditableItem,
+  ProcessedEdges,
+  ConstructionElement,
+} from '@/types';
+import {
+  PlusIcon,
+  Trash2,
+  RefreshCw,
+  FileDown,
+  Loader2,
+  Eye,
+  Ruler,
+} from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { generateAndDownloadPdf } from '@/lib/pdf';
 import { generateTechnicalDrawing } from '@/ai/flows/imageGenerationFlow';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -57,277 +91,504 @@ import { ARPreview } from './ARPreview';
 import { GrainAlignmentTool } from './GrainAlignmentTool';
 
 // Memoized Sub-components
-const OrderEntryForm = React.memo(({
-  constructionElements, specimenId, setSpecimenId,
-  length, setLength, width, setWidth, height, setHeight,
-  quantity, setQuantity, selectedElement, handleElementTypeChange,
-  isListening, startListening
-}: any) => {
-  const renderQuantityInput = () => {
-    if (!selectedElement) return null;
-    let label = '';
-    switch (selectedElement.orderUnit) {
-      case 'piece': label = 'Broj komada'; break;
-      case 'sqm': label = 'Količina (m²)'; break;
-      case 'lm': label = 'Količina (m)'; break;
-    }
-    return (
-      <div className="space-y-2 pt-2">
-        <Label htmlFor="quantity">{label}</Label>
-        <Input id="quantity" type="number" value={quantity} onChange={e => setQuantity(parseFloat(e.target.value) || 0)} min="1" />
-      </div>
-    );
-  };
+const OrderEntryForm = React.memo(
+  ({
+    constructionElements,
+    specimenId,
+    setSpecimenId,
+    length,
+    setLength,
+    width,
+    setWidth,
+    height,
+    setHeight,
+    quantity,
+    setQuantity,
+    selectedElement,
+    handleElementTypeChange,
+    isListening,
+    startListening,
+  }: any) => {
+    const renderQuantityInput = () => {
+      if (!selectedElement) return null;
+      let label = '';
+      switch (selectedElement.orderUnit) {
+        case 'piece':
+          label = 'Broj komada';
+          break;
+        case 'sqm':
+          label = 'Količina (m²)';
+          break;
+        case 'lm':
+          label = 'Količina (m)';
+          break;
+      }
+      return (
+        <div className="space-y-2 pt-2">
+          <Label htmlFor="quantity">{label}</Label>
+          <Input
+            id="quantity"
+            type="number"
+            value={quantity}
+            onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
+            min="1"
+          />
+        </div>
+      );
+    };
 
-  return (
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>1. Unos naloga</CardTitle>
+          <Button
+            variant={isListening ? 'destructive' : 'outline'}
+            size="icon"
+            onClick={startListening}
+            className={isListening ? 'animate-pulse' : ''}
+            title="Glasovne naredbe"
+          >
+            {isListening ? (
+              <Mic className="h-4 w-4" />
+            ) : (
+              <MicOff className="h-4 w-4" />
+            )}
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="element-type-select">Tip elementa</Label>
+            <Select
+              onValueChange={handleElementTypeChange}
+              defaultValue={constructionElements[0].id}
+            >
+              <SelectTrigger id="element-type-select">
+                <SelectValue placeholder="Odaberite tip elementa" />
+              </SelectTrigger>
+              <SelectContent>
+                {constructionElements.map((el: any) => (
+                  <SelectItem key={el.id} value={el.id}>
+                    {el.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="specimen-id">ID / Naziv komada</Label>
+            <Input
+              id="specimen-id"
+              value={specimenId}
+              onChange={(e) => setSpecimenId(e.target.value)}
+              placeholder="npr. Kuhinjska ploča K01"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="length">Dužina (cm)</Label>
+              <Input
+                id="length"
+                type="number"
+                inputMode="decimal"
+                pattern="[0-9]*"
+                value={length}
+                onChange={(e) => setLength(parseFloat(e.target.value) || 0)}
+                disabled={selectedElement?.hasSpecialBunjaEdges}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="width">Širina (cm)</Label>
+              <Input
+                id="width"
+                type="number"
+                inputMode="decimal"
+                pattern="[0-9]*"
+                value={width}
+                onChange={(e) => setWidth(parseFloat(e.target.value) || 0)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="height">Debljina (cm)</Label>
+              <Input
+                id="height"
+                type="number"
+                inputMode="decimal"
+                pattern="[0-9]*"
+                value={height}
+                onChange={(e) => setHeight(parseFloat(e.target.value) || 0)}
+              />
+            </div>
+          </div>
+          {renderQuantityInput()}
+        </CardContent>
+      </Card>
+    );
+  }
+);
+
+const MaterialSelection = React.memo(
+  ({
+    materials,
+    selectedMaterialId,
+    setSelectedMaterialId,
+    handleOpenModal,
+  }: any) => (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>1. Unos naloga</CardTitle>
-        <Button 
-          variant={isListening ? "destructive" : "outline"} 
-          size="icon" 
-          onClick={startListening}
-          className={isListening ? "animate-pulse" : ""}
-          title="Glasovne naredbe"
+        <CardTitle>2. Odabir materijala</CardTitle>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => handleOpenModal('material')}
+          aria-label="Dodaj novi materijal"
         >
-          {isListening ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+          <PlusIcon className="h-4 w-4" aria-hidden="true" />
         </Button>
+      </CardHeader>
+      <CardContent>
+        <Label htmlFor="material-select">Vrsta kamena</Label>
+        <Select
+          value={selectedMaterialId}
+          onValueChange={setSelectedMaterialId}
+        >
+          <SelectTrigger id="material-select">
+            <SelectValue placeholder="Odaberite materijal" />
+          </SelectTrigger>
+          <SelectContent>
+            {materials.map((m: any) => (
+              <SelectItem key={m.id} value={m.id.toString()}>
+                {m.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </CardContent>
+    </Card>
+  )
+);
+
+const ProcessingConfig = React.memo(
+  ({
+    selectedElement,
+    selectedFinishId,
+    setSelectedFinishId,
+    handleOpenModal,
+    finishes,
+    bunjaEdgeStyle,
+    setBunjaEdgeStyle,
+    profiles,
+    selectedProfileId,
+    setSelectedProfileId,
+    edgeNames,
+    processedEdges,
+    updateProcessedEdge,
+    okapnikEdges,
+    updateOkapnikEdge,
+  }: any) => (
+    <Card>
+      <CardHeader>
+        <CardTitle>3. Definiranje obrade</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="element-type-select">Tip elementa</Label>
-          <Select onValueChange={handleElementTypeChange} defaultValue={constructionElements[0].id}>
-            <SelectTrigger id="element-type-select">
-              <SelectValue placeholder="Odaberite tip elementa" />
-            </SelectTrigger>
-            <SelectContent>
-              {constructionElements.map((el: any) => (
-                <SelectItem key={el.id} value={el.id}>{el.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="specimen-id">ID / Naziv komada</Label>
-          <Input id="specimen-id" value={specimenId} onChange={e => setSpecimenId(e.target.value)} placeholder="npr. Kuhinjska ploča K01" />
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="length">Dužina (cm)</Label>
-            <Input id="length" type="number" inputMode="decimal" pattern="[0-9]*" value={length} onChange={e => setLength(parseFloat(e.target.value) || 0)} disabled={selectedElement?.hasSpecialBunjaEdges} />
+          <Label htmlFor="surface-finish-select">Obrada lica</Label>
+          <div className="flex items-center gap-2">
+            <Select
+              value={selectedFinishId}
+              onValueChange={setSelectedFinishId}
+            >
+              <SelectTrigger
+                id="surface-finish-select"
+                aria-label="Odaberite obradu lica"
+              >
+                <SelectValue placeholder="Odaberite obradu" />
+              </SelectTrigger>
+              <SelectContent>
+                {finishes.map((f: any) => (
+                  <SelectItem key={f.id} value={f.id.toString()}>
+                    {f.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleOpenModal('finish')}
+              aria-label="Dodaj novu obradu lica"
+            >
+              <PlusIcon className="h-4 w-4" aria-hidden="true" />
+            </Button>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="width">Širina (cm)</Label>
-            <Input id="width" type="number" inputMode="decimal" pattern="[0-9]*" value={width} onChange={e => setWidth(parseFloat(e.target.value) || 0)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="height">Debljina (cm)</Label>
-            <Input id="height" type="number" inputMode="decimal" pattern="[0-9]*" value={height} onChange={e => setHeight(parseFloat(e.target.value) || 0)} />
-          </div>
         </div>
-        {renderQuantityInput()}
+
+        {selectedElement?.hasSpecialBunjaEdges ? (
+          <div className="space-y-3 pt-2">
+            <Label className="text-base">Obrada ivica bunje</Label>
+            <RadioGroup
+              defaultValue="lomljene"
+              value={bunjaEdgeStyle}
+              onValueChange={(value) =>
+                setBunjaEdgeStyle(value as 'oštre' | 'lomljene')
+              }
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="lomljene" id="r-lomljene" />
+                <Label htmlFor="r-lomljene" className="cursor-pointer">
+                  Lomljene ivice
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="oštre" id="r-ostre" />
+                <Label htmlFor="r-ostre" className="cursor-pointer">
+                  Oštre ivice (pilano)
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-2">
+              <Label>Profil i obrada ivica</Label>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={selectedProfileId}
+                  onValueChange={setSelectedProfileId}
+                >
+                  <SelectTrigger
+                    id="edge-profile-select"
+                    aria-label="Odaberite profil ivice"
+                  >
+                    <SelectValue placeholder="Odaberite profil" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {profiles.map((p: any) => (
+                      <SelectItem key={p.id} value={p.id.toString()}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleOpenModal('profile')}
+                  aria-label="Dodaj novi profil ivice"
+                >
+                  <PlusIcon className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2 pt-2">
+              <Label className="text-sm">Primijeni obradu na ivicama:</Label>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
+                {Object.keys(edgeNames).map((edge) => (
+                  <div className="flex items-center space-x-2" key={edge}>
+                    <Checkbox
+                      id={`edge-${edge}`}
+                      checked={processedEdges[edge as keyof ProcessedEdges]}
+                      onCheckedChange={(checked) =>
+                        updateProcessedEdge(
+                          edge as keyof ProcessedEdges,
+                          !!checked
+                        )
+                      }
+                    />
+                    <Label
+                      htmlFor={`edge-${edge}`}
+                      className="font-normal cursor-pointer"
+                    >
+                      {edgeNames[edge as keyof typeof edgeNames]}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2 pt-2">
+              <Label className="text-sm">Dodaj okapnik na ivicama:</Label>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
+                {Object.keys(edgeNames).map((edge) => (
+                  <div
+                    className="flex items-center space-x-2"
+                    key={`okapnik-${edge}`}
+                  >
+                    <Checkbox
+                      id={`okapnik-${edge}`}
+                      checked={okapnikEdges[edge as keyof ProcessedEdges]}
+                      onCheckedChange={(checked) =>
+                        updateOkapnikEdge(
+                          edge as keyof ProcessedEdges,
+                          !!checked
+                        )
+                      }
+                      disabled={!processedEdges[edge as keyof ProcessedEdges]}
+                    />
+                    <Label
+                      htmlFor={`okapnik-${edge}`}
+                      className={`font-normal cursor-pointer ${!processedEdges[edge as keyof ProcessedEdges] ? 'text-muted-foreground' : ''}`}
+                    >
+                      {edgeNames[edge as keyof typeof edgeNames]}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
-  );
-});
-
-const MaterialSelection = React.memo(({
-  materials, selectedMaterialId, setSelectedMaterialId, handleOpenModal
-}: any) => (
-  <Card>
-    <CardHeader className="flex flex-row items-center justify-between">
-      <CardTitle>2. Odabir materijala</CardTitle>
-      <Button variant="ghost" size="icon" onClick={() => handleOpenModal('material')} aria-label="Dodaj novi materijal">
-        <PlusIcon className="h-4 w-4" aria-hidden="true" />
-      </Button>
-    </CardHeader>
-    <CardContent>
-      <Label htmlFor="material-select">Vrsta kamena</Label>
-      <Select value={selectedMaterialId} onValueChange={setSelectedMaterialId}>
-        <SelectTrigger id="material-select"><SelectValue placeholder="Odaberite materijal" /></SelectTrigger>
-        <SelectContent>
-          {materials.map((m: any) => <SelectItem key={m.id} value={m.id.toString()}>{m.name}</SelectItem>)}
-        </SelectContent>
-      </Select>
-    </CardContent>
-  </Card>
-));
-
-const ProcessingConfig = React.memo(({
-  selectedElement, selectedFinishId, setSelectedFinishId, handleOpenModal,
-  finishes, bunjaEdgeStyle, setBunjaEdgeStyle, profiles, selectedProfileId, setSelectedProfileId,
-  edgeNames, processedEdges, updateProcessedEdge, okapnikEdges, updateOkapnikEdge
-}: any) => (
-  <Card>
-    <CardHeader><CardTitle>3. Definiranje obrade</CardTitle></CardHeader>
-    <CardContent className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="surface-finish-select">Obrada lica</Label>
-        <div className="flex items-center gap-2">
-          <Select value={selectedFinishId} onValueChange={setSelectedFinishId}>
-            <SelectTrigger id="surface-finish-select" aria-label="Odaberite obradu lica"><SelectValue placeholder="Odaberite obradu" /></SelectTrigger>
-            <SelectContent>
-              {finishes.map((f: any) => <SelectItem key={f.id} value={f.id.toString()}>{f.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Button variant="ghost" size="icon" onClick={() => handleOpenModal('finish')} aria-label="Dodaj novu obradu lica">
-            <PlusIcon className="h-4 w-4" aria-hidden="true" />
-          </Button>
-        </div>
-      </div>
-
-      {selectedElement?.hasSpecialBunjaEdges ? (
-        <div className="space-y-3 pt-2">
-          <Label className="text-base">Obrada ivica bunje</Label>
-          <RadioGroup defaultValue="lomljene" value={bunjaEdgeStyle} onValueChange={(value) => setBunjaEdgeStyle(value as 'oštre' | 'lomljene')}>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="lomljene" id="r-lomljene" />
-              <Label htmlFor="r-lomljene" className="cursor-pointer">Lomljene ivice</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="oštre" id="r-ostre" />
-              <Label htmlFor="r-ostre" className="cursor-pointer">Oštre ivice (pilano)</Label>
-            </div>
-          </RadioGroup>
-        </div>
-      ) : (
-        <>
-          <div className="space-y-2">
-            <Label>Profil i obrada ivica</Label>
-            <div className="flex items-center gap-2">
-              <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
-                <SelectTrigger id="edge-profile-select" aria-label="Odaberite profil ivice"><SelectValue placeholder="Odaberite profil" /></SelectTrigger>
-                <SelectContent>
-                  {profiles.map((p: any) => <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Button variant="ghost" size="icon" onClick={() => handleOpenModal('profile')} aria-label="Dodaj novi profil ivice">
-                <PlusIcon className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </div>
-          </div>
-          <div className="space-y-2 pt-2">
-            <Label className="text-sm">Primijeni obradu na ivicama:</Label>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
-              {Object.keys(edgeNames).map((edge) => (
-                <div className="flex items-center space-x-2" key={edge}>
-                  <Checkbox
-                    id={`edge-${edge}`}
-                    checked={processedEdges[edge as keyof ProcessedEdges]}
-                    onCheckedChange={(checked) => updateProcessedEdge(edge as keyof ProcessedEdges, !!checked)}
-                  />
-                  <Label htmlFor={`edge-${edge}`} className="font-normal cursor-pointer">{edgeNames[edge as keyof typeof edgeNames]}</Label>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-2 pt-2">
-            <Label className="text-sm">Dodaj okapnik na ivicama:</Label>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2 pt-1 text-sm">
-              {Object.keys(edgeNames).map((edge) => (
-                <div className="flex items-center space-x-2" key={`okapnik-${edge}`}>
-                  <Checkbox
-                    id={`okapnik-${edge}`}
-                    checked={okapnikEdges[edge as keyof ProcessedEdges]}
-                    onCheckedChange={(checked) => updateOkapnikEdge(edge as keyof ProcessedEdges, !!checked)}
-                    disabled={!processedEdges[edge as keyof ProcessedEdges]}
-                  />
-                  <Label htmlFor={`okapnik-${edge}`} className={`font-normal cursor-pointer ${!processedEdges[edge as keyof ProcessedEdges] ? 'text-muted-foreground' : ''}`}>{edgeNames[edge as keyof typeof edgeNames]}</Label>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-    </CardContent>
-  </Card>
-));
+  )
+);
 
 const CalculationSummary = React.memo(({ calculations }: any) => (
-
   <Card>
-    <CardHeader><CardTitle>4. Kalkulacija</CardTitle></CardHeader>
+    <CardHeader>
+      <CardTitle>4. Kalkulacija</CardTitle>
+    </CardHeader>
     <CardContent className="space-y-3">
       <div className="flex justify-between text-sm">
         <span className="text-muted-foreground">Površina</span>
-        <span className="font-medium font-code">{calculations.surfaceArea.toFixed(2)} m²</span>
+        <span className="font-medium font-code">
+          {calculations.surfaceArea.toFixed(2)} m²
+        </span>
       </div>
-      <div className="flex justify-between text-sm"><span className="text-muted-foreground">Težina</span><span className="font-medium font-code">{calculations.weight.toFixed(1)} kg</span></div>
+      <div className="flex justify-between text-sm">
+        <span className="text-muted-foreground">Težina</span>
+        <span className="font-medium font-code">
+          {calculations.weight.toFixed(1)} kg
+        </span>
+      </div>
       <Separator />
-      <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak materijala</span><span className="font-medium font-code">€{calculations.materialCost.toFixed(2)}</span></div>
-      <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak obrade</span><span className="font-medium font-code">€{calculations.processingCost.toFixed(2)}</span></div>
+      <div className="flex justify-between text-sm">
+        <span className="text-muted-foreground">Trošak materijala</span>
+        <span className="font-medium font-code">
+          €{calculations.materialCost.toFixed(2)}
+        </span>
+      </div>
+      <div className="flex justify-between text-sm">
+        <span className="text-muted-foreground">Trošak obrade</span>
+        <span className="font-medium font-code">
+          €{calculations.processingCost.toFixed(2)}
+        </span>
+      </div>
       {calculations.okapnikCost > 0 && (
-        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trošak okapnika</span><span className="font-medium font-code">€{calculations.okapnikCost.toFixed(2)}</span></div>
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">Trošak okapnika</span>
+          <span className="font-medium font-code">
+            €{calculations.okapnikCost.toFixed(2)}
+          </span>
+        </div>
       )}
       <Separator />
-      <div className="flex justify-between text-lg font-bold text-primary"><span>Ukupni trošak</span><span>€{calculations.totalCost.toFixed(2)}</span></div>
+      <div className="flex justify-between text-lg font-bold text-primary">
+        <span>Ukupni trošak</span>
+        <span>€{calculations.totalCost.toFixed(2)}</span>
+      </div>
     </CardContent>
   </Card>
 ));
 
-const OrderList = React.memo(({ orderItems, edgeNames, handleRemoveOrderItem }: any) => (
-  <ScrollArea className="h-64">
-    <div className="space-y-3 pr-4">
-      {orderItems.length === 0 ? (
-        <p className="text-center text-muted-foreground py-8">Nema stavkih u nalogu.</p>
-      ) : (
-        orderItems.map((item: any) => {
-          let quantityString = '';
-          switch (item.orderUnit) {
-            case 'piece': quantityString = `${item.quantity} kom`; break;
-            case 'sqm': quantityString = `${item.quantity.toFixed(2)} m²`; break;
-            case 'lm': quantityString = `${item.quantity.toFixed(2)} m`; break;
-          }
+const OrderList = React.memo(
+  ({ orderItems, edgeNames, handleRemoveOrderItem }: any) => (
+    <ScrollArea className="h-64">
+      <div className="space-y-3 pr-4">
+        {orderItems.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">
+            Nema stavkih u nalogu.
+          </p>
+        ) : (
+          orderItems.map((item: any) => {
+            let quantityString = '';
+            switch (item.orderUnit) {
+              case 'piece':
+                quantityString = `${item.quantity} kom`;
+                break;
+              case 'sqm':
+                quantityString = `${item.quantity.toFixed(2)} m²`;
+                break;
+              case 'lm':
+                quantityString = `${item.quantity.toFixed(2)} m`;
+                break;
+            }
 
-          let description = `${item.material.name} | ${item.finish.name}`;
-          if (item.orderUnit !== 'sqm' && item.orderUnit !== 'lm') {
-            description += ` | ${item.profile.name}`;
-          }
+            let description = `${item.material.name} | ${item.finish.name}`;
+            if (item.orderUnit !== 'sqm' && item.orderUnit !== 'lm') {
+              description += ` | ${item.profile.name}`;
+            }
 
-          return (
-            <div key={item.orderId} className="flex items-center justify-between rounded-lg border p-3">
-              <div className="flex-1">
-                <p className="font-semibold">{item.id} <span className="text-sm font-normal text-muted-foreground">({quantityString})</span></p>
-                <p className="text-xs text-muted-foreground">{description}</p>
-                {item.bunjaEdgeStyle ? (
-                  <p className="text-xs text-muted-foreground">Obrada ivica: {item.bunjaEdgeStyle === 'lomljene' ? 'Lomljene' : 'Oštre'}</p>
-                ) : (
-                  <>
-                    <p className="text-xs text-muted-foreground">Obrađene ivice: {(Object.entries(item.processedEdges)
-                      .filter(([, selected]) => selected)
-                      .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
-                      .join(', ') || 'Nijedna')}</p>
-                    <p className="text-xs text-muted-foreground">Okapnik: {(Object.entries(item.okapnikEdges || {})
-                      .filter(([, selected]) => selected)
-                      .map(([edge]) => edgeNames[edge as keyof typeof edgeNames])
-                      .join(', ') || 'Nema')}</p>
-                  </>
-                )}
-              </div>
-              <div className="text-right">
-                <p className="font-semibold">€{item.totalCost.toFixed(2)}</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="ml-2"
-                onClick={() => handleRemoveOrderItem(item.orderId)}
-                aria-label={`Ukloni stavku ${item.id} iz radnog naloga`}
+            return (
+              <div
+                key={item.orderId}
+                className="flex items-center justify-between rounded-lg border p-3"
               >
-                <Trash2 className="h-4 w-4 text-destructive" aria-hidden="true" />
-              </Button>
-            </div>
-          )
-        })
-      )}
-    </div>
-  </ScrollArea>
-));
+                <div className="flex-1">
+                  <p className="font-semibold">
+                    {item.id}{' '}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      ({quantityString})
+                    </span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">{description}</p>
+                  {item.bunjaEdgeStyle ? (
+                    <p className="text-xs text-muted-foreground">
+                      Obrada ivica:{' '}
+                      {item.bunjaEdgeStyle === 'lomljene'
+                        ? 'Lomljene'
+                        : 'Oštre'}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-xs text-muted-foreground">
+                        Obrađene ivice:{' '}
+                        {Object.entries(item.processedEdges)
+                          .filter(([, selected]) => selected)
+                          .map(
+                            ([edge]) =>
+                              edgeNames[edge as keyof typeof edgeNames]
+                          )
+                          .join(', ') || 'Nijedna'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Okapnik:{' '}
+                        {Object.entries(item.okapnikEdges || {})
+                          .filter(([, selected]) => selected)
+                          .map(
+                            ([edge]) =>
+                              edgeNames[edge as keyof typeof edgeNames]
+                          )
+                          .join(', ') || 'Nema'}
+                      </p>
+                    </>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold">€{item.totalCost.toFixed(2)}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="ml-2"
+                  onClick={() => handleRemoveOrderItem(item.orderId)}
+                  aria-label={`Ukloni stavku ${item.id} iz radnog naloga`}
+                >
+                  <Trash2
+                    className="h-4 w-4 text-destructive"
+                    aria-hidden="true"
+                  />
+                </Button>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </ScrollArea>
+  )
+);
 
-import { usePostHog } from 'posthog-js/react'
+import { usePostHog } from 'posthog-js/react';
 
 export function Lab() {
-  const posthog = usePostHog()
+  const posthog = usePostHog();
   const { toast } = useToast();
   const { setCadData } = useCadContext();
   const searchParams = useSearchParams();
@@ -341,12 +602,13 @@ export function Lab() {
   // Fetch dynamic data
   useEffect(() => {
     const fetchData = async () => {
-      const PYTHON_API_URL = process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:8000';
+      const PYTHON_API_URL =
+        process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:8000';
       try {
         const [mRes, fRes, pRes] = await Promise.all([
           fetch(`${PYTHON_API_URL}/api/cad/materials`),
           fetch(`${PYTHON_API_URL}/api/cad/finishes`),
-          fetch(`${PYTHON_API_URL}/api/cad/profiles`)
+          fetch(`${PYTHON_API_URL}/api/cad/profiles`),
         ]);
 
         if (mRes.ok) setMaterials(await mRes.json());
@@ -370,7 +632,12 @@ export function Lab() {
   }, []);
 
   const {
-    versions, templates, saveVersion, saveTemplate, deleteVersion, deleteTemplate,
+    versions,
+    templates,
+    saveVersion,
+    saveTemplate,
+    deleteVersion,
+    deleteTemplate,
   } = useProjectHistory();
 
   // Load version or template from URL
@@ -379,42 +646,72 @@ export function Lab() {
     const templateId = searchParams.get('template');
 
     if (versionId) {
-      const version = versions.find(v => v.id === versionId);
+      const version = versions.find((v) => v.id === versionId);
       if (version) {
         setOrderItems(version.items);
-        toast({ title: "Verzija učitana", description: `Učitana je verzija: ${version.name}` });
+        toast({
+          title: 'Verzija učitana',
+          description: `Učitana je verzija: ${version.name}`,
+        });
       }
     } else if (templateId) {
-      const template = templates.find(t => t.id === templateId);
+      const template = templates.find((t) => t.id === templateId);
       if (template) {
         setOrderItems(template.items);
-        toast({ title: "Predložak učitan", description: `Učitan je predložak: ${template.name}` });
+        toast({
+          title: 'Predložak učitan',
+          description: `Učitan je predložak: ${template.name}`,
+        });
       }
     }
   }, [searchParams, versions, templates, toast]);
 
   const config = useElementConfiguration(materials, finishes, profiles);
   const {
-    selectedElement, length, setLength, width, setWidth, height, setHeight,
-    quantity, setQuantity, specimenId, setSpecimenId,
-    selectedMaterialId, setSelectedMaterialId,
-    selectedFinishId, setSelectedFinishId,
-    selectedProfileId, setSelectedProfileId,
-    processedEdges, updateProcessedEdge,
-    okapnikEdges, updateOkapnikEdge,
-    bunjaEdgeStyle, setBunjaEdgeStyle,
-    grainOffset, setGrainOffset, grainRotation, setGrainRotation,
-    handleElementTypeChange
+    selectedElement,
+    length,
+    setLength,
+    width,
+    setWidth,
+    height,
+    setHeight,
+    quantity,
+    setQuantity,
+    specimenId,
+    setSpecimenId,
+    selectedMaterialId,
+    setSelectedMaterialId,
+    selectedFinishId,
+    setSelectedFinishId,
+    selectedProfileId,
+    setSelectedProfileId,
+    processedEdges,
+    updateProcessedEdge,
+    okapnikEdges,
+    updateOkapnikEdge,
+    bunjaEdgeStyle,
+    setBunjaEdgeStyle,
+    grainOffset,
+    setGrainOffset,
+    grainRotation,
+    setGrainRotation,
+    handleElementTypeChange,
   } = config;
 
-  const { isListening, startListening, error: voiceError } = useVoiceCommands({
-    setLength, setWidth, setHeight,
+  const {
+    isListening,
+    startListening,
+    error: voiceError,
+  } = useVoiceCommands({
+    setLength,
+    setWidth,
+    setHeight,
     addToOrder: () => handleAddToOrder(),
     downloadPdf: () => handleDownloadPdf(),
     reset: () => {
-        setOrderItems([]);
-        toast({ title: "Resetirano", description: "Radni nalog je ispraznjen." });
-    }
+      setOrderItems([]);
+      toast({ title: 'Resetirano', description: 'Radni nalog je ispraznjen.' });
+    },
   });
 
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
@@ -425,19 +722,39 @@ export function Lab() {
   const [showDimensions, setShowDimensions] = useState(false);
   const canvasRef = useRef<CanvasHandle>(null);
 
-  const selectedMaterial = useMemo(() => materials.find(m => m.id.toString() === selectedMaterialId), [materials, selectedMaterialId]);
-  const selectedFinish = useMemo(() => finishes.find(f => f.id.toString() === selectedFinishId), [finishes, selectedFinishId]);
-  const selectedProfile = useMemo(() => profiles.find(p => p.id.toString() === selectedProfileId), [profiles, selectedProfileId]);
+  const selectedMaterial = useMemo(
+    () => materials.find((m) => m.id.toString() === selectedMaterialId),
+    [materials, selectedMaterialId]
+  );
+  const selectedFinish = useMemo(
+    () => finishes.find((f) => f.id.toString() === selectedFinishId),
+    [finishes, selectedFinishId]
+  );
+  const selectedProfile = useMemo(
+    () => profiles.find((p) => p.id.toString() === selectedProfileId),
+    [profiles, selectedProfileId]
+  );
 
   const calculations = useOrderCalculations({
-    length, width, height,
-    selectedMaterial, selectedFinish, selectedProfile,
-    processedEdges, okapnikEdges,
-    selectedElement, quantity, bunjaEdgeStyle
+    length,
+    width,
+    height,
+    selectedMaterial,
+    selectedFinish,
+    selectedProfile,
+    processedEdges,
+    okapnikEdges,
+    selectedElement,
+    quantity,
+    bunjaEdgeStyle,
   });
 
   const { warnings, isAnalyzing: isAnalyzingDesign } = useDesignAnalysis(
-    length, width, height, selectedMaterial, selectedElement
+    length,
+    width,
+    height,
+    selectedMaterial,
+    selectedElement
   );
 
   // Sync with CAD Context for AI
@@ -448,9 +765,19 @@ export function Lab() {
       selectedFinish,
       selectedProfile,
       activeDimensions: { length, width, height },
-      safetyWarnings: warnings
+      safetyWarnings: warnings,
     });
-  }, [orderItems, selectedMaterial, selectedFinish, selectedProfile, length, width, height, warnings, setCadData]);
+  }, [
+    orderItems,
+    selectedMaterial,
+    selectedFinish,
+    selectedProfile,
+    length,
+    width,
+    height,
+    warnings,
+    setCadData,
+  ]);
 
   // Inject warnings into AI Context
   useEffect(() => {
@@ -459,54 +786,89 @@ export function Lab() {
     }
   }, [warnings]);
 
-  const deferredVisualizationState = useDeferredValue(useMemo(() => ({
-    dims: { length, width, height },
-    material: selectedMaterial,
-    finish: selectedFinish,
-    profile: selectedProfile,
-    processedEdges: processedEdges,
-    okapnikEdges: okapnikEdges,
-    grainOffset: grainOffset,
-    grainRotation: grainRotation,
-    mirrorGrain: config.mirrorGrain,
-  }), [length, width, height, selectedMaterial, selectedFinish, selectedProfile, processedEdges, okapnikEdges, grainOffset, grainRotation, config.mirrorGrain]));
+  const deferredVisualizationState = useDeferredValue(
+    useMemo(
+      () => ({
+        dims: { length, width, height },
+        material: selectedMaterial,
+        finish: selectedFinish,
+        profile: selectedProfile,
+        processedEdges: processedEdges,
+        okapnikEdges: okapnikEdges,
+        grainOffset: grainOffset,
+        grainRotation: grainRotation,
+        mirrorGrain: config.mirrorGrain,
+        showBookmatchPreview: config.showBookmatchPreview,
+      }),
+      [
+        length,
+        width,
+        height,
+        selectedMaterial,
+        selectedFinish,
+        selectedProfile,
+        processedEdges,
+        okapnikEdges,
+        grainOffset,
+        grainRotation,
+        config.mirrorGrain,
+        config.showBookmatchPreview,
+      ]
+    )
+  );
 
   useEffect(() => {
     if (calculations.totalCost > 0) {
       const parts = [
         `Kalkulacija ažurirana. Ukupni trošak: ${calculations.totalCost.toFixed(2)} eura. `,
-        `Površina: ${calculations.surfaceArea.toFixed(2)} m². Težina: ${calculations.weight.toFixed(1)} kg.`
+        `Površina: ${calculations.surfaceArea.toFixed(2)} m². Težina: ${calculations.weight.toFixed(1)} kg.`,
       ];
       setAnnouncement(parts.join(''));
     }
   }, [calculations.totalCost, calculations.surfaceArea, calculations.weight]);
 
-  const edgeNames = useMemo(() => ({
-    front: 'Prednja', back: 'Zadnja', left: 'Lijeva', right: 'Desna'
-  }), []);
+  const edgeNames = useMemo(
+    () => ({
+      front: 'Prednja',
+      back: 'Zadnja',
+      left: 'Lijeva',
+      right: 'Desna',
+    }),
+    []
+  );
 
   const handleAddToOrder = useCallback(async () => {
-    if (!selectedMaterial || !selectedFinish || !selectedProfile || !specimenId || !selectedElement) {
-      toast({ title: "Greška", description: "Molimo popunite sva polja.", variant: "destructive" });
+    if (
+      !selectedMaterial ||
+      !selectedFinish ||
+      !selectedProfile ||
+      !specimenId ||
+      !selectedElement
+    ) {
+      toast({
+        title: 'Greška',
+        description: 'Molimo popunite sva polja.',
+        variant: 'destructive',
+      });
       return;
     }
 
     // PostHog Tracking Start
     posthog?.capture('add_to_order_started', {
-        item_type: selectedElement?.name,
-        material: selectedMaterial?.name,
-        total_cost: calculations.totalCost
+      item_type: selectedElement?.name,
+      material: selectedMaterial?.name,
+      total_cost: calculations.totalCost,
     });
 
     setIsAddingItem(true);
     try {
-      const processedEdgesNames = (Object.entries(processedEdges)
+      const processedEdgesNames = Object.entries(processedEdges)
         .filter(([, selected]) => selected)
-        .map(([edge]) => edgeNames[edge as keyof typeof edgeNames]));
+        .map(([edge]) => edgeNames[edge as keyof typeof edgeNames]);
 
-      const okapnikEdgesNames = (Object.entries(okapnikEdges)
+      const okapnikEdgesNames = Object.entries(okapnikEdges)
         .filter(([, selected]) => selected)
-        .map(([edge]) => edgeNames[edge as keyof typeof edgeNames]));
+        .map(([edge]) => edgeNames[edge as keyof typeof edgeNames]);
 
       let drawingResponse;
       let retries = 0;
@@ -515,20 +877,28 @@ export function Lab() {
       while (retries <= MAX_RETRIES) {
         try {
           drawingResponse = await generateTechnicalDrawing({
-            length, width, profileName: selectedProfile.name,
+            length,
+            width,
+            profileName: selectedProfile.name,
             surfaceFinishName: selectedFinish.name,
             processedEdges: processedEdgesNames,
             okapnikEdges: okapnikEdgesNames,
             isBunja: !!selectedElement.hasSpecialBunjaEdges,
-            bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges ? bunjaEdgeStyle : undefined,
+            bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges
+              ? bunjaEdgeStyle
+              : undefined,
           });
           if (drawingResponse.imageDataUri) break;
-        } catch (err) { console.error(`Attempt ${retries + 1} failed:`, err); }
+        } catch (err) {
+          console.error(`Attempt ${retries + 1} failed:`, err);
+        }
         retries++;
-        if (retries <= MAX_RETRIES) await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+        if (retries <= MAX_RETRIES)
+          await new Promise((resolve) => setTimeout(resolve, 1000 * retries));
       }
 
-      if (!drawingResponse?.imageDataUri) throw new Error("AI nije uspio generirati sliku.");
+      if (!drawingResponse?.imageDataUri)
+        throw new Error('AI nije uspio generirati sliku.');
 
       const newOrderItem: OrderItem = {
         orderId: Date.now(),
@@ -544,40 +914,73 @@ export function Lab() {
         planSnapshotUrl: drawingResponse.imageUrl,
         orderUnit: selectedElement.orderUnit,
         quantity: quantity,
-        bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges ? bunjaEdgeStyle : undefined,
+        bunjaEdgeStyle: selectedElement.hasSpecialBunjaEdges
+          ? bunjaEdgeStyle
+          : undefined,
       };
-      setOrderItems(prev => [...prev, newOrderItem]);
-      toast({ title: "Stavka dodana", description: `${selectedElement.name} uspješno dodan.` });
-      
+      setOrderItems((prev) => [...prev, newOrderItem]);
+      toast({
+        title: 'Stavka dodana',
+        description: `${selectedElement.name} uspješno dodan.`,
+      });
+
       // PostHog Tracking Success
       posthog?.capture('add_to_order_completed', {
-          item_id: specimenId,
-          value: calculations.totalCost,
-          currency: 'EUR'
+        item_id: specimenId,
+        value: calculations.totalCost,
+        currency: 'EUR',
       });
 
       const currentNumber = parseInt(specimenId.split(' ').pop() || '0');
-      setSpecimenId(`${selectedElement.name} ${(currentNumber + 1).toString().padStart(2, '0')}`);
+      setSpecimenId(
+        `${selectedElement.name} ${(currentNumber + 1).toString().padStart(2, '0')}`
+      );
     } catch (error) {
       // PostHog Tracking Error
       posthog?.capture('add_to_order_failed', {
-          error: error instanceof Error ? error.message : "Unknown error"
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
-      toast({ title: "Greška", description: error instanceof Error ? error.message : "Greška.", variant: "destructive" });
-    } finally { setIsAddingItem(false); }
-  }, [selectedMaterial, selectedFinish, selectedProfile, specimenId, selectedElement, length, width, height, processedEdges, okapnikEdges, bunjaEdgeStyle, calculations.totalCost, quantity, edgeNames, toast, setSpecimenId, posthog]);
+      toast({
+        title: 'Greška',
+        description: error instanceof Error ? error.message : 'Greška.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAddingItem(false);
+    }
+  }, [
+    selectedMaterial,
+    selectedFinish,
+    selectedProfile,
+    specimenId,
+    selectedElement,
+    length,
+    width,
+    height,
+    processedEdges,
+    okapnikEdges,
+    bunjaEdgeStyle,
+    calculations.totalCost,
+    quantity,
+    edgeNames,
+    toast,
+    setSpecimenId,
+    posthog,
+  ]);
 
   const handleDownloadPdf = useCallback(async () => {
     if (orderItems.length === 0) return;
-    
+
     posthog?.capture('download_pdf_clicked', {
-        item_count: orderItems.length,
-        total_value: orderItems.reduce((sum, item) => sum + item.totalCost, 0)
+      item_count: orderItems.length,
+      total_value: orderItems.reduce((sum, item) => sum + item.totalCost, 0),
     });
 
     try {
       const currentImage = canvasRef.current?.captureImage();
-      const images3D = orderItems.map(item => item.planSnapshotDataUri || currentImage || null);
+      const images3D = orderItems.map(
+        (item) => item.planSnapshotDataUri || currentImage || null
+      );
 
       const { generateEnhancedPdf } = await import('@/lib/pdf-enhanced');
 
@@ -585,73 +988,143 @@ export function Lab() {
         companyName: 'Kamena Galanterija',
         orderNumber: `RN-${new Date().toISOString().split('T')[0].replace(/-/g, '')}`,
       });
-      toast({ title: "PDF generiran", description: "Radni nalog je uspješno preuzet." });
-    } catch (error) { toast({ title: "Greška", description: "Greška pri generiranju PDF-a.", variant: "destructive" }); }
+      toast({
+        title: 'PDF generiran',
+        description: 'Radni nalog je uspješno preuzet.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Greška',
+        description: 'Greška pri generiranju PDF-a.',
+        variant: 'destructive',
+      });
+    }
   }, [orderItems, edgeNames, toast, posthog]);
 
   const handleRemoveOrderItem = useCallback((orderId: number) => {
-    setOrderItems(prev => prev.filter(item => item.orderId !== orderId));
+    setOrderItems((prev) => prev.filter((item) => item.orderId !== orderId));
   }, []);
 
-  const handleOpenModal = useCallback((type: ModalType, item?: EditableItem) => {
-    setEditingItem(item || null);
-    setModalOpen(type);
-  }, []);
+  const handleOpenModal = useCallback(
+    (type: ModalType, item?: EditableItem) => {
+      setEditingItem(item || null);
+      setModalOpen(type);
+    },
+    []
+  );
 
-  const handleSaveItem = useCallback((item: EditableItem, type: ModalType) => {
-    if (type === 'material') setMaterials(prev => {
-      const idx = prev.findIndex(m => m.id === item.id);
-      return idx > -1 ? [...prev.slice(0, idx), item as Material, ...prev.slice(idx + 1)] : [...prev, { ...item, id: Date.now() } as Material];
-    });
-    else if (type === 'finish') setFinishes(prev => {
-      const idx = prev.findIndex(f => f.id === item.id);
-      return idx > -1 ? [...prev.slice(0, idx), item as SurfaceFinish, ...prev.slice(idx + 1)] : [...prev, { ...item, id: Date.now() } as SurfaceFinish];
-    });
-    else if (type === 'profile') setProfiles(prev => {
-      const idx = prev.findIndex(p => p.id === item.id);
-      return idx > -1 ? [...prev.slice(0, idx), item as EdgeProfile, ...prev.slice(idx + 1)] : [...prev, { ...item, id: Date.now() } as EdgeProfile];
-    });
-    setModalOpen(null);
-    toast({ title: "Spremljeno" });
-  }, [toast]);
+  const handleSaveItem = useCallback(
+    (item: EditableItem, type: ModalType) => {
+      if (type === 'material')
+        setMaterials((prev) => {
+          const idx = prev.findIndex((m) => m.id === item.id);
+          return idx > -1
+            ? [...prev.slice(0, idx), item as Material, ...prev.slice(idx + 1)]
+            : [...prev, { ...item, id: Date.now() } as Material];
+        });
+      else if (type === 'finish')
+        setFinishes((prev) => {
+          const idx = prev.findIndex((f) => f.id === item.id);
+          return idx > -1
+            ? [
+                ...prev.slice(0, idx),
+                item as SurfaceFinish,
+                ...prev.slice(idx + 1),
+              ]
+            : [...prev, { ...item, id: Date.now() } as SurfaceFinish];
+        });
+      else if (type === 'profile')
+        setProfiles((prev) => {
+          const idx = prev.findIndex((p) => p.id === item.id);
+          return idx > -1
+            ? [
+                ...prev.slice(0, idx),
+                item as EdgeProfile,
+                ...prev.slice(idx + 1),
+              ]
+            : [...prev, { ...item, id: Date.now() } as EdgeProfile];
+        });
+      setModalOpen(null);
+      toast({ title: 'Spremljeno' });
+    },
+    [toast]
+  );
 
   return (
     <main className="container mx-auto p-4 md:p-6 lg:p-8 pb-safe px-safe">
-      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">{announcement}</div>
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {announcement}
+      </div>
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 xl:grid-cols-4">
         <div className="flex flex-col gap-6 lg:col-span-1 xl:col-span-1 lg:order-1 order-2">
           <OrderEntryForm
-            constructionElements={constructionElements} specimenId={specimenId} setSpecimenId={setSpecimenId}
-            length={length} setLength={setLength} width={width} setWidth={setWidth} height={height} setHeight={setHeight}
-            quantity={quantity} setQuantity={setQuantity} selectedElement={selectedElement} handleElementTypeChange={handleElementTypeChange}
-            isListening={isListening} startListening={startListening}
+            constructionElements={constructionElements}
+            specimenId={specimenId}
+            setSpecimenId={setSpecimenId}
+            length={length}
+            setLength={setLength}
+            width={width}
+            setWidth={setWidth}
+            height={height}
+            setHeight={setHeight}
+            quantity={quantity}
+            setQuantity={setQuantity}
+            selectedElement={selectedElement}
+            handleElementTypeChange={handleElementTypeChange}
+            isListening={isListening}
+            startListening={startListening}
           />
           <MaterialSelection
-            materials={materials} selectedMaterialId={selectedMaterialId} setSelectedMaterialId={setSelectedMaterialId} handleOpenModal={handleOpenModal}
+            materials={materials}
+            selectedMaterialId={selectedMaterialId}
+            setSelectedMaterialId={setSelectedMaterialId}
+            handleOpenModal={handleOpenModal}
           />
           <ProcessingConfig
-            selectedElement={selectedElement} selectedFinishId={selectedFinishId} setSelectedFinishId={setSelectedFinishId}
-            handleOpenModal={handleOpenModal} finishes={finishes} bunjaEdgeStyle={bunjaEdgeStyle} setBunjaEdgeStyle={setBunjaEdgeStyle}
-            profiles={profiles} selectedProfileId={selectedProfileId} setSelectedProfileId={setSelectedProfileId}
-            edgeNames={edgeNames} processedEdges={processedEdges} updateProcessedEdge={updateProcessedEdge}
-            okapnikEdges={okapnikEdges} updateOkapnikEdge={updateOkapnikEdge}
+            selectedElement={selectedElement}
+            selectedFinishId={selectedFinishId}
+            setSelectedFinishId={setSelectedFinishId}
+            handleOpenModal={handleOpenModal}
+            finishes={finishes}
+            bunjaEdgeStyle={bunjaEdgeStyle}
+            setBunjaEdgeStyle={setBunjaEdgeStyle}
+            profiles={profiles}
+            selectedProfileId={selectedProfileId}
+            setSelectedProfileId={setSelectedProfileId}
+            edgeNames={edgeNames}
+            processedEdges={processedEdges}
+            updateProcessedEdge={updateProcessedEdge}
+            okapnikEdges={okapnikEdges}
+            updateOkapnikEdge={updateOkapnikEdge}
           />
           <GrainAlignmentTool />
           <CalculationSummary calculations={calculations} />
-          
+
           {/* Design Safety Warnings */}
           {warnings.length > 0 && (
             <Card className="border-orange-500 bg-orange-50 dark:bg-orange-950/20">
               <CardHeader className="py-2">
-                <CardTitle className="text-sm text-orange-700 dark:text-orange-300">Strukturna upozorenja</CardTitle>
+                <CardTitle className="text-sm text-orange-700 dark:text-orange-300">
+                  Strukturna upozorenja
+                </CardTitle>
               </CardHeader>
               <CardContent className="py-2 space-y-2">
                 {warnings.map((warn, idx) => (
-                  <div key={idx} className={`text-xs p-2 rounded border ${
-                    warn.severity === 'critical' ? 'border-red-500 bg-red-100 text-red-700' : 
-                    warn.severity === 'warning' ? 'border-orange-500 bg-orange-100 text-orange-700' :
-                    'border-blue-500 bg-blue-100 text-blue-700'
-                  }`}>
+                  <div
+                    key={idx}
+                    className={`text-xs p-2 rounded border ${
+                      warn.severity === 'critical'
+                        ? 'border-red-500 bg-red-100 text-red-700'
+                        : warn.severity === 'warning'
+                          ? 'border-orange-500 bg-orange-100 text-orange-700'
+                          : 'border-blue-500 bg-blue-100 text-blue-700'
+                    }`}
+                  >
                     <p className="font-bold">{warn.message}</p>
                     <p className="mt-1 opacity-90">{warn.suggestion}</p>
                   </div>
@@ -666,14 +1139,33 @@ export function Lab() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>3D Vizualizacija</CardTitle>
               <div className="flex gap-1">
-                <Button variant={showDimensions ? "secondary" : "ghost"} size="icon" onClick={() => setShowDimensions(!showDimensions)} aria-label="Dimenzije"><Ruler className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" onClick={() => setRefreshKey(k => k + 1)} aria-label="Refresh"><RefreshCw className="h-4 w-4" /></Button>
+                <Button
+                  variant={showDimensions ? 'secondary' : 'ghost'}
+                  size="icon"
+                  onClick={() => setShowDimensions(!showDimensions)}
+                  aria-label="Dimenzije"
+                >
+                  <Ruler className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setRefreshKey((k) => k + 1)}
+                  aria-label="Refresh"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="h-full pb-0 flex flex-col">
               <div className="flex-1 min-h-[400px]">
                 <ErrorBoundary>
-                  <VisualizationCanvas ref={canvasRef} key={refreshKey} {...deferredVisualizationState} showDimensions={showDimensions} />
+                  <VisualizationCanvas
+                    ref={canvasRef}
+                    key={refreshKey}
+                    {...deferredVisualizationState}
+                    showDimensions={showDimensions}
+                  />
                 </ErrorBoundary>
               </div>
               <div className="py-4 border-t mt-auto">
@@ -688,32 +1180,82 @@ export function Lab() {
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle>5. Radni nalog</CardTitle>
               <div className="flex gap-2">
-                <TemplateManager templates={templates} currentItems={orderItems} onSave={saveTemplate} onLoad={setOrderItems} onDelete={deleteTemplate} />
-                <VersionHistoryDialog versions={versions} currentItems={orderItems} onRestore={setOrderItems} onDelete={deleteVersion} />
+                <TemplateManager
+                  templates={templates}
+                  currentItems={orderItems}
+                  onSave={saveTemplate}
+                  onLoad={setOrderItems}
+                  onDelete={deleteTemplate}
+                />
+                <VersionHistoryDialog
+                  versions={versions}
+                  currentItems={orderItems}
+                  onRestore={setOrderItems}
+                  onDelete={deleteVersion}
+                />
               </div>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-4 md:flex-row md:items-center">
-                <Button onClick={handleAddToOrder} className="w-full md:w-auto flex-1 h-11" disabled={isAddingItem}>
-                  {isAddingItem ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Dodaj stavku u nalog'}
+                <Button
+                  onClick={handleAddToOrder}
+                  className="w-full md:w-auto flex-1 h-11"
+                  disabled={isAddingItem}
+                >
+                  {isAddingItem ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    'Dodaj stavku u nalog'
+                  )}
                 </Button>
-                <Button onClick={handleDownloadPdf} variant="outline" className="w-full md:w-auto flex-1 h-11" disabled={orderItems.length === 0}>
+                <Button
+                  onClick={handleDownloadPdf}
+                  variant="outline"
+                  className="w-full md:w-auto flex-1 h-11"
+                  disabled={orderItems.length === 0}
+                >
                   <FileDown className="mr-2 h-4 w-4" /> Preuzmi Nalog (PDF)
                 </Button>
-                <Button onClick={() => saveVersion(`Verzija ${versions.length + 1}`, orderItems)} variant="ghost" className="w-full md:w-auto flex-1 h-11 border-dashed border-2" disabled={orderItems.length === 0}>
+                <Button
+                  onClick={() =>
+                    saveVersion(`Verzija ${versions.length + 1}`, orderItems)
+                  }
+                  variant="ghost"
+                  className="w-full md:w-auto flex-1 h-11 border-dashed border-2"
+                  disabled={orderItems.length === 0}
+                >
                   Spremi trenutnu verziju
                 </Button>
               </div>
               <Separator className="my-4" />
-              <OrderList orderItems={orderItems} edgeNames={edgeNames} handleRemoveOrderItem={handleRemoveOrderItem} />
+              <OrderList
+                orderItems={orderItems}
+                edgeNames={edgeNames}
+                handleRemoveOrderItem={handleRemoveOrderItem}
+              />
             </CardContent>
           </Card>
         </div>
       </div>
 
-      <MaterialModal isOpen={modalOpen === 'material'} onClose={() => setModalOpen(null)} onSave={(item) => handleSaveItem(item, 'material')} item={editingItem as Material | null} />
-      <FinishModal isOpen={modalOpen === 'finish'} onClose={() => setModalOpen(null)} onSave={(item) => handleSaveItem(item, 'finish')} item={editingItem as SurfaceFinish | null} />
-      <ProfileModal isOpen={modalOpen === 'profile'} onClose={() => setModalOpen(null)} onSave={(item) => handleSaveItem(item, 'profile')} item={editingItem as EdgeProfile | null} />
+      <MaterialModal
+        isOpen={modalOpen === 'material'}
+        onClose={() => setModalOpen(null)}
+        onSave={(item) => handleSaveItem(item, 'material')}
+        item={editingItem as Material | null}
+      />
+      <FinishModal
+        isOpen={modalOpen === 'finish'}
+        onClose={() => setModalOpen(null)}
+        onSave={(item) => handleSaveItem(item, 'finish')}
+        item={editingItem as SurfaceFinish | null}
+      />
+      <ProfileModal
+        isOpen={modalOpen === 'profile'}
+        onClose={() => setModalOpen(null)}
+        onSave={(item) => handleSaveItem(item, 'profile')}
+        item={editingItem as EdgeProfile | null}
+      />
     </main>
   );
 }
