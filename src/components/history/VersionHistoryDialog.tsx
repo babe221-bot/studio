@@ -23,6 +23,7 @@ interface VersionHistoryDialogProps {
   currentItems: OrderItem[];
   onRestore: (items: OrderItem[]) => void;
   onDelete: (id: string) => Promise<any>;
+  onShare?: (id: string) => Promise<string>;
 }
 
 export function VersionHistoryDialog({
@@ -30,12 +31,36 @@ export function VersionHistoryDialog({
   currentItems,
   onRestore,
   onDelete,
+  onShare,
 }: VersionHistoryDialogProps) {
   const { toast } = useToast();
   const [selectedVersion, setSelectedVersion] = useState<ProjectVersion | null>(
     null
   );
   const [isComparing, setIsComparing] = useState(false);
+  const [isSharing, setIsSharing] = useState<string | null>(null);
+
+  const handleShare = async (id: string) => {
+    if (!onShare) return;
+    setIsSharing(id);
+    try {
+      const token = await onShare(id);
+      const shareUrl = `${window.location.origin}/share/${token}`;
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: 'Link za dijeljenje kopiran',
+        description: 'Link je spremljen u međuspremnik.',
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Greška pri dijeljenju',
+        description: err.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSharing(null);
+    }
+  };
 
   const handleRestore = (version: ProjectVersion) => {
     onRestore(version.items);

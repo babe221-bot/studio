@@ -97,9 +97,8 @@ import { GrainAlignmentTool } from './GrainAlignmentTool';
 // Memoized Sub-components
 const OrderEntryForm = React.memo(
   ({
-    constructionElements,
-    specimenId,
-    setSpecimenId,
+    selectedElement,
+    handleElementTypeChange,
     length,
     setLength,
     width,
@@ -108,58 +107,130 @@ const OrderEntryForm = React.memo(
     setHeight,
     quantity,
     setQuantity,
-    selectedElement,
-    handleElementTypeChange,
+    specimenId,
+    setSpecimenId,
+    materials,
+    selectedMaterialId,
+    setSelectedMaterialId,
+    handleOpenModal,
+    finishes,
+    bunjaEdgeStyle,
+    setBunjaEdgeStyle,
+    profiles,
+    selectedProfileId,
+    setSelectedProfileId,
+    edgeNames,
+    processedEdges,
+    updateProcessedEdge,
+    okapnikEdges,
+    updateOkapnikEdge,
     isListening,
     startListening,
-  }: any) => {
+    stopListening,
+    transcript,
+  }: {
+    selectedElement: ConstructionElement;
+    handleElementTypeChange: (id: string) => void;
+    length: number;
+    setLength: (l: number | ((prev: number) => number)) => void;
+    width: number;
+    setWidth: (w: number | ((prev: number) => number)) => void;
+    height: number;
+    setHeight: (h: number | ((prev: number) => number)) => void;
+    quantity: number;
+    setQuantity: (q: number) => void;
+    specimenId: string;
+    setSpecimenId: (id: string) => void;
+    materials: Material[];
+    selectedMaterialId: string | undefined;
+    setSelectedMaterialId: (id: string) => void;
+    handleOpenModal: (type: ModalType, item?: EditableItem) => void;
+    finishes: SurfaceFinish[];
+    bunjaEdgeStyle: 'oštre' | 'lomljene';
+    setBunjaEdgeStyle: (s: 'oštre' | 'lomljene') => void;
+    profiles: EdgeProfile[];
+    selectedProfileId: string | undefined;
+    setSelectedProfileId: (id: string) => void;
+    edgeNames: Record<string, string>;
+    processedEdges: ProcessedEdges;
+    updateProcessedEdge: (edge: keyof ProcessedEdges, value: boolean) => void;
+    okapnikEdges: ProcessedEdges;
+    updateOkapnikEdge: (edge: keyof ProcessedEdges, value: boolean) => void;
+    isListening: boolean;
+    startListening: () => void;
+    stopListening: () => void;
+    transcript: string;
+  }) => {
     const renderQuantityInput = () => {
-      if (!selectedElement) return null;
-      let label = '';
-      switch (selectedElement.orderUnit) {
-        case 'piece':
-          label = 'Broj komada';
-          break;
-        case 'sqm':
-          label = 'Količina (m²)';
-          break;
-        case 'lm':
-          label = 'Količina (m)';
-          break;
+      if (selectedElement?.orderUnit === 'sqm') {
+        return (
+          <div className="space-y-2">
+            <Label htmlFor="quantity">Količina (m²)</Label>
+            <Input
+              id="quantity"
+              type="number"
+              value={quantity}
+              onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
+              min={0.01}
+              step={0.01}
+            />
+          </div>
+        );
+      }
+      if (selectedElement?.orderUnit === 'lm') {
+        return (
+          <div className="space-y-2">
+            <Label htmlFor="quantity">Količina (dužni metri)</Label>
+            <Input
+              id="quantity"
+              type="number"
+              value={quantity}
+              onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
+              min={0.1}
+              step={0.1}
+            />
+          </div>
+        );
       }
       return (
-        <div className="space-y-2 pt-2">
-          <Label htmlFor="quantity">{label}</Label>
+        <div className="space-y-2">
+          <Label htmlFor="quantity">Količina (komada)</Label>
           <Input
             id="quantity"
             type="number"
             value={quantity}
-            onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
-            min="1"
+            onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+            min={1}
           />
         </div>
       );
     };
 
     return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>1. Unos naloga</CardTitle>
+      <Card className="lg:sticky lg:top-24">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <CardTitle>3. Konfiguracija</CardTitle>
           <Button
             variant={isListening ? 'destructive' : 'outline'}
-            size="icon"
-            onClick={startListening}
+            size="sm"
+            onClick={isListening ? stopListening : startListening}
             className={isListening ? 'animate-pulse' : ''}
-            title="Glasovne naredbe"
           >
             {isListening ? (
-              <Mic className="h-4 w-4" />
+              <MicOff className="h-4 w-4 mr-2" />
             ) : (
-              <MicOff className="h-4 w-4" />
+              <Mic className="h-4 w-4 mr-2" />
             )}
+            {isListening ? 'Slušam...' : 'Glasovne naredbe'}
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
+          {isListening && transcript && (
+            <div className="bg-muted p-2 rounded text-xs italic mb-2">
+              "{transcript}"
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="element-type-select">Tip elementa</Label>
             <Select
@@ -670,13 +741,16 @@ export function Lab() {
     saveTemplate,
     deleteVersion,
     deleteTemplate,
+    shareProject,
+    fetchSharedProject,
     isLoading: isLoadingHistory,
   } = useSupabasePersistence();
 
-  // Load version or template from URL
+  // Load version, template or shared project from URL
   useEffect(() => {
     const versionId = searchParams.get('version');
     const templateId = searchParams.get('template');
+    const sharedToken = searchParams.get('shared_token');
 
     if (versionId) {
       const version = versions.find((v) => v.id === versionId);
@@ -696,8 +770,25 @@ export function Lab() {
           description: `Učitan je predložak: ${template.name}`,
         });
       }
+    } else if (sharedToken) {
+      async function loadShared() {
+        try {
+          const project = await fetchSharedProject(sharedToken);
+          if (project) {
+            setOrderItems(project.items);
+            if (project.notes) setProjectNotes(project.notes);
+            toast({
+              title: 'Dijeljeni projekt učitan',
+              description: `Učitan projekt: ${project.name}`,
+            });
+          }
+        } catch (err) {
+          console.error('Failed to load shared project:', err);
+        }
+      }
+      loadShared();
     }
-  }, [searchParams, versions, templates, toast]);
+  }, [searchParams, versions, templates, fetchSharedProject, toast]);
 
   const config = useElementConfiguration(materials, finishes, profiles);
   const {
@@ -1164,9 +1255,8 @@ export function Lab() {
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 xl:grid-cols-4">
         <div className="flex flex-col gap-6 lg:col-span-1 xl:col-span-1 lg:order-1 order-2">
           <OrderEntryForm
-            constructionElements={constructionElements}
-            specimenId={specimenId}
-            setSpecimenId={setSpecimenId}
+            selectedElement={selectedElement}
+            handleElementTypeChange={handleElementTypeChange}
             length={length}
             setLength={setLength}
             width={width}
@@ -1175,10 +1265,27 @@ export function Lab() {
             setHeight={setHeight}
             quantity={quantity}
             setQuantity={setQuantity}
-            selectedElement={selectedElement}
-            handleElementTypeChange={handleElementTypeChange}
+            specimenId={specimenId}
+            setSpecimenId={setSpecimenId}
+            materials={materials}
+            selectedMaterialId={selectedMaterialId}
+            setSelectedMaterialId={setSelectedMaterialId}
+            handleOpenModal={handleOpenModal}
+            finishes={finishes}
+            bunjaEdgeStyle={bunjaEdgeStyle}
+            setBunjaEdgeStyle={setBunjaEdgeStyle}
+            profiles={profiles}
+            selectedProfileId={selectedProfileId}
+            setSelectedProfileId={setSelectedProfileId}
+            edgeNames={edgeNames}
+            processedEdges={processedEdges}
+            updateProcessedEdge={updateProcessedEdge}
+            okapnikEdges={okapnikEdges}
+            updateOkapnikEdge={updateOkapnikEdge}
             isListening={isListening}
             startListening={startListening}
+            stopListening={stopListening}
+            transcript={transcript}
           />
           <MaterialSelection
             materials={materials}
@@ -1202,6 +1309,10 @@ export function Lab() {
             updateProcessedEdge={updateProcessedEdge}
             okapnikEdges={okapnikEdges}
             updateOkapnikEdge={updateOkapnikEdge}
+            isListening={isListening}
+            startListening={startListening}
+            stopListening={stopListening}
+            transcript={transcript}
           />
           <GrainAlignmentTool />
           <CalculationSummary

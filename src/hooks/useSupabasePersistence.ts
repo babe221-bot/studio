@@ -160,6 +160,54 @@ export function useSupabasePersistence() {
     [supabase]
   );
 
+  const shareProject = useCallback(
+    async (id: string) => {
+      try {
+        const shareToken =
+          typeof crypto !== 'undefined' && crypto.randomUUID
+            ? crypto.randomUUID()
+            : Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+        const { data, error } = await supabase
+          .from('project_versions')
+          .update({
+            share_token: shareToken,
+            is_public: true,
+          })
+          .eq('id', id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        setVersions((prev) => prev.map((v) => (v.id === id ? data : v)));
+        return data.share_token;
+      } catch (error) {
+        console.error('Error sharing project in Supabase:', error);
+        throw error;
+      }
+    },
+    [supabase]
+  );
+
+  const fetchSharedProject = useCallback(
+    async (token: string) => {
+      try {
+        const { data, error } = await supabase
+          .from('project_versions')
+          .select('*')
+          .eq('share_token', token)
+          .single();
+
+        if (error) throw error;
+        return data as ProjectVersion;
+      } catch (error) {
+        console.error('Error fetching shared project from Supabase:', error);
+        throw error;
+      }
+    },
+    [supabase]
+  );
+
   return {
     versions,
     templates,
@@ -168,6 +216,8 @@ export function useSupabasePersistence() {
     saveTemplate,
     deleteVersion,
     deleteTemplate,
+    shareProject,
+    fetchSharedProject,
     refresh: fetchProjects,
   };
 }
