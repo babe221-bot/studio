@@ -28,6 +28,35 @@ import {
   type GeometryJobOutput,
 } from '@/lib/WorkerPool';
 
+// Temporary mock functions for missing dependencies
+function getFinishPreset(name: string) {
+  return {
+    normalStrength: 0.1,
+    roughness: 0.3,
+    metalness: 0.1,
+    clearcoat: 0,
+    clearcoatRoughness: 0,
+    sheen: 0,
+    sheenRoughness: 0,
+  };
+}
+
+function generateProceduralNormalMap(
+  strength: number,
+  seed: string | number
+): THREE.Texture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = '#8080ff';
+    ctx.fillRect(0, 0, 256, 256);
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  return tex;
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -43,6 +72,7 @@ interface StoneSlabMeshProps {
   grainRotation?: number;
   mirrorGrain?: boolean;
   position?: [number, number, number];
+  onGeometryGenerated?: () => void;
 }
 
 export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
@@ -55,7 +85,8 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
   grainOffset = { x: 0, y: 0 },
   grainRotation = 0,
   mirrorGrain = false,
-  position = [0, 0, 0],
+  position = [0, 0, 0] as [number, number, number],
+  onGeometryGenerated,
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const { camera, controls } = useThree();
