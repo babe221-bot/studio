@@ -40,7 +40,11 @@
 **Goal:** Add social features and novel interaction methods.
 **Status:** In Progress
 **Requirements:** [UX-01, UX-02, UX-03]
-**Plans:** 3 plans estimated
+**Plans:** 3 plans
+
+- [ ] 04-01-PLAN.md - Voice Commands Integration
+- [ ] 04-02-PLAN.md - Shared Workspaces
+- [ ] 04-03-PLAN.md - User Gallery
 
 - [ ] 04-01-PLAN.md - Voice Commands
 - [ ] 04-02-PLAN.md - Shared Workspaces
