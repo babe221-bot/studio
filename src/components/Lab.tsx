@@ -81,6 +81,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { generateAndDownloadPdf } from '@/lib/pdf';
 import { generateTechnicalDrawing } from '@/ai/flows/imageGenerationFlow';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -862,6 +863,7 @@ export function Lab() {
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [announcement, setAnnouncement] = useState<string>('');
   const [showDimensions, setShowDimensions] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const canvasRef = useRef<CanvasHandle>(null);
 
   const selectedMaterial = useMemo(

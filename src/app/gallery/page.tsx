@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Loader2, ExternalLink, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function GalleryPage() {
   const [projects, setProjects] = useState<ProjectVersion[]>([]);
@@ -77,10 +78,12 @@ export default function GalleryPage() {
             >
               <div className="aspect-video bg-muted flex items-center justify-center relative">
                 {project.items[0]?.planSnapshotDataUri ? (
-                  <img
+                  <Image
                     src={project.items[0].planSnapshotDataUri}
                     alt={project.name}
-                    className="w-full h-full object-contain p-4"
+                    fill
+                    className="object-contain p-4"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                 ) : (
                   <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
