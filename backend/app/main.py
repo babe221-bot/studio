@@ -96,6 +96,57 @@ app.add_middleware(
     max_age=3600,
 )
 
+
+# ── Security Middleware ─────────────────────────────────────────────────────────
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Add security headers and request ID tracking."""
+    # Generate request ID for audit logging
+    request_id = str(uuid.uuid4())
+    request.state.request_id = request_id
+    
+    # Track request start time
+    start_time = time.time()
+    
+    # Process request
+    response = await call_next(request)
+    
+    # Add security headers
+    response.headers["X-Request-ID"] = request_id
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    
+    # Add rate limit headers
+    if hasattr(request.state, "rate_limit"):
+        response.headers["X-RateLimit-Limit"] = str(request.state.rate_limit.get("limit", 100))
+        response.headers["X-RateLimit-Remaining"] = str(request.state.rate_limit.get("remaining", 99))
+    
+    # Log request duration for performance monitoring
+    duration = time.time() - start_time
+    if duration > 1.0:  # Log slow requests
+        logger.info(f"[SLOW REQUEST] {request.method} {request.url.path} took {duration:.2f}s - Request ID: {request_id}")
+    
+    return response
+
+
+# ── Input Sanitization ─────────────────────────────────────────────────────────
+
+def sanitize_input(value: str, max_length: int = 1000) -> str:
+    """Basic input sanitization to prevent injection attacks."""
+    if not isinstance(value, str):
+        return str(value)
+    
+    # Remove null bytes and control characters (except newlines/tabs)
+    sanitized = value.replace('\x00', '')
+    sanitized = ''.join(char for char in sanitized if char.isprintable() or char in '\n\t')
+    
+    # Truncate to max length
+    return sanitized[:max_length]
+
+
 # Include routers
 app.include_router(cad.router, prefix="/api/cad", tags=["CAD"])
 app.include_router(data.router, prefix="/api/data", tags=["Data"])
