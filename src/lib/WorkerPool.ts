@@ -93,6 +93,15 @@ export class WorkerPool<TInput = unknown, TOutput = unknown> {
   private jobQueue: QueuedJob<TInput, TOutput>[] = [];
   private isTerminated = false;
 
+  // Geometry result cache for repeated configurations
+  private geometryCache = new Map<string, TOutput>();
+  private readonly MAX_CACHE_SIZE = 100;
+
+  // Message batching for rapid dimension changes
+  private pendingBatch: TInput[] = [];
+  private batchTimeout: ReturnType<typeof setTimeout> | null = null;
+  private readonly BATCH_DELAY_MS = 50;
+
   // Statistics
   private stats = {
     totalProcessed: 0,
