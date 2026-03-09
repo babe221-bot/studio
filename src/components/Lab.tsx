@@ -1217,11 +1217,6 @@ export function Lab() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+S to save template
-      if (e.ctrlKey && e.key === 's') {
-        e.preventDefault();
-        saveTemplate?.();
-      }
       // Ctrl+P for PDF
       if (e.ctrlKey && e.key === 'p') {
         e.preventDefault();
@@ -1256,7 +1251,7 @@ export function Lab() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [orderItems.length, saveTemplate, handleDownloadPdf]);
+  }, [orderItems.length, handleDownloadPdf]);
 
   const handleOpenModal = useCallback(
     (type: ModalType, item?: EditableItem) => {
