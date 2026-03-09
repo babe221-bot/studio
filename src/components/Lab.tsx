@@ -77,6 +77,9 @@ import {
   CreditCard,
   Mic,
   MicOff,
+  Menu,
+  PanelLeftClose,
+  PanelLeft,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -1246,6 +1249,116 @@ export function Lab() {
 
   return (
     <main className="container mx-auto p-4 md:p-6 lg:p-8 pb-safe px-safe">
+      {/* Mobile toggle button */}
+      <div className="lg:hidden mb-4">
+        <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Menu className="h-4 w-4" />
+              Konfiguracija
+            </Button>
+          </SheetTrigger>
+          <SheetContent
+            side="left"
+            className="w-[300px] sm:w-[350px] overflow-y-auto"
+          >
+            <div className="flex flex-col gap-4 mt-4">
+              <OrderEntryForm
+                selectedElement={selectedElement}
+                handleElementTypeChange={handleElementTypeChange}
+                length={length}
+                setLength={setLength}
+                width={width}
+                setWidth={setWidth}
+                height={height}
+                setHeight={setHeight}
+                quantity={quantity}
+                setQuantity={setQuantity}
+                specimenId={specimenId}
+                setSpecimenId={setSpecimenId}
+                materials={materials}
+                selectedMaterialId={selectedMaterialId}
+                setSelectedMaterialId={setSelectedMaterialId}
+                handleOpenModal={handleOpenModal}
+                finishes={finishes}
+                bunjaEdgeStyle={bunjaEdgeStyle}
+                setBunjaEdgeStyle={setBunjaEdgeStyle}
+                profiles={profiles}
+                selectedProfileId={selectedProfileId}
+                setSelectedProfileId={setSelectedProfileId}
+                edgeNames={edgeNames}
+                processedEdges={processedEdges}
+                updateProcessedEdge={updateProcessedEdge}
+                okapnikEdges={okapnikEdges}
+                updateOkapnikEdge={updateOkapnikEdge}
+                isListening={isListening}
+                startListening={startListening}
+                stopListening={stopListening}
+                transcript={transcript}
+              />
+              <MaterialSelection
+                materials={materials}
+                selectedMaterialId={selectedMaterialId}
+                setSelectedMaterialId={setSelectedMaterialId}
+                handleOpenModal={handleOpenModal}
+              />
+              <ProcessingConfig
+                selectedElement={selectedElement}
+                selectedFinishId={selectedFinishId}
+                setSelectedFinishId={setSelectedFinishId}
+                handleOpenModal={handleOpenModal}
+                finishes={finishes}
+                bunjaEdgeStyle={bunjaEdgeStyle}
+                setBunjaEdgeStyle={setBunjaEdgeStyle}
+                profiles={profiles}
+                selectedProfileId={selectedProfileId}
+                setSelectedProfileId={setSelectedProfileId}
+                edgeNames={edgeNames}
+                processedEdges={processedEdges}
+                updateProcessedEdge={updateProcessedEdge}
+                okapnikEdges={okapnikEdges}
+                updateOkapnikEdge={updateOkapnikEdge}
+                isListening={isListening}
+                startListening={startListening}
+                stopListening={stopListening}
+                transcript={transcript}
+              />
+              <GrainAlignmentTool />
+              <CalculationSummary
+                calculations={calculations}
+                selectedMaterial={selectedMaterial}
+                selectedFinish={selectedFinish}
+                selectedProfile={selectedProfile}
+                orderItems={orderItems}
+              />
+              <OrderItemsList
+                orderItems={orderItems}
+                setOrderItems={setOrderItems}
+                handleEditItem={handleEditItem}
+                handleDeleteItem={handleDeleteItem}
+                handleDuplicateItem={handleDuplicateItem}
+              />
+              <ProjectNotes
+                projectNotes={projectNotes}
+                setProjectNotes={setProjectNotes}
+              />
+              <ActionButtons
+                isCheckingOut={isCheckingOut}
+                handleCheckout={handleCheckout}
+                handleSaveTemplate={handleSaveTemplate}
+                handleDownloadPdf={handleDownloadPdf}
+                handleGenerateTechnicalDrawing={handleGenerateTechnicalDrawing}
+                handleClearAll={handleClearAll}
+                isListening={isListening}
+                startListening={startListening}
+                stopListening={stopListening}
+              />
+              <VersionHistoryDialog />
+              <TemplateManager />
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
       <div
         role="status"
         aria-live="polite"
@@ -1255,7 +1368,8 @@ export function Lab() {
         {announcement}
       </div>
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 xl:grid-cols-4">
-        <div className="flex flex-col gap-6 lg:col-span-1 xl:col-span-1 lg:order-1 order-2">
+        {/* Desktop sidebar - hidden on mobile */}
+        <div className="hidden lg:flex lg:flex-col lg:gap-6 lg:col-span-1 xl:col-span-1 lg:order-1 order-2">
           <OrderEntryForm
             selectedElement={selectedElement}
             handleElementTypeChange={handleElementTypeChange}
