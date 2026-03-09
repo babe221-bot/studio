@@ -1,6 +1,10 @@
 import os
 import tempfile
+import io
+import struct
+import numpy as np
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -246,3 +250,244 @@ async def export_glb(request: ProcessingRequest):
         raise HTTPException(status_code=500, detail=result.get("error"))
     
     return result
+
+
+# ── CAD Export Endpoints ───────────────────────────────────────────────────────
+
+class ExportRequest(BaseModel):
+    """Request for CAD export."""
+    dimensions: Dict[str, float]
+    material_name: Optional[str] = "Stone"
+    surface_finish: Optional[str] = "polished"
+    edge_profile: Optional[str] = "sharp"
+
+
+def generate_box_mesh(length: float, width: float, height: float):
+    """
+    Generate vertices and faces for a simple box mesh.
+    Dimensions in cm, convert to mm for CAD.
+    """
+    l, w, h = length * 10, width * 10, height * 10  # cm to mm
+    
+    # 8 vertices of a box
+    vertices = np.array([
+        [0, 0, 0],
+        [l, 0, 0],
+        [l, w, 0],
+        [0, w, 0],
+        [0, 0, h],
+        [l, 0, h],
+        [l, w, h],
+        [0, w, h],
+    ], dtype=np.float32)
+    
+    # 12 triangular faces (2 per side)
+    faces = np.array([
+        [0, 1, 2], [0, 2, 3],  # bottom
+        [4, 6, 5], [4, 7, 6],  # top
+        [0, 4, 5], [0, 5, 1],  # front
+        [2, 6, 7], [2, 7, 3],  # back
+        [0, 3, 7], [0, 7, 4],  # left
+        [1, 5, 6], [1, 6, 2],  # right
+    ], dtype=np.uint32)
+    
+    return vertices, faces
+
+
+def generate_stl(vertices, faces) -> bytes:
+    """Generate binary STL file."""
+    header = b'Stone Studio CAD Export' + b'\x00' * (80 - len(b'Stone Studio CAD Export'))
+    
+    triangles = []
+    for face in faces:
+        v0, v1, v2 = vertices[face]
+        normal = np.cross(v1 - v0, v2 - v0)
+        normal = normal / (np.linalg.norm(normal) + 1e-10)
+        
+        triangle = struct.pack('<3f3f3f3f', 
+            normal[0], normal[1], normal[2],
+            v0[0], v0[1], v0[2],
+            v1[0], v1[1], v1[2],
+            v2[0], v2[1], v2[2],
+            0  # attribute byte count
+        )
+        triangles.append(triangle)
+    
+    return header + struct.pack('<I', len(faces)) + b''.join(triangles)
+
+
+def generate_obj(vertices, faces, material: str = "Stone") -> str:
+    """Generate OBJ file with MTL support."""
+    lines = [
+        "# Stone Studio CAD Export",
+        "# OBJ format",
+        "",
+        "mtllib materials.mtl",
+        "",
+    ]
+    
+    # Vertices
+    for v in vertices:
+        lines.append(f"v {v[0]:.4f} {v[1]:.4f} {v[2]:.4f}")
+    
+    lines.append("")
+    
+    # Faces (use material)
+    lines.append("usemtl stone_material")
+    for face in faces:
+        lines.append(f"f {face[0]+1} {face[1]+1} {face[2]+1}")  # OBJ is 1-indexed
+    
+    return "\n".join(lines)
+
+
+def generate_mtl(material_name: str) -> str:
+    """Generate MTL file for material."""
+    return f"""# Stone Studio Material
+newmtl stone_material
+Ka 0.8 0.8 0.8
+Kd 0.7 0.7 0.7
+Ks 0.3 0.3 0.3
+Ns 50.0
+d 1.0
+"""
+
+
+def generate_step(length: float, width: float, height: float, material: str) -> str:
+    """
+    Generate a basic STEP file (ISO 10303-21).
+    This creates a simple rectangular cuboid representation.
+    """
+    l, w, h = length * 10, width * 10, height * 10  # mm
+    
+    # Simplified STEP file with a box representation
+    step_content = f"""ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('Stone Studio Export'),'2.1');
+FILE_NAME('slab_export.step','2026-03-09T00:00:00',('Stone Studio'),('Stone Studio'),'','','');
+FILE_SCHEMA(('AUTOMOTIVE_DESIGN'));
+ENDSEC;
+DATA;
+#10=CARTESIAN_POINT('',(0,0,0));
+#11=CARTESIAN_POINT('',({l},0,0));
+#12=CARTESIAN_POINT('',({l},{w},0));
+#13=CARTESIAN_POINT('',(0,{w},0));
+#14=CARTESIAN_POINT('',(0,0,{h}));
+#15=CARTESIAN_POINT('',({l},0,{h}));
+#16=CARTESIAN_POINT('',({l},{w},{h}));
+#17=CARTESIAN_POINT('',(0,{w},{h}));
+#20=DIRECTION('',(0,0,1));
+#21=DIRECTION('',(0,1,0));
+#22=DIRECTION('',(1,0,0));
+#30=AXIS2_PLACEMENT_3D('',#10,#20,#22);
+#40=MANIFOLD_SOLID_BREP('Slab',#100);
+#100=CLOSED_SHELL('',(#101));
+#101=ADVANCED_FACE('',(#110),#30,.T.);
+#110=FACE_BOUND('',#111,.T.);
+#111=EDGE_LOOP('',(#120,#121,#122,#123));
+#120=EDGE_CURVE('',#200,#201,#210,.T.);
+#121=EDGE_CURVE('',#201,#202,#220,.T.);
+#122=EDGE_CURVE('',#202,#203,#230,.T.);
+#123=EDGE_CURVE('',#203,#200,#240,.T.);
+#200=VERTEX_POINT('',#10);
+#201=VERTEX_POINT('',#11);
+#202=VERTEX_POINT('',#12);
+#203=VERTEX_POINT('',#13);
+#210=LINE('',#10,#22);
+#220=LINE('',#11,#21);
+#230=LINE('',#12,#22);
+#240=LINE('',#13,#21);
+#999=PRODUCT('{material}','','',(#1000));
+#1000=PRODUCT_CONTEXT('',#999,'mechanical');
+#1001=PRODUCT_DEFINITION_FORMATION('','',#999);
+#1002=PRODUCT_DEFINITION('','',#1001);
+ENDSEC;
+ENDISO-10303-21;
+"""
+    return step_content
+
+
+@router.post("/export/stl")
+async def export_stl(request: ExportRequest):
+    """
+    Export configuration as STL (Stereolithography) file.
+    Returns binary STL format.
+    """
+    logger.info(f"[CAD API] STL export requested for: {request.dimensions}")
+    
+    dims = request.dimensions
+    vertices, faces = generate_box_mesh(
+        dims.get("length", 100),
+        dims.get("width", 60),
+        dims.get("height", 3)
+    )
+    
+    stl_data = generate_stl(vertices, faces)
+    
+    return StreamingResponse(
+        io.BytesIO(stl_data),
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f"attachment; filename=slab_{dims.get('length', 100)}x{dims.get('width', 60)}.stl"}
+    )
+
+
+@router.post("/export/obj")
+async def export_obj(request: ExportRequest):
+    """
+    Export configuration as OBJ file with MTL material.
+    """
+    logger.info(f"[CAD API] OBJ export requested for: {request.dimensions}")
+    
+    dims = request.dimensions
+    vertices, faces = generate_box_mesh(
+        dims.get("length", 100),
+        dims.get("width", 60),
+        dims.get("height", 3)
+    )
+    
+    obj_data = generate_obj(vertices, faces, request.material_name or "Stone")
+    mtl_data = generate_mtl(request.material_name or "Stone")
+    
+    # Return OBJ with MTL inline for simplicity
+    obj_with_mtl = obj_data + "\n\n" + mtl_data
+    
+    return StreamingResponse(
+        io.BytesIO(obj_with_mtl.encode()),
+        media_type="model/obj",
+        headers={"Content-Disposition": f"attachment; filename=slab_{dims.get('length', 100)}x{dims.get('width', 60)}.obj"}
+    )
+
+
+@router.post("/export/step")
+async def export_step(request: ExportRequest):
+    """
+    Export configuration as STEP file (ISO 10303-21).
+    Returns STEP format for CAD software.
+    """
+    logger.info(f"[CAD API] STEP export requested for: {request.dimensions}")
+    
+    dims = request.dimensions
+    step_data = generate_step(
+        dims.get("length", 100),
+        dims.get("width", 60),
+        dims.get("height", 3),
+        request.material_name or "Stone"
+    )
+    
+    return StreamingResponse(
+        io.BytesIO(step_data.encode()),
+        media_type="application/step",
+        headers={"Content-Disposition": f"attachment; filename=slab_{dims.get('length', 100)}x{dims.get('width', 60)}.step"}
+    )
+
+
+@router.get("/export/formats")
+async def list_export_formats():
+    """List available export formats."""
+    return {
+        "formats": [
+            {"id": "stl", "name": "STL", "description": "Stereolithography - 3D printing"},
+            {"id": "obj", "name": "OBJ", "description": "Wavefront - CAD/CAM software"},
+            {"id": "step", "name": "STEP", "description": "ISO 10303 - Industrial CAD exchange"},
+            {"id": "glb", "name": "GLB", "description": "glTF Binary - Web/AR"},
+        ]
+    }
