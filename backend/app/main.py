@@ -8,14 +8,23 @@ except ImportError:
     from app.mocks import bpy as mock_bpy
     sys.modules["bpy"] = mock_bpy
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import os
+import time
+
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from app.api import cad, data, pricing, design_review
 from app.services.database import init_db
 import sentry_sdk
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
 
 # Initialize Sentry
 sentry_dsn = os.getenv("SENTRY_DSN")
@@ -50,6 +59,21 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Add rate limiter
+app.state.limiter = limiter
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "error": "Rate limit exceeded",
+            "detail": str(exc),
+            "retry_after": exc.detail
+        },
+        headers={"Retry-After": str(exc.detail)}
+    )
 
 # Configure CORS
 # In production, set ALLOWED_ORIGINS to specific domains (e.g., "https://stone-studio.vercel.app")
