@@ -296,6 +296,37 @@ export class WorkerPool<TInput = unknown, TOutput = unknown> {
   }
 
   /**
+   * Pre-warm the cache with common configurations
+   * This improves perceived performance for frequently used geometries
+   */
+  async prewarm(configs: TInput[]): Promise<void> {
+    console.debug(
+      `[WorkerPool] Pre-warming cache with ${configs.length} configurations`
+    );
+    // Execute in background without blocking
+    Promise.allSettled(configs.map((config) => this.execute(config)));
+  }
+
+  /**
+   * Clear the geometry cache
+   */
+  clearCache(): void {
+    const size = this.geometryCache.size;
+    this.geometryCache.clear();
+    console.debug(`[WorkerPool] Cleared ${size} cached entries`);
+  }
+
+  /**
+   * Get cache statistics
+   */
+  getCacheStats(): { size: number; maxSize: number } {
+    return {
+      size: this.geometryCache.size,
+      maxSize: this.MAX_CACHE_SIZE,
+    };
+  }
+
+  /**
    * Cancel a pending job by ID
    */
   cancelJob(jobId: string): boolean {
@@ -429,6 +460,21 @@ export class WorkerPool<TInput = unknown, TOutput = unknown> {
       this.log(`Job ${job.id} completed in ${executionTime}ms`);
       console.debug(
         `[WorkerPool] Job ${job.id} completed in ${executionTime}ms`
+      );
+
+      // Cache the result for repeated configurations
+      const cacheKey = JSON.stringify(job.input);
+      if (this.geometryCache.size >= this.MAX_CACHE_SIZE) {
+        // Remove oldest entry (first entry in map)
+        const firstKey = this.geometryCache.keys().next().value;
+        if (firstKey) {
+          this.geometryCache.delete(firstKey);
+          console.debug('[WorkerPool] Cache full, evicted oldest entry');
+        }
+      }
+      this.geometryCache.set(cacheKey, e.data as TOutput);
+      console.debug(
+        `[WorkerPool] Cached result, cache size: ${this.geometryCache.size}`
       );
 
       job.resolve(e.data as TOutput);
