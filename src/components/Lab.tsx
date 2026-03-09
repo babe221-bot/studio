@@ -1214,6 +1214,50 @@ export function Lab() {
     }
   }, [orderItems, toast]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+S to save template
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        saveTemplate?.();
+      }
+      // Ctrl+P for PDF
+      if (e.ctrlKey && e.key === 'p') {
+        e.preventDefault();
+        if (orderItems.length > 0) {
+          handleDownloadPdf();
+        }
+      }
+      // Arrow keys for dimension changes (when not in input)
+      if (document.activeElement?.tagName !== 'INPUT') {
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setLength((l) => Math.min(l + 10, 500));
+          setAnnouncement('Dužina povećana za 10 cm');
+        }
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setLength((l) => Math.max(l - 10, 10));
+          setAnnouncement('Dužina smanjena za 10 cm');
+        }
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          setWidth((w) => Math.min(w + 10, 300));
+          setAnnouncement('Širina povećana za 10 cm');
+        }
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          setWidth((w) => Math.max(w - 10, 10));
+          setAnnouncement('Širina smanjena za 10 cm');
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [orderItems.length, saveTemplate, handleDownloadPdf]);
+
   const handleOpenModal = useCallback(
     (type: ModalType, item?: EditableItem) => {
       setEditingItem(item || null);
@@ -1449,6 +1493,7 @@ export function Lab() {
                   variant="outline"
                   className="w-full md:w-auto flex-1 h-11"
                   disabled={orderItems.length === 0}
+                  aria-label="Preuzmi radni nalog kao PDF"
                 >
                   <FileDown className="mr-2 h-4 w-4" /> Preuzmi Nalog (PDF)
                 </Button>
