@@ -33,3 +33,6 @@ redis>=5.0.1
 # Observability
 sentry-sdk[fastapi]>=2.0.0
 loguru>=0.7.2
+
+# Rate Limiting
+slowapi>=0.1.9
