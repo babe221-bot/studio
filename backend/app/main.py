@@ -15,6 +15,7 @@ from contextlib import asynccontextmanager
 import os
 import time
 import uuid
+import logging
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -23,6 +24,9 @@ from slowapi.errors import RateLimitExceeded
 from app.api import cad, data, pricing, design_review
 from app.services.database import init_db
 import sentry_sdk
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Initialize rate limiter
 limiter = Limiter(key_func=get_remote_address)
