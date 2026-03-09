@@ -190,6 +190,17 @@ export class WorkerPool<TInput = unknown, TOutput = unknown> {
       return Promise.reject(new Error('WorkerPool has been terminated'));
     }
 
+    // Check geometry cache for repeated configurations
+    const cacheKey = JSON.stringify(input);
+    const cachedResult = this.geometryCache.get(cacheKey);
+    if (cachedResult !== undefined) {
+      console.debug(
+        '[WorkerPool] Cache hit for geometry:',
+        cacheKey.substring(0, 50)
+      );
+      return Promise.resolve(cachedResult);
+    }
+
     if (this.jobQueue.length >= this.config.maxQueueSize) {
       this.log(
         `[QUEUE FULL] Job rejected, queue at ${this.jobQueue.length}/${this.config.maxQueueSize}`
