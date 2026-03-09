@@ -215,6 +215,11 @@ const OrderEntryForm = React.memo(
             size="sm"
             onClick={isListening ? stopListening : startListening}
             className={isListening ? 'animate-pulse' : ''}
+            aria-label={
+              isListening
+                ? 'Zaustavi prepoznavanje glasa'
+                : 'Pokreni prepoznavanje glasa'
+            }
           >
             {isListening ? (
               <MicOff className="h-4 w-4 mr-2" />
@@ -269,6 +274,10 @@ const OrderEntryForm = React.memo(
                 value={length}
                 onChange={(e) => setLength(parseFloat(e.target.value) || 0)}
                 disabled={selectedElement?.hasSpecialBunjaEdges}
+                aria-label="Dužina u centimetrima"
+                aria-valuenow={length}
+                aria-valuemin={0}
+                aria-valuemax={500}
               />
             </div>
             <div className="space-y-2">
@@ -280,6 +289,10 @@ const OrderEntryForm = React.memo(
                 pattern="[0-9]*"
                 value={width}
                 onChange={(e) => setWidth(parseFloat(e.target.value) || 0)}
+                aria-label="Širina u centimetrima"
+                aria-valuenow={width}
+                aria-valuemin={0}
+                aria-valuemax={300}
               />
             </div>
             <div className="space-y-2">
@@ -291,6 +304,10 @@ const OrderEntryForm = React.memo(
                 pattern="[0-9]*"
                 value={height}
                 onChange={(e) => setHeight(parseFloat(e.target.value) || 0)}
+                aria-label="Debljina u centimetrima"
+                aria-valuenow={height}
+                aria-valuemin={0}
+                aria-valuemax={20}
               />
             </div>
           </div>
@@ -1419,6 +1436,7 @@ export function Lab() {
                   onClick={handleAddToOrder}
                   className="w-full md:w-auto flex-1 h-11"
                   disabled={isAddingItem}
+                  aria-label="Dodaj trenutnu konfiguraciju u radni nalog"
                 >
                   {isAddingItem ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
