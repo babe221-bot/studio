@@ -8,10 +8,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import {
-  TechnicalDrawingInput,
-  TechnicalDrawingOutput,
-} from '@/types';
+import { TechnicalDrawingInput, TechnicalDrawingOutput } from '@/types';
 
 // ── Supabase Storage client (server-side, service-role key) ─────────────────
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -33,7 +30,9 @@ async function uploadToSupabase(dataUri: string): Promise<string> {
     // Support both PNG data URIs (from Python) and raw base64 SVG strings
     const match = dataUri.match(/^data:(image\/(?:png|svg\+xml));base64,(.*)$/);
     if (!match) {
-      throw new Error(`Invalid data URI format — expected data:image/png or data:image/svg+xml. Got: ${dataUri.slice(0, 40)}…`);
+      throw new Error(
+        `Invalid data URI format — expected data:image/png or data:image/svg+xml. Got: ${dataUri.slice(0, 40)}…`
+      );
     }
 
     const contentType = match[1];
@@ -70,7 +69,7 @@ function toSvgDataUri(base64: string): string {
 // ── main export ──────────────────────────────────────────────────────────────
 
 export async function generateTechnicalDrawing(
-  input: TechnicalDrawingInput,
+  input: TechnicalDrawingInput
 ): Promise<TechnicalDrawingOutput> {
   const PYTHON_API_URL =
     process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:8000';
@@ -104,7 +103,9 @@ export async function generateTechnicalDrawing(
     });
 
     if (!response.ok) {
-      throw new Error(`Python API error: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Python API error: ${response.status} ${response.statusText}`
+      );
     }
 
     const result = await response.json();

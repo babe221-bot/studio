@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
 /**
  * Three.js Components for React Three Fiber
- * 
+ *
  * Exports all R3F components for the stone slab visualization.
  */
 

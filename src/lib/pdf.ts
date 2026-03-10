@@ -1,4 +1,3 @@
-
 'use client';
 
 // Re-export from pdf-enhanced for backwards compatibility
@@ -12,7 +11,10 @@ export type EdgeNameMap = {
 };
 
 // Legacy compatibility export
-export const generateAndDownloadPdfLegacy = (orderItems: OrderItem[], edgeNames: EdgeNameMap) => {
+export const generateAndDownloadPdfLegacy = (
+  orderItems: OrderItem[],
+  edgeNames: EdgeNameMap
+) => {
   const images3D = orderItems.map(() => null);
   const { generateEnhancedPdf } = require('./pdf-enhanced');
   return generateEnhancedPdf(orderItems, edgeNames, images3D);

@@ -23,7 +23,11 @@ interface LabState {
 
   // Actions
   setSelectedElement: (element: ConstructionElement) => void;
-  setDimensions: (dims: { length?: number; width?: number; height?: number }) => void;
+  setDimensions: (dims: {
+    length?: number;
+    width?: number;
+    height?: number;
+  }) => void;
   setQuantity: (qty: number) => void;
   setSpecimenId: (id: string) => void;
   setMaterialId: (id: string) => void;
@@ -79,21 +83,28 @@ export const useLabStore = create<LabState>()(
           height: element.defaultHeight,
           specimenId: `${element.name} 01`,
           quantity: 1,
-          processedEdges: (element.orderUnit === 'sqm' || element.orderUnit === 'lm')
-            ? { front: false, back: false, left: false, right: false }
-            : { front: true, back: false, left: false, right: false },
-          okapnikEdges: { front: false, back: false, left: false, right: false },
+          processedEdges:
+            element.orderUnit === 'sqm' || element.orderUnit === 'lm'
+              ? { front: false, back: false, left: false, right: false }
+              : { front: true, back: false, left: false, right: false },
+          okapnikEdges: {
+            front: false,
+            back: false,
+            left: false,
+            right: false,
+          },
           grainOffset: { x: 0, y: 0 },
           grainRotation: 0,
-          mirrorGrain: false
+          mirrorGrain: false,
         });
       },
 
-      setDimensions: (dims) => set((state) => ({
-        length: dims.length ?? state.length,
-        width: dims.width ?? state.width,
-        height: dims.height ?? state.height
-      })),
+      setDimensions: (dims) =>
+        set((state) => ({
+          length: dims.length ?? state.length,
+          width: dims.width ?? state.width,
+          height: dims.height ?? state.height,
+        })),
 
       setQuantity: (quantity) => set({ quantity }),
       setSpecimenId: (specimenId) => set({ specimenId }),
@@ -101,42 +112,47 @@ export const useLabStore = create<LabState>()(
       setFinishId: (selectedFinishId) => set({ selectedFinishId }),
       setProfileId: (selectedProfileId) => set({ selectedProfileId }),
 
-      setProcessedEdge: (edge, checked) => set((state) => {
-        const next = { ...state.processedEdges, [edge]: checked };
-        // If processed edge is unchecked, okapnik must also be unchecked
-        let nextOkapnik = { ...state.okapnikEdges };
-        if (!checked) {
-          nextOkapnik[edge] = false;
-        }
-        return { processedEdges: next, okapnikEdges: nextOkapnik };
-      }),
+      setProcessedEdge: (edge, checked) =>
+        set((state) => {
+          const next = { ...state.processedEdges, [edge]: checked };
+          // If processed edge is unchecked, okapnik must also be unchecked
+          let nextOkapnik = { ...state.okapnikEdges };
+          if (!checked) {
+            nextOkapnik[edge] = false;
+          }
+          return { processedEdges: next, okapnikEdges: nextOkapnik };
+        }),
 
-      setOkapnikEdge: (edge, checked) => set((state) => ({
-        okapnikEdges: { ...state.okapnikEdges, [edge]: checked }
-      })),
+      setOkapnikEdge: (edge, checked) =>
+        set((state) => ({
+          okapnikEdges: { ...state.okapnikEdges, [edge]: checked },
+        })),
 
       setBunjaEdgeStyle: (bunjaEdgeStyle) => set({ bunjaEdgeStyle }),
 
-      setGrainOffset: (offset) => set((state) => ({
-        grainOffset: {
-          x: offset.x ?? state.grainOffset.x,
-          y: offset.y ?? state.grainOffset.y
-        }
-      })),
+      setGrainOffset: (offset) =>
+        set((state) => ({
+          grainOffset: {
+            x: offset.x ?? state.grainOffset.x,
+            y: offset.y ?? state.grainOffset.y,
+          },
+        })),
 
       setGrainRotation: (grainRotation) => set({ grainRotation }),
 
       setMirrorGrain: (mirrorGrain) => set({ mirrorGrain }),
 
-      setShowBookmatchPreview: (showBookmatchPreview) => set({ showBookmatchPreview }),
+      setShowBookmatchPreview: (showBookmatchPreview) =>
+        set({ showBookmatchPreview }),
 
       resetToDefaults: (elementId) => {
-        const element = elementId 
-          ? constructionElements.find(e => e.id === elementId) || DEFAULT_ELEMENT
+        const element = elementId
+          ? constructionElements.find((e) => e.id === elementId) ||
+            DEFAULT_ELEMENT
           : DEFAULT_ELEMENT;
-        
+
         get().setSelectedElement(element);
-      }
+      },
     }),
     {
       name: 'lab-storage', // unique name for localStorage
