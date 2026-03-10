@@ -23,27 +23,39 @@ export function AIAssistant() {
 
   const cadContextString = useMemo(() => buildCADContext(cadData), [cadData]);
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } =
-    useChat({
-      onError: (err) => {
-        toast({
-          title: 'Greška',
-          description:
-            err.message || 'Došlo je do greške u komunikaciji s AI pomoćnikom.',
-          variant: 'destructive',
-        });
-      },
-    }) as any;
+  const { messages, status, sendMessage } = useChat({
+    onError: (err) => {
+      toast({
+        title: 'Greška',
+        description:
+          err.message || 'Došlo je do greške u komunikaciji s AI pomoćnikom.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const [input, setInput] = useState('');
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
+
+  const isLoading = status === 'submitted' || status === 'streaming';
 
   const handleSubmitWithContext = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
+
+    const currentInput = input;
+    setInput('');
 
     const messageWithContext = cadContextString
-      ? `[Kontekst projekta:\n${cadContextString}]\n\nPitanje korisnika: ${input}`
-      : input;
+      ? `[Kontekst projekta:\n${cadContextString}]\n\nPitanje korisnika: ${currentInput}`
+      : currentInput;
 
-    handleSubmit(e, { body: { prompt: messageWithContext } });
+    sendMessage(
+      { text: currentInput },
+      { body: { prompt: messageWithContext } }
+    );
   };
 
   const [isOpen, setIsOpen] = useState(false);
@@ -128,7 +140,12 @@ export function AIAssistant() {
                         : 'bg-card border text-card-foreground rounded-bl-sm'
                     }`}
                   >
-                    {m.content}
+                    {m.parts?.map((part, i) => {
+                      if (part.type === 'text') {
+                        return <span key={i}>{part.text}</span>;
+                      }
+                      return null;
+                    })}
                   </div>
                 </div>
               ))}
