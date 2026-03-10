@@ -39,6 +39,8 @@ class UserProfileDB(Base):
     shipping_address = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
+    role = Column(String, nullable=False, default='customer') # customer/staff/manager/admin/superadmin
+    is_active = Column(Boolean, default=True)
 
 class OrderDB(Base):
     __tablename__ = "orders"
