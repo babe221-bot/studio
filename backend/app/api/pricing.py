@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.database import get_db
 from app.services.pricing_service import PriceCalculationRequest, PriceCalculationResponse, calculate_price
+from app.services.email import send_email
 
 router = APIRouter()
 
