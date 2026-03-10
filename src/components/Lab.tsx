@@ -246,8 +246,8 @@ const OrderEntryForm = React.memo(
                 <SelectValue placeholder="Odaberite tip elementa" />
               </SelectTrigger>
               <SelectContent>
-                {constructionElements.map((el: any) => (
-                  <SelectItem key={el.id} value={el.id}>
+                {constructionElements.map((el: ConstructionElement) => (
+                  <SelectItem key={el.id} value={el.id.toString()}>
                     {el.name}
                   </SelectItem>
                 ))}
@@ -324,7 +324,12 @@ const MaterialSelection = React.memo(
     selectedMaterialId,
     setSelectedMaterialId,
     handleOpenModal,
-  }: any) => (
+  }: {
+    materials: Material[];
+    selectedMaterialId: string;
+    setSelectedMaterialId: (id: string) => void;
+    handleOpenModal: (type: ModalType, item?: EditableItem) => void;
+  }) => (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>2. Odabir materijala</CardTitle>
@@ -347,44 +352,9 @@ const MaterialSelection = React.memo(
             <SelectValue placeholder="Odaberite materijal" />
           </SelectTrigger>
           <SelectContent>
-            {materials.map((m: any) => (
+            {materials.map((m: Material) => (
               <SelectItem key={m.id} value={m.id.toString()}>
-                {m.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </CardContent>
-    </Card>
-  )
-);
-
-const ProcessingConfig = React.memo(
-  ({
-    selectedElement,
-    selectedFinishId,
-    setSelectedFinishId,
-    handleOpenModal,
-    finishes,
-    bunjaEdgeStyle,
-    setBunjaEdgeStyle,
-    profiles,
-    selectedProfileId,
-    setSelectedProfileId,
-    edgeNames,
-    processedEdges,
-    updateProcessedEdge,
-    okapnikEdges,
-    updateOkapnikEdge,
-  }: any) => (
-    <Card>
-      <CardHeader>
-        <CardTitle>3. Definiranje obrade</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="surface-finish-select">Obrada lica</Label>
-          <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
             <Select
               value={selectedFinishId}
               onValueChange={setSelectedFinishId}
@@ -396,7 +366,7 @@ const ProcessingConfig = React.memo(
                 <SelectValue placeholder="Odaberite obradu" />
               </SelectTrigger>
               <SelectContent>
-                {finishes.map((f: any) => (
+                {finishes.map((f: SurfaceFinish) => (
                   <SelectItem key={f.id} value={f.id.toString()}>
                     {f.name}
                   </SelectItem>
@@ -454,7 +424,7 @@ const ProcessingConfig = React.memo(
                     <SelectValue placeholder="Odaberite profil" />
                   </SelectTrigger>
                   <SelectContent>
-                    {profiles.map((p: any) => (
+                    {profiles.map((p: EdgeProfile) => (
                       <SelectItem key={p.id} value={p.id.toString()}>
                         {p.name}
                       </SelectItem>
@@ -1200,13 +1170,14 @@ export function Lab() {
       if (url) {
         window.location.href = url;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Checkout error:', error);
       toast({
         title: 'Greška pri naplati',
         description:
-          error.message ||
-          'Došlo je do greške prilikom povezivanja sa servisom za plaćanje.',
+          error instanceof Error
+            ? error.message
+            : 'Došlo je do greške prilikom povezivanja sa servisom za plaćanje.',
         variant: 'destructive',
       });
     } finally {
@@ -1504,10 +1475,11 @@ export function Lab() {
                         description:
                           'Vaša verzija je uspješno spremljena u oblak.',
                       });
-                    } catch (err: any) {
+                    } catch (err: unknown) {
                       toast({
                         title: 'Greška pri spremanju',
-                        description: err.message || 'Došlo je do greške.',
+                        description:
+                          err instanceof Error ? err.message : 'Došlo je do greške.',
                         variant: 'destructive',
                       });
                     }
