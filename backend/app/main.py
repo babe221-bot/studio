@@ -163,6 +163,12 @@ app.include_router(pricing.router, prefix="/api/pricing", tags=["Pricing"])
 app.include_router(design_review.router, prefix="/api/ai", tags=["AI"])
 app.include_router(collaboration.router, prefix="/api/collaboration", tags=["Collaboration"])
 
+# Admin Routers
+app.include_router(admin_users.router, prefix="/api/admin", tags=["Admin: Users"])
+app.include_router(admin_orders.router, prefix="/api/admin", tags=["Admin: Orders"])
+app.include_router(admin_materials.router, prefix="/api/admin", tags=["Admin: Materials"])
+app.include_router(admin_analytics.router, prefix="/api/admin", tags=["Admin: Analytics"])
+
 
 
 @app.get("/")
