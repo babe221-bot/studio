@@ -3,7 +3,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from app.services.database import get_db
 from app.models.domain import UserProfileDB
-from app.models.schemas import EmailPreferences
 from pydantic import BaseModel
 from typing import Dict, Any
 import json
@@ -12,6 +11,11 @@ import uuid
 from app.services.auth_utils import get_current_active_user # Assuming this exists
 
 router = APIRouter()
+
+class EmailPreferences(BaseModel):
+    welcome: bool = True
+    order_confirmation: bool = True
+    receipt: bool = True
 
 class PreferencesUpdate(BaseModel):
     email_preferences: Dict[str, bool]
@@ -61,4 +65,3 @@ async def update_user_preferences(prefs_update: PreferencesUpdate, user_id: str 
     await db.commit()
     
     return EmailPreferences(**updated_prefs)
-
