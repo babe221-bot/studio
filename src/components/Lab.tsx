@@ -790,7 +790,7 @@ export function Lab() {
     } else if (sharedToken) {
       async function loadShared() {
         try {
-          const project = await fetchSharedProject(sharedToken);
+          const project = await fetchSharedProject(sharedToken as string);
           if (project) {
             setOrderItems(project.items);
             if (project.notes) setProjectNotes(project.notes);
