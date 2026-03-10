@@ -354,7 +354,68 @@ const MaterialSelection = React.memo(
           <SelectContent>
             {materials.map((m: Material) => (
               <SelectItem key={m.id} value={m.id.toString()}>
-                <div className="flex items-center gap-2">
+                {m.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </CardContent>
+    </Card>
+  )
+);
+
+interface ProcessingConfigProps {
+  selectedElement: ConstructionElement | undefined;
+  selectedFinishId: string;
+  setSelectedFinishId: (id: string) => void;
+  handleOpenModal: (type: ModalType, item?: EditableItem) => void;
+  finishes: SurfaceFinish[];
+  bunjaEdgeStyle: 'oštre' | 'lomljene';
+  setBunjaEdgeStyle: (style: 'oštre' | 'lomljene') => void;
+  profiles: EdgeProfile[];
+  selectedProfileId: string;
+  setSelectedProfileId: (id: string) => void;
+  edgeNames: Record<string, string>;
+  processedEdges: ProcessedEdges;
+  updateProcessedEdge: (edge: keyof ProcessedEdges, value: boolean) => void;
+  okapnikEdges: ProcessedEdges;
+  updateOkapnikEdge: (edge: keyof ProcessedEdges, value: boolean) => void;
+  isListening: boolean;
+  startListening: () => void;
+  stopListening: () => void;
+  transcript: string;
+}
+
+const ProcessingConfig = React.memo<ProcessingConfigProps>(
+  ({
+    selectedElement,
+    selectedFinishId,
+    setSelectedFinishId,
+    handleOpenModal,
+    finishes,
+    bunjaEdgeStyle,
+    setBunjaEdgeStyle,
+    profiles,
+    selectedProfileId,
+    setSelectedProfileId,
+    edgeNames,
+    processedEdges,
+    updateProcessedEdge,
+    okapnikEdges,
+    updateOkapnikEdge,
+    isListening,
+    startListening,
+    stopListening,
+    transcript,
+  }: ProcessingConfigProps) => (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>3. Obrada i profili</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          <Label>Vrsta obrade lica</Label>
+          <div className="flex items-center gap-2">
             <Select
               value={selectedFinishId}
               onValueChange={setSelectedFinishId}
@@ -383,7 +444,6 @@ const MaterialSelection = React.memo(
             </Button>
           </div>
         </div>
-
         {selectedElement?.hasSpecialBunjaEdges ? (
           <div className="space-y-3 pt-2">
             <Label className="text-base">Obrada ivica bunje</Label>
@@ -1317,20 +1377,20 @@ export function Lab() {
           />
           <MaterialSelection
             materials={materials}
-            selectedMaterialId={selectedMaterialId}
+            selectedMaterialId={selectedMaterialId || ''}
             setSelectedMaterialId={setSelectedMaterialId}
             handleOpenModal={handleOpenModal}
           />
           <ProcessingConfig
             selectedElement={selectedElement}
-            selectedFinishId={selectedFinishId}
+            selectedFinishId={selectedFinishId || ''}
             setSelectedFinishId={setSelectedFinishId}
             handleOpenModal={handleOpenModal}
             finishes={finishes}
             bunjaEdgeStyle={bunjaEdgeStyle}
             setBunjaEdgeStyle={setBunjaEdgeStyle}
             profiles={profiles}
-            selectedProfileId={selectedProfileId}
+            selectedProfileId={selectedProfileId || ''}
             setSelectedProfileId={setSelectedProfileId}
             edgeNames={edgeNames}
             processedEdges={processedEdges}
@@ -1479,7 +1539,9 @@ export function Lab() {
                       toast({
                         title: 'Greška pri spremanju',
                         description:
-                          err instanceof Error ? err.message : 'Došlo je do greške.',
+                          err instanceof Error
+                            ? err.message
+                            : 'Došlo je do greške.',
                         variant: 'destructive',
                       });
                     }
