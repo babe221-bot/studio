@@ -32,8 +32,6 @@ export default function AdminOrdersPage() {
     } catch (err) {
       console.error('Error fetching orders:', err);
       setError('An unexpected error occurred while fetching orders.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
