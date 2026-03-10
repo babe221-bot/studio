@@ -6,6 +6,7 @@ from sqlalchemy import (
     Integer,
     Numeric,
     String,
+    Text,
     func,
 )
 
@@ -28,6 +29,10 @@ class MaterialDB(Base):
     inventory_count = Column(Integer, default=0)
     low_stock_threshold = Column(Integer, default=5)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    sku = Column(String, unique=True, nullable=True)
+    supplier = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
+    is_featured = Column(Boolean, default=False)
 
 class UserProfileDB(Base):
     __tablename__ = "user_profiles"
@@ -57,6 +62,10 @@ class OrderDB(Base):
     notes = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    fulfillment_status = Column(String, default='pending') # pending, processing, shipped, delivered
+    assigned_staff_id = Column(String, nullable=True)
+    tracking_number = Column(String, nullable=True)
 
 class InvoiceDB(Base):
     __tablename__ = "invoices"
@@ -111,3 +120,18 @@ class ConfigLockDB(Base):
     field = Column(String, primary_key=True)
     client_id = Column(String, nullable=False)
     acquired_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class AdminAuditLogDB(Base):
+    __tablename__ = "admin_audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    admin_id = Column(String, nullable=False)
+    action = Column(String, nullable=False)
+    resource_type = Column(String, nullable=False)
+    resource_id = Column(String, nullable=True)
+    old_value = Column(Text, nullable=True)
+    new_value = Column(Text, nullable=True)
+    ip_address = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+    request_id = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
