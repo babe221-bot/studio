@@ -1,21 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { MetricCard } from '@/components/admin/MetricCard';
 import { RevenueChart } from '@/components/admin/RevenueChart';
+import { RecentOrders } from '@/components/admin/RecentOrders';
+import { LowStockAlerts } from '@/components/admin/LowStockAlerts';
 import { SummaryStats, RevenueStat } from '@/backend/app/api/admin/analytics';
-import { MaterialResponse } from '@/backend/app/api/admin/materials';
 import { OrderResponse } from '@/backend/app/api/admin/orders';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
+import { MaterialResponse } from '@/backend/app/api/admin/materials';
 import {
   PieChart,
   Pie,
@@ -24,6 +17,10 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import { Button } from '@/components/ui/button';
+import { FileDown } from 'lucide-react';
+import { ExportModal } from '@/components/modals/ExportModal';
+import { ExportFormat } from '@/lib/export/exportService';
 
 const COLORS = [
   '#0088FE',
