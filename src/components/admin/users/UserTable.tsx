@@ -9,10 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { UserResponse } from '@/backend/app/api/admin/users';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
+import { UserResponse } from '@/backend/app/api/admin/users';
 
 interface UserTableProps {
   users: UserResponse[];
