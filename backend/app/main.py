@@ -22,6 +22,11 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from app.api import cad, data, pricing, design_review, collaboration
+from app.api.admin import users as admin_users
+from app.api.admin import orders as admin_orders
+from app.api.admin import materials as admin_materials
+from app.api.admin import analytics as admin_analytics
+
 from app.services.database import init_db
 import sentry_sdk
 import logging
