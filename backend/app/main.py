@@ -21,7 +21,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
-from app.api import cad, data, pricing, design_review
+from app.api import cad, data, pricing, design_review, collaboration
 from app.services.database import init_db
 import sentry_sdk
 import logging
@@ -156,6 +156,8 @@ app.include_router(cad.router, prefix="/api/cad", tags=["CAD"])
 app.include_router(data.router, prefix="/api/data", tags=["Data"])
 app.include_router(pricing.router, prefix="/api/pricing", tags=["Pricing"])
 app.include_router(design_review.router, prefix="/api/ai", tags=["AI"])
+app.include_router(collaboration.router, prefix="/api/collaboration", tags=["Collaboration"])
+
 
 
 @app.get("/")
