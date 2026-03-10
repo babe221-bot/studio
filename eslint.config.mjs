@@ -4,7 +4,17 @@ import prettierPlugin from 'eslint-plugin-prettier';
 
 export default [
   {
-    ignores: ['.next/**', 'node_modules/**', 'dist/**', 'backend/**'],
+    ignores: [
+      '.next/**',
+      'node_modules/**',
+      'dist/**',
+      'backend/**',
+      '.kilocode/**',
+      '.venv/**',
+      'scripts/**',
+      '*.config.js',
+      '*.config.mjs',
+    ],
   },
   js.configs.recommended,
   {
