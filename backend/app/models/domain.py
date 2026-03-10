@@ -1,5 +1,16 @@
-from sqlalchemy import Column, Integer, String, Numeric, DateTime, func
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    func,
+)
+
 from app.services.database import Base
+
 
 class MaterialDB(Base):
     __tablename__ = "materials"
@@ -71,3 +82,30 @@ class EdgeProfileDB(Base):
     name = Column(String, nullable=False)
     cost_m = Column(Numeric, nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+class ConfigurationDB(Base):
+    __tablename__ = "configs"
+
+    id = Column(String, primary_key=True, server_default=func.gen_random_uuid())
+    owner_id = Column(String, nullable=True) # Matches auth.users UUID
+    state = Column(String, nullable=False, default='{}') # JSON string
+    is_locked = Column(Boolean, default=False)
+    locked_by = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+class ConfigCollaboratorDB(Base):
+    __tablename__ = "config_collaborators"
+
+    config_id = Column(String, ForeignKey("configs.id", ondelete="CASCADE"), primary_key=True)
+    user_id = Column(String, primary_key=True)
+    permission = Column(String, default='view') # 'view', 'edit', 'admin'
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class ConfigLockDB(Base):
+    __tablename__ = "config_locks"
+
+    config_id = Column(String, ForeignKey("configs.id", ondelete="CASCADE"), primary_key=True)
+    field = Column(String, primary_key=True)
+    client_id = Column(String, nullable=False)
+    acquired_at = Column(DateTime(timezone=True), server_default=func.now())
