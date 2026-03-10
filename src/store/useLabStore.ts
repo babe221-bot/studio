@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { ConstructionElement, ProcessedEdges } from '@/types';
 import { constructionElements } from '@/lib/constructionElements';
 
-interface LabState {
+export interface LabState {
   selectedElement: ConstructionElement;
   length: number;
   width: number;

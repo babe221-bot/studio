@@ -142,3 +142,37 @@ export interface CADAIResponse {
   };
   error?: string;
 }
+
+// ── Collaboration Types ───────────────────────────────────────────────────────
+
+export interface UserPresence {
+  userId: string;
+  displayName: string;
+  avatarUrl?: string;
+  cursorPosition?: { x: number; y: number };
+  selectedField?: string;
+  lastActive: number;
+}
+
+export interface DeltaUpdate {
+  configId: string;
+  timestamp: number;
+  clientId: string;
+  changes: Record<string, unknown>;
+}
+
+export type CollaborationPermission = 'view' | 'edit' | 'admin';
+
+export interface Collaborator {
+  config_id: string;
+  user_id: string;
+  permission: CollaborationPermission;
+  created_at: string;
+}
+
+export interface ConfigLock {
+  config_id: string;
+  field: string;
+  client_id: string;
+  acquired_at: string;
+}
