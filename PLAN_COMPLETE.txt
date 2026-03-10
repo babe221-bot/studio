@@ -5,6 +5,7 @@
 **SUMMARY:** .planning/phases/02-operational-excellence/02-03-SUMMARY.md
 
 **Commits:**
+- 97f6b97: docs(02-03): update plan complete marker
 - 358a15c: docs(02-03): add plan complete marker
 - 54f1be5: chore(02-03): fix roadmap duplication
 - 3cac7dd: chore(02-03): finalize plan completion
