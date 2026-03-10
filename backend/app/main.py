@@ -21,11 +21,11 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
-from app.api import cad, data, pricing, design_review, collaboration
 from app.api.admin import users as admin_users
 from app.api.admin import orders as admin_orders
 from app.api.admin import materials as admin_materials
 from app.api.admin import analytics as admin_analytics
+from app.api import preferences
 
 from app.services.database import init_db
 import sentry_sdk
@@ -168,6 +168,9 @@ app.include_router(admin_users.router, prefix="/api/admin", tags=["Admin: Users"
 app.include_router(admin_orders.router, prefix="/api/admin", tags=["Admin: Orders"])
 app.include_router(admin_materials.router, prefix="/api/admin", tags=["Admin: Materials"])
 app.include_router(admin_analytics.router, prefix="/api/admin", tags=["Admin: Analytics"])
+
+# Preferences Router
+app.include_router(preferences.router, prefix="/api/preferences", tags=["Preferences"])
 
 
 

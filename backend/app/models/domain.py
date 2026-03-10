@@ -46,6 +46,7 @@ class UserProfileDB(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now())
     role = Column(String, nullable=False, default='customer') # customer/staff/manager/admin/superadmin
     is_active = Column(Boolean, default=True)
+    email_preferences = Column(String, default='{"welcome": true, "order_confirmation": true, "receipt": true}', nullable=False) # JSON string for preferences
 
 class OrderDB(Base):
     __tablename__ = "orders"
