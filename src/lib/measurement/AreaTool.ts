@@ -189,8 +189,12 @@ export class AreaTool extends MeasurementTool {
 
     for (let i = 0; i < n; i++) {
       const j = (i + 1) % n;
-      area += projected[i].u * projected[j].v;
-      area -= projected[j].u * projected[i].v;
+      const current = projected[i];
+      const next = projected[j];
+      if (current && next) {
+        area += current.u * next.v;
+        area -= next.u * current.v;
+      }
     }
 
     return (Math.abs(area) / 2) * 10000; // Convert to cm²
