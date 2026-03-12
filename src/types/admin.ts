@@ -1,7 +1,7 @@
 export interface SummaryStats {
-  totalOrders: number;
-  totalRevenue: number;
-  activeUsers: number;
+  total_orders: number;
+  total_revenue: number;
+  total_users: number;
   pendingReviews: number;
   orderGrowth: number;
   revenueGrowth: number;
@@ -29,4 +29,5 @@ export interface MaterialResponse {
   inventory_count: number;
   status: 'in_stock' | 'low_stock' | 'out_of_stock';
   category: string;
+  is_active: boolean;
 }
