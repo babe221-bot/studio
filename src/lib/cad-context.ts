@@ -20,6 +20,12 @@ export interface CADContextData {
     height: number;
   } | null;
   safetyWarnings?: DesignWarning[];
+  physicsState?: {
+    deformation: number[];
+    naturalFrequency: number;
+    maxDeflection: number;
+    supportPoints: { left: number; right: number };
+  } | null;
 }
 
 /**
