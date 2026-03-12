@@ -8,14 +8,25 @@ import { Search } from 'lucide-react';
 import { MaterialCard } from './MaterialCard';
 import { MaterialSearch } from './MaterialSearch';
 import { MaterialFilters } from './MaterialFilters';
+import { MaterialDetail } from './MaterialDetail';
 import { useMaterials } from '@/hooks/useMaterials';
 import { useMaterialFilters } from '@/hooks/useMaterialFilters';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
+import type { Material } from '@/types';
 
-export function MaterialLibrary() {
+export function MaterialLibrary({
+  onSelect,
+  onClose,
+}: {
+  onSelect?: (material: Material) => void;
+  onClose?: () => void;
+}) {
   const { materials, isLoading, error } = useMaterials();
   const { filters, setFilter, clearFilters } = useMaterialFilters();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(
+    null
+  );
 
   // Filter materials client-side for instant feedback
   const filteredMaterials = materials.filter((material) => {
@@ -57,9 +68,14 @@ export function MaterialLibrary() {
   }
 
   return (
-    <Card className="space-y-4">
-      <CardHeader>
+    <Card className="space-y-4 relative">
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Material Library</CardTitle>
+        {onClose && (
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -77,7 +93,12 @@ export function MaterialLibrary() {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredMaterials.map((material) => (
-            <MaterialCard key={material.id} material={material} />
+            <MaterialCard
+              key={material.id}
+              material={material}
+              onClick={() => setSelectedMaterial(material)}
+              onApply={() => onSelect?.(material)}
+            />
           ))}
         </div>
 
@@ -87,6 +108,17 @@ export function MaterialLibrary() {
           </p>
         )}
       </CardContent>
+
+      {selectedMaterial && (
+        <MaterialDetail
+          material={selectedMaterial}
+          onClose={() => setSelectedMaterial(null)}
+          onApply={(m) => {
+            onSelect?.(m);
+            setSelectedMaterial(null);
+          }}
+        />
+      )}
     </Card>
   );
 }

@@ -307,6 +307,27 @@ export function Lab() {
         onClose={() => setIsExportModalOpen(false)}
         onExport={handleExportAction}
       />
+
+      {isMaterialLibraryOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <MaterialLibrary
+              onSelect={(material) => {
+                setSelectedMaterialId(material.id);
+                setIsMaterialLibraryOpen(false);
+                toast({
+                  title: 'Material Applied',
+                  description: `${
+                    material.display_name || material.name
+                  } applied to configuration.`,
+                });
+              }}
+              onClose={() => setIsMaterialLibraryOpen(false)}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 xl:grid-cols-4">
         <div className="flex flex-col gap-6 lg:col-span-1">
           {/* All the form cards go here, wrapped with ActiveSelectionIndicator */}
