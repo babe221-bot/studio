@@ -25,14 +25,6 @@ interface ARPreviewProps {
   };
 }
 
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'model-viewer': any;
-    }
-  }
-}
-
 export function ARPreview({ config }: ARPreviewProps) {
   const [glbUrl, setGlbUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
