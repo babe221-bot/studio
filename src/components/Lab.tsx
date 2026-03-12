@@ -358,7 +358,7 @@ export function Lab() {
                     console.log('Material library button clicked');
                   }}
                 >
-                  <Folder className="h-4 w-4 mr-2" />
+                  <Layout className="h-4 w-4 mr-2" />
                   Materials
                 </Button>
                 {configId && <PresenceAvatars />}
