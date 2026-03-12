@@ -2,6 +2,8 @@ from pydantic import BaseModel
 from typing import Dict, Any, Optional
 
 
+import datetime
+
 class Dimensions(BaseModel):
     length: float
     width: float
@@ -50,3 +52,23 @@ class CADResponse(BaseModel):
     dxf_filename: Optional[str] = None
     data: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
+
+
+class AdminAuditLogCreate(BaseModel):
+    admin_id: str
+    action: str
+    resource_type: str
+    resource_id: Optional[str] = None
+    old_value: Optional[str] = None
+    new_value: Optional[str] = None
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    request_id: Optional[str] = None
+
+
+class AdminAuditLogResponse(AdminAuditLogCreate):
+    id: int
+    created_at: datetime.datetime
+
+    class Config:
+        from_attributes = True
