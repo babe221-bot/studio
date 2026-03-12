@@ -69,7 +69,7 @@ export interface MaterialUpdate {
 export interface UserResponse {
   id: string;
   email: string;
-  role: 'admin' | 'superadmin' | 'customer';
+  role: 'admin' | 'superadmin' | 'customer' | 'staff' | 'manager';
   created_at: string;
   is_active: boolean;
   name?: string;
@@ -77,7 +77,7 @@ export interface UserResponse {
 }
 
 export interface UserUpdate {
-  role?: 'admin' | 'superadmin' | 'customer';
+  role?: 'admin' | 'superadmin' | 'customer' | 'staff' | 'manager';
   is_active?: boolean;
 }
 

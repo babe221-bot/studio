@@ -19,7 +19,8 @@ export async function exportConfig(
       return exportSTL(processedMesh, filename);
     case 'obj':
       return exportOBJ(processedMesh, filename);
-    case 'gltf' || 'glb':
+    case 'gltf':
+    case 'glb':
       return exportGLTF(processedMesh, filename);
     default:
       throw new Error(`Unsupported export format: ${format}`);

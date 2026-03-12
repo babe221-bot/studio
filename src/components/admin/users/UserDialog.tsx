@@ -81,7 +81,19 @@ export const UserDialog: React.FC<UserDialogProps> = ({
           </div>
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={setRole}>
+            <Select
+              value={role}
+              onValueChange={(value: string) =>
+                setRole(
+                  value as
+                    | 'admin'
+                    | 'superadmin'
+                    | 'customer'
+                    | 'staff'
+                    | 'manager'
+                )
+              }
+            >
               <SelectTrigger id="role">
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
