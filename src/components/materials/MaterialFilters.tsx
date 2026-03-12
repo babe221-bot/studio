@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -11,14 +12,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+export interface MaterialFiltersState {
+  category: string | null;
+  minPrice: number | null;
+  maxPrice: number | null;
+  availability: string | null;
+}
+
 interface MaterialFiltersProps {
-  filters: {
-    category: string | null;
-    minPrice: number | null;
-    maxPrice: number | null;
-    availability: string | null;
-  };
-  onFilterChange: (filters: Partial<typeof filters>) => void;
+  filters: MaterialFiltersState;
+  onFilterChange: (filters: Partial<MaterialFiltersState>) => void;
   onClear: () => void;
 }
 

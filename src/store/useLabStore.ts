@@ -10,9 +10,9 @@ export interface LabState {
   height: number;
   quantity: number;
   specimenId: string;
-  selectedMaterialId: string | undefined;
-  selectedFinishId: string | undefined;
-  selectedProfileId: string | undefined;
+  selectedMaterialId: number | undefined;
+  selectedFinishId: number | undefined;
+  selectedProfileId: number | undefined;
   processedEdges: ProcessedEdges;
   okapnikEdges: ProcessedEdges;
   bunjaEdgeStyle: 'oštre' | 'lomljene';
