@@ -1,8 +1,9 @@
 import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
 import nextPlugin from '@next/eslint-plugin-next';
 import prettierPlugin from 'eslint-plugin-prettier';
 
-export default [
+export default tseslint.config(
   {
     ignores: [
       '.next/**',
@@ -17,6 +18,7 @@ export default [
     ],
   },
   js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
     plugins: {
       '@next/next': nextPlugin,
@@ -26,7 +28,7 @@ export default [
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs['core-web-vitals'].rules,
       'prettier/prettier': 'error',
-      'no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-vars': 'warn',
     },
-  },
-];
+  }
+);
