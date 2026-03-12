@@ -93,6 +93,9 @@ import { usePostHog } from 'posthog-js/react';
 import { ExportModal } from '@/components/modals/ExportModal';
 import { exportConfig, ExportFormat } from '@/lib/export/exportService';
 import * as THREE from 'three';
+import { MaterialLibrary } from './materials/MaterialLibrary';
+import { PhysicsControls } from './PhysicsControls';
+import { usePhysics } from '@/hooks/usePhysics';
 
 // ... (Keep all the memoized sub-components like OrderEntryForm, etc. as they are) ...
 
@@ -106,6 +109,9 @@ export function Lab() {
   const { updatePresence } = useCollaboration(configId);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isMaterialLibraryOpen, setIsMaterialLibraryOpen] = useState(false);
+  const [leftSupport, setLeftSupport] = useState(0);
+  const [rightSupport, setRightSupport] = useState(100);
 
   const [materials, setMaterials] = useState<Material[]>([]);
   const [finishes, setFinishes] = useState<SurfaceFinish[]>([]);
