@@ -96,6 +96,7 @@ import * as THREE from 'three';
 import { MaterialLibrary } from './materials/MaterialLibrary';
 import { PhysicsControls } from './PhysicsControls';
 import { CrossSectionControls } from './CrossSectionControls';
+import { MeasurementTools, type MeasurementToolType } from './MeasurementTools';
 import { usePhysics } from '@/hooks/usePhysics';
 
 // ... (Keep all the memoized sub-components like OrderEntryForm, etc. as they are) ...
