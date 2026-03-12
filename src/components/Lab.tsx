@@ -54,6 +54,11 @@ import { useElementConfiguration } from '@/hooks/useElementConfiguration';
 import { useSupabasePersistence } from '@/hooks/useSupabasePersistence';
 import { useDesignAnalysis } from '@/hooks/useDesignAnalysis';
 import { useVoiceCommands } from '@/hooks/useVoiceCommands';
+import {
+  fetchMaterials,
+  fetchSurfaceFinishes,
+  fetchEdgeProfiles,
+} from '@/services/api';
 import { VersionHistoryDialog } from './history/VersionHistoryDialog';
 import { TemplateManager } from './history/TemplateManager';
 import { ARPreview } from './ARPreview';
