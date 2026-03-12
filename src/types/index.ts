@@ -6,10 +6,28 @@ export type {
 export interface Material {
   id: number;
   name: string;
+  display_name?: string;
   density: number;
   cost_sqm: number;
   texture: string;
   color: string;
+  // PBR Properties
+  roughness?: number;
+  metallic?: number;
+  normalStrength?: number;
+  displacementScale?: number;
+  clearcoat?: number;
+  ambientOcclusion?: number;
+  // Additional properties
+  category_id?: string;
+  subcategory?: string;
+  supplier?: string;
+  supplierSku?: string;
+  origin?: string;
+  availability?: string;
+  leadTimeDays?: number;
+  tags?: string[];
+  isFeatured?: boolean;
 }
 
 export interface SurfaceFinish {
