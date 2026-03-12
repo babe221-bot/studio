@@ -60,6 +60,8 @@ export interface VisualizationProps {
     position: number; // 0-100
     orientation: 'x' | 'y' | 'z';
   };
+  // Physics props
+  supportPoints?: { left: number; right: number };
 }
 
 export type CanvasHandle = {
@@ -139,6 +141,7 @@ const Scene: React.FC<SceneProps> = ({
   showBookmatchPreview,
   showDimensions,
   crossSection,
+  supportPoints,
   onSceneReady,
   onInteractionStart,
   onInteractionEnd,
@@ -207,6 +210,7 @@ const Scene: React.FC<SceneProps> = ({
             grainRotation={grainRotation}
             mirrorGrain={mirrorGrain}
             crossSection={crossSection}
+            supportPoints={supportPoints}
             position={
               showBookmatchPreview
                 ? [-((dims.length || 0) / 1000) / 2 - 0.02, 0, 0]
