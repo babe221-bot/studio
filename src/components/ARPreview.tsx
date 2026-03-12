@@ -1,3 +1,4 @@
+/// <reference path="../../types/model-viewer.d.ts" />
 'use client';
 
 import React, { useState, useEffect } from 'react';

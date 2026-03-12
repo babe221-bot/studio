@@ -177,6 +177,14 @@ export interface ConfigLock {
   acquired_at: string;
 }
 
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'model-viewer': any;
+    }
+  }
+}
+
 // ── User Settings Types ───────────────────────────────────────────────────────
 
 export interface EmailPreferences {
