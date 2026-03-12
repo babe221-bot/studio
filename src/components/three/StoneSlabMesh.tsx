@@ -243,6 +243,9 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
 
   const [materials, setMaterials] = useState<THREE.Material[]>([]);
 
+  // Physics deformation state
+  const [deformation, setDeformation] = useState<number[]>([]);
+
   // ============================================================================
   // Material Setup with ResourceManager
   // ============================================================================
@@ -251,6 +254,20 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
     if (!material || !finish) {
       setMaterials([]);
       return;
+    }
+
+    // Calculate physics deformation if material is present
+    if (material) {
+      const deflections = PhysicsEngine.calculateDeflectionProfile(
+        material,
+        dims.length,
+        dims.width,
+        dims.height,
+        { left: 0, right: 100 } // Simple support at ends for now
+      );
+      setDeformation(deflections);
+    } else {
+      setDeformation([]);
     }
 
     const preset = getFinishPreset(finish.name);
@@ -410,6 +427,9 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
   }, [
     material,
     finish,
+    dims.length,
+    dims.width,
+    dims.height,
     vizDims.L,
     vizDims.W,
     grainOffset,
@@ -418,17 +438,36 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
   ]);
 
   // ============================================================================
-  // Geometry Construction
+  // Geometry Construction with Physics Deformation
   // ============================================================================
 
   const geometry = useMemo(() => {
     if (!geometryData) return null;
 
+    // Create a copy of positions to apply deformation
+    const positions = [...geometryData.positions];
+
+    // Apply physics deformation if we have deflection data
+    if (
+      deformation.length > 0 &&
+      deformation.length === geometryData.positions.length / 3
+    ) {
+      // Scale deformation for visibility (exaggerate for better visual effect)
+      const deformationScale = 5.0; // Adjust as needed
+
+      // Apply vertical deformation (Y-axis) based on position along the beam
+      for (let i = 0; i < positions.length; i += 3) {
+        const vertexIndex = i / 3; // Which vertex we're processing
+        if (vertexIndex < deformation.length) {
+          // Apply deformation to Y coordinate (vertical)
+          positions[i + 1] +=
+            deformation[vertexIndex] * deformationScale * PhysicsEngine.MM_TO_M;
+        }
+      }
+    }
+
     const geo = new THREE.BufferGeometry();
-    geo.setAttribute(
-      'position',
-      new THREE.BufferAttribute(geometryData.positions, 3)
-    );
+    geo.setAttribute('position', new THREE.Float32ArrayAttribute(positions, 3));
     if (geometryData.uvs) {
       geo.setAttribute('uv', new THREE.BufferAttribute(geometryData.uvs, 2));
     }
@@ -441,7 +480,7 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
     geo.computeVertexNormals();
 
     return geo;
-  }, [geometryData]);
+  }, [geometryData, deformation]);
 
   // Handle geometry disposal safely in an effect
   useEffect(() => {
