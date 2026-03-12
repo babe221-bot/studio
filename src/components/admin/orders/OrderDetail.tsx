@@ -20,14 +20,13 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { OrderResponse, OrderUpdate } from '@/types/admin';
-import { OrderDB } from '@/backend/app/models/domain'; // Assuming you need full OrderDB for items/notes
+import { OrderResponse, OrderUpdate, OrderDB } from '@/types/admin';
 
 interface OrderDetailProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (orderId: string, data: OrderUpdate) => void;
-  order: (OrderDB & { items: any }) | null; // Extend with items from OrderDB
+  order: (OrderDB & { items: string }) | null; // Use OrderDB with items as string
 }
 
 export const OrderDetail: React.FC<OrderDetailProps> = ({
