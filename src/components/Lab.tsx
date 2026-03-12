@@ -201,7 +201,9 @@ export function Lab() {
   } = config;
 
   const { deformation, naturalFrequency, maxDeflection } = usePhysics({
-    material: materials.find((m) => m.id === selectedMaterialId) || null,
+    material:
+      materials.find((m) => String(m.id) === String(selectedMaterialId)) ||
+      null,
     length: length * 10, // cm to mm
     width: width * 10,
     height: height * 10,
