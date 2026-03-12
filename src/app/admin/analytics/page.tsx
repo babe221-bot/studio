@@ -6,9 +6,9 @@ import { MetricCard } from '@/components/admin/MetricCard';
 import { RevenueChart } from '@/components/admin/RevenueChart';
 import { RecentOrders } from '@/components/admin/RecentOrders';
 import { LowStockAlerts } from '@/components/admin/LowStockAlerts';
-import { SummaryStats, RevenueStat } from '@/backend/app/api/admin/analytics';
-import { OrderResponse } from '@/backend/app/api/admin/orders';
-import { MaterialResponse } from '@/backend/app/api/admin/materials';
+import { SummaryStats, RevenueStat } from '@/types/admin';
+import { OrderResponse } from '@/types/admin';
+import { MaterialResponse } from '@/types/admin';
 import {
   PieChart,
   Pie,
@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { FileDown } from 'lucide-react';
 import { ExportModal } from '@/components/modals/ExportModal';
 import { ExportFormat } from '@/lib/export/exportService';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const COLORS = [
   '#0088FE',

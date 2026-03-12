@@ -6,9 +6,9 @@ import { MetricCard } from '@/components/admin/MetricCard';
 import { RevenueChart } from '@/components/admin/RevenueChart';
 import { RecentOrders } from '@/components/admin/RecentOrders';
 import { LowStockAlerts } from '@/components/admin/LowStockAlerts';
-import { SummaryStats, RevenueStat } from '@/backend/app/api/admin/analytics';
-import { OrderResponse } from '@/backend/app/api/admin/orders';
-import { MaterialResponse } from '@/backend/app/api/admin/materials';
+import { SummaryStats, RevenueStat } from '@/types/admin';
+import { OrderResponse } from '@/types/admin';
+import { MaterialResponse } from '@/types/admin';
 
 export default function AdminDashboardPage() {
   const [summaryStats, setSummaryStats] = useState<SummaryStats | null>(null);
