@@ -1,102 +1,16 @@
-export interface Material {
-  id: number;
-  name: string;
-  display_name?: string;
-  density: number;
-  cost_sqm: number;
-  texture: string;
-  color: string;
-  // PBR Properties
-  roughness?: number;
-  metallic?: number;
-  normalStrength?: number;
-  displacementScale?: number;
-  clearcoat?: number;
-  ambientOcclusion?: number;
-  // Additional properties
-  category_id?: string;
-  subcategory?: string;
-  supplier?: string;
-  supplierSku?: string;
-  origin?: string;
-  availability?: string;
-  leadTimeDays?: number;
-  tags?: string[];
-  isFeatured?: boolean;
-}
-
-export interface SurfaceFinish {
-  id: number;
-  name: string;
-  cost_sqm: number;
-}
-
-export interface EdgeProfile {
-  id: number;
-  name: string;
-  cost_m: number;
-}
-
-export interface ProcessedEdges {
-  front: boolean;
-  back: boolean;
-  left: boolean;
-  right: boolean;
-}
-
-export interface OrderItem {
-  orderId: number;
-  id: string;
-  dims: {
-    length: number;
-    width: number;
-    height: number;
-  };
-  material: Material;
-  finish: SurfaceFinish;
-  profile: EdgeProfile;
-  processedEdges: ProcessedEdges;
-  okapnikEdges: ProcessedEdges;
-  totalCost: number;
-  planSnapshotDataUri?: string;
-  planSnapshotUrl?: string;
-  orderUnit: 'piece' | 'sqm' | 'lm';
-  quantity: number;
-  bunjaEdgeStyle?: 'oštre' | 'lomljene';
-  textureOffset?: { x: number; y: number };
-}
-
-export interface ProjectVersion {
-  id: string;
-  name: string;
-  timestamp: number;
-  items: OrderItem[];
-  notes?: string;
-  share_token?: string;
-  is_public?: boolean;
-}
-
-export interface ProjectTemplate {
-  id: string;
-  name: string;
-  items: OrderItem[];
-  description?: string;
-  createdAt: number;
-}
-
-export type ModalType = 'material' | 'finish' | 'profile' | null;
-
-export interface ConstructionElement {
-  id: string;
-  name: string;
-  defaultLength: number;
-  defaultWidth: number;
-  defaultHeight: number;
-  orderUnit: 'piece' | 'sqm' | 'lm';
-  hasSpecialBunjaEdges?: boolean;
-}
-
-export type EditableItem = Material | SurfaceFinish | EdgeProfile;
+// Re-export Material and related types from index.ts to avoid duplication
+export type {
+  Material,
+  SurfaceFinish,
+  EdgeProfile,
+  ProcessedEdges,
+  OrderItem,
+  ProjectVersion,
+  ProjectTemplate,
+  ModalType,
+  ConstructionElement,
+  EditableItem,
+} from './index';
 
 // ── AI Chat Types ─────────────────────────────────────────────────────────────
 /**
