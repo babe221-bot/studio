@@ -106,11 +106,11 @@ export function Lab() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
-  const [materials, setMaterials] = useState<Material[]>(initialMaterials);
-  const [finishes, setFinishes] = useState<SurfaceFinish[]>(
-    initialSurfaceFinishes
-  );
-  const [profiles, setProfiles] = useState<EdgeProfile[]>(initialEdgeProfiles);
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [finishes, setFinishes] = useState<SurfaceFinish[]>([]);
+  const [profiles, setProfiles] = useState<EdgeProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [projectNotes, setProjectNotes] = useState('');
 
@@ -122,6 +122,44 @@ export function Lab() {
   const [announcement, setAnnouncement] = useState<string>('');
   const [showDimensions, setShowDimensions] = useState(false);
   const canvasRef = useRef<CanvasHandle>(null);
+
+  // Fetch data on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Fetch all data in parallel
+        const [materialsData, finishesData, profilesData] = await Promise.all([
+          fetchMaterials(),
+          fetchSurfaceFinishes(),
+          fetchEdgeProfiles(),
+        ]);
+
+        // Use fetched data if available, otherwise fallback to hardcoded data
+        setMaterials(
+          materialsData.length > 0 ? materialsData : initialMaterials
+        );
+        setFinishes(
+          finishesData.length > 0 ? finishesData : initialSurfaceFinishes
+        );
+        setProfiles(
+          profilesData.length > 0 ? profilesData : initialEdgeProfiles
+        );
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Failed to load configuration data. Using default values.');
+        // Fallback to hardcoded data on error
+        setMaterials(initialMaterials);
+        setFinishes(initialSurfaceFinishes);
+        setProfiles(initialEdgeProfiles);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []); // Empty deps array means run once on mount
 
   const config = useElementConfiguration(materials, finishes, profiles);
   const {
