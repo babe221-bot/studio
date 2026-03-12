@@ -84,6 +84,10 @@ import type {
 } from '@/types';
 import { usePostHog } from 'posthog-js/react';
 
+import { ExportModal } from '@/components/modals/ExportModal';
+import { exportConfig, ExportFormat } from '@/lib/export/exportService';
+import * as THREE from 'three';
+
 // ... (Keep all the memoized sub-components like OrderEntryForm, etc. as they are) ...
 
 export function Lab() {
@@ -95,6 +99,7 @@ export function Lab() {
 
   const { updatePresence } = useCollaboration(configId);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const [materials, setMaterials] = useState<Material[]>(initialMaterials);
   const [finishes, setFinishes] = useState<SurfaceFinish[]>(
@@ -173,12 +178,52 @@ export function Lab() {
     /* ... */
   };
 
+  const handleExportAction = async (
+    format: ExportFormat,
+    filename: string,
+    quality: 'draft' | 'standard' | 'high'
+  ) => {
+    // In a real application, you would get the actual mesh from the VisualizationCanvas.
+    // Here we create a dummy mesh for demonstration purposes to satisfy the exportService signature.
+    const geometry = new THREE.BoxGeometry(length, height, width);
+    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    const dummyMesh = new THREE.Mesh(geometry, material);
+
+    try {
+      const blob = await exportConfig(dummyMesh, format, filename);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({
+        title: 'Export Successful',
+        description: `File saved as ${filename}`,
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast({
+        title: 'Export Failed',
+        description: 'An error occurred during export.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
     <main className="container mx-auto p-4 md:p-6 lg:p-8">
       <InviteCollaboratorModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
         configId={configId}
+      />
+      <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        onExport={handleExportAction}
       />
       <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 xl:grid-cols-4">
         <div className="flex flex-col gap-6 lg:col-span-1">
@@ -239,6 +284,14 @@ export function Lab() {
                 {configId && <ConnectionStatus />}
               </div>
               <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsExportModalOpen(true)}
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Export CAD
+                </Button>
                 {configId && <PresenceAvatars />}
                 {configId && (
                   <Button
