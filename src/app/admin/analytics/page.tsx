@@ -19,6 +19,8 @@ import {
 } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { AnalyticsExportBtn } from '@/components/admin/AnalyticsExportBtn';
+import { CustomWidgetsManager } from '@/components/admin/CustomWidgetsManager';
+import { ForecastChart } from '@/components/admin/ForecastChart';
 import { ExportFormat } from '@/lib/export/exportService';
 import {
   Table,
@@ -255,6 +257,12 @@ export default function AdminAnalyticsPage() {
           <TopMaterialsChart materials={materials} />
         </div>
       </div>
+
+      <div className="grid gap-4 md:grid-cols-1">
+        <ForecastChart />
+      </div>
+
+      <CustomWidgetsManager />
     </div>
   );
 }

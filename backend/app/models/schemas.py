@@ -72,3 +72,19 @@ class AdminAuditLogResponse(AdminAuditLogCreate):
 
     class Config:
         from_attributes = True
+
+
+class AdminWidgetCreate(BaseModel):
+    title: str
+    metric_type: str
+    chart_type: str
+    config: Optional[str] = "{}"
+
+
+class AdminWidgetResponse(AdminWidgetCreate):
+    id: int
+    admin_id: str
+    created_at: datetime.datetime
+
+    class Config:
+        from_attributes = True

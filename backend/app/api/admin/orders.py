@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from app.services.database import get_db
-from app.models.domain import OrderDB
+from app.models.domain import OrderDB, AdminAuditLogDB
 from pydantic import BaseModel
 from typing import List
+import json
 
 router = APIRouter()
 
@@ -40,6 +41,17 @@ async def list_orders(skip: int = 0, limit: int = 100, db: AsyncSession = Depend
 
 @router.put("/orders/{order_id}", response_model=OrderResponse, dependencies=[Depends(is_admin)])
 async def update_order(order_id: str, order_update: OrderUpdate, db: AsyncSession = Depends(get_db)):
+    # Fetch old value
+    old_result = await db.execute(select(OrderDB).where(OrderDB.id == order_id))
+    old_order = old_result.scalar_one_or_none()
+    if not old_order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    old_data = {
+        "status": old_order.status,
+        "fulfillment_status": old_order.fulfillment_status
+    }
+
     update_data = order_update.dict(exclude_unset=True)
     if not update_data:
         raise HTTPException(status_code=400, detail="No update data provided")
@@ -49,13 +61,24 @@ async def update_order(order_id: str, order_update: OrderUpdate, db: AsyncSessio
         .where(OrderDB.id == order_id)
         .values(**update_data)
     )
+
+    # Log audit
+    audit_log = AdminAuditLogDB(
+        admin_id="admin_user", # Placeholder matching is_admin
+        action="UPDATE_ORDER",
+        resource_type="order",
+        resource_id=order_id,
+        old_value=json.dumps(old_data),
+        new_value=json.dumps(update_data)
+    )
+    db.add(audit_log)
+
     await db.commit()
 
+    # Re-fetch for response
     result = await db.execute(select(OrderDB).where(OrderDB.id == order_id))
     updated_order = result.scalar_one_or_none()
-    if not updated_order:
-        raise HTTPException(status_code=404, detail="Order not found")
-
+    
     return OrderResponse(
         id=updated_order.id,
         user_id=updated_order.user_id,

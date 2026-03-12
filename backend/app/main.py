@@ -25,7 +25,10 @@ from app.api.admin import users as admin_users
 from app.api.admin import orders as admin_orders
 from app.api.admin import materials as admin_materials
 from app.api.admin import analytics as admin_analytics
-from app.api import preferences
+from app.api.admin import audit as admin_audit
+from app.api.admin import widgets as admin_widgets
+from app.api.admin import forecast as admin_forecast
+from app.api import cad, data, pricing, design_review, collaboration, preferences
 
 from app.services.database import init_db
 import sentry_sdk
@@ -168,6 +171,9 @@ app.include_router(admin_users.router, prefix="/api/admin", tags=["Admin: Users"
 app.include_router(admin_orders.router, prefix="/api/admin", tags=["Admin: Orders"])
 app.include_router(admin_materials.router, prefix="/api/admin", tags=["Admin: Materials"])
 app.include_router(admin_analytics.router, prefix="/api/admin", tags=["Admin: Analytics"])
+app.include_router(admin_audit.router, prefix="/api/admin/audit", tags=["Admin: Audit"])
+app.include_router(admin_widgets.router, prefix="/api/admin/widgets", tags=["Admin: Widgets"])
+app.include_router(admin_forecast.router, prefix="/api/admin/forecast", tags=["Admin: Forecast"])
 
 # Preferences Router
 app.include_router(preferences.router, prefix="/api/preferences", tags=["Preferences"])

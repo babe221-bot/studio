@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   BarChart3,
   Settings,
+  History,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -70,6 +71,9 @@ export const Sidebar: React.FC = () => {
               icon={<BarChart3 className="h-4 w-4" />}
             >
               Analytics
+            </NavLink>
+            <NavLink href="/admin/audit" icon={<History className="h-4 w-4" />}>
+              Audit Logs
             </NavLink>
           </nav>
         </div>

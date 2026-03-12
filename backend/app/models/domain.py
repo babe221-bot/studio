@@ -136,3 +136,14 @@ class AdminAuditLogDB(Base):
     user_agent = Column(String, nullable=True)
     request_id = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class AdminWidgetDB(Base):
+    __tablename__ = "admin_widgets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    admin_id = Column(String, nullable=False)
+    title = Column(String, nullable=False)
+    metric_type = Column(String, nullable=False) # e.g., 'orders_count', 'revenue', 'users_count'
+    chart_type = Column(String, nullable=False)  # e.g., 'number', 'line', 'bar'
+    config = Column(Text, nullable=True, default='{}') # JSON string for extra settings
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
