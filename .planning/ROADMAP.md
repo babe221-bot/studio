@@ -66,7 +66,7 @@
 
 ### Phase 7: Advanced Features
 
-**Goal:** Add enterprise features including real-time collaboration, admin dashboard, email notifications, advanced export, material library, PWA support, and analytics.
+**Goal:** Add enterprise features including real-time collaboration, admin dashboard, email notifications, material library browser, physics simulation, cross-section view, measurement tools, project templates, version history, design comparison, and batch processing.
 **Status:** In Progress (3/7 plans complete)
 **Requirements:** []
 **Plans:** 7 plans
@@ -74,7 +74,7 @@
 - [x] 07-01-PLAN.md - Real-Time Collaboration Infrastructure
 - [x] 07-02-PLAN.md - Admin Dashboard
 - [x] 07-03-PLAN.md - Email Notifications
-- [ ] 07-04-PLAN.md - Advanced CAD Export
-- [ ] 07-05-PLAN.md - Extended Material Library
-- [ ] 07-06-PLAN.md - PWA Enhancements
-- [ ] 07-07-PLAN.md - Analytics Dashboard
+- [ ] 07-04-PLAN.md - Material Library Browser and Real-time Physics Simulation
+- [ ] 07-05-PLAN.md - Cross-section View and Measurement Tools
+- [ ] 07-06-PLAN.md - Project Templates and Version History
+- [ ] 07-07-PLAN.md - Design Comparison and Batch Processing
