@@ -672,7 +672,10 @@ export function getGeometryWorkerPool(): WorkerPool<
   if (!geometryWorkerPool) {
     geometryWorkerPool = new WorkerPool<GeometryJobInput, GeometryJobOutput>({
       poolSize: 2, // Maintain 2 workers for geometry generation
-      workerUrl: new URL('@/workers/geometryWorker.ts', import.meta.url),
+      workerUrl: new URL(
+        '../workers/geometryWorker.ts',
+        typeof window !== 'undefined' ? window.location.origin : import.meta.url
+      ),
       maxQueueSize: 10,
       debug: process.env.NODE_ENV === 'development',
       idleTimeout: 30000,
