@@ -1,0 +1,197 @@
+export interface Material {
+  id: number;
+  name: string;
+  display_name?: string;
+  density: number;
+  cost_sqm: number;
+  texture: string;
+  color: string;
+  // PBR Properties
+  roughness?: number;
+  metallic?: number;
+  normalStrength?: number;
+  displacementScale?: number;
+  clearcoat?: number;
+  ambientOcclusion?: number;
+  // Additional properties
+  category_id?: string;
+  subcategory?: string;
+  supplier?: string;
+  supplierSku?: string;
+  origin?: string;
+  availability?: string;
+  leadTimeDays?: number;
+  tags?: string[];
+  isFeatured?: boolean;
+}
+
+export interface SurfaceFinish {
+  id: number;
+  name: string;
+  cost_sqm: number;
+}
+
+export interface EdgeProfile {
+  id: number;
+  name: string;
+  cost_m: number;
+}
+
+export interface ProcessedEdges {
+  front: boolean;
+  back: boolean;
+  left: boolean;
+  right: boolean;
+}
+
+export interface OrderItem {
+  orderId: number;
+  id: string;
+  dims: {
+    length: number;
+    width: number;
+    height: number;
+  };
+  material: Material;
+  finish: SurfaceFinish;
+  profile: EdgeProfile;
+  processedEdges: ProcessedEdges;
+  okapnikEdges: ProcessedEdges;
+  totalCost: number;
+  planSnapshotDataUri?: string;
+  planSnapshotUrl?: string;
+  orderUnit: 'piece' | 'sqm' | 'lm';
+  quantity: number;
+  bunjaEdgeStyle?: 'oštre' | 'lomljene';
+  textureOffset?: { x: number; y: number };
+}
+
+export interface ProjectVersion {
+  id: string;
+  name: string;
+  timestamp: number;
+  items: OrderItem[];
+  notes?: string;
+  share_token?: string;
+  is_public?: boolean;
+}
+
+export interface ProjectTemplate {
+  id: string;
+  name: string;
+  items: OrderItem[];
+  description?: string;
+  createdAt: number;
+}
+
+export type ModalType = 'material' | 'finish' | 'profile' | null;
+
+export interface ConstructionElement {
+  id: string;
+  name: string;
+  defaultLength: number;
+  defaultWidth: number;
+  defaultHeight: number;
+  orderUnit: 'piece' | 'sqm' | 'lm';
+  hasSpecialBunjaEdges?: boolean;
+}
+
+export type EditableItem = Material | SurfaceFinish | EdgeProfile;
+
+// ── AI Chat Types ─────────────────────────────────────────────────────────────
+/**
+ * Request payload for the AI chat endpoint.
+ */
+export interface AIChatRequest {
+  messages: Array<{
+    id: string;
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+  }>;
+  cadContext?: string;
+}
+
+/**
+ * Response from the AI chat endpoint (streaming).
+ */
+export interface AIChatResponse {
+  stream: ReadableStream<Uint8Array>;
+}
+
+/**
+ * Request payload for CAD-specific AI operations via Python backend.
+ */
+export interface CADAIRequest {
+  operation:
+    | 'analyze_geometry'
+    | 'suggest_dimensions'
+    | 'check_constraints'
+    | 'optimize_layout';
+  payload: {
+    dimensions?: { length: number; width: number; height: number };
+    material?: string;
+    constraints?: Array<{ type: string; value: number | string }>;
+    existingItems?: Array<{
+      dims: { length: number; width: number; height: number };
+      position?: { x: number; y: number };
+    }>;
+  };
+}
+
+/**
+ * Response from CAD-specific AI operations.
+ */
+export interface CADAIResponse {
+  success: boolean;
+  result?: {
+    suggestions?: Array<{ description: string; confidence: number }>;
+    issues?: Array<{ severity: 'warning' | 'error'; message: string }>;
+    optimizedLayout?: Array<{
+      itemId: string;
+      position: { x: number; y: number };
+      rotation: number;
+    }>;
+  };
+  error?: string;
+}
+
+// ── Collaboration Types ───────────────────────────────────────────────────
+export interface UserPresence {
+  userId: string;
+  displayName: string;
+  avatarUrl?: string;
+  cursorPosition?: { x: number; y: number };
+  selectedField?: string;
+  lastActive: number;
+}
+
+export interface DeltaUpdate {
+  configId: string;
+  timestamp: number;
+  clientId: string;
+  changes: Record<string, unknown>;
+}
+
+export type CollaborationPermission = 'view' | 'edit' | 'admin';
+
+export interface Collaborator {
+  config_id: string;
+  user_id: string;
+  permission: CollaborationPermission;
+  created_at: string;
+}
+
+export interface ConfigLock {
+  config_id: string;
+  field: string;
+  client_id: string;
+  acquired_at: string;
+}
+
+// ── User Settings Types ───────────────────────────────────────────────────────
+export interface EmailPreferences {
+  welcome: boolean;
+  order_confirmation: boolean;
+  receipt: boolean;
+  [key: string]: boolean;
+}

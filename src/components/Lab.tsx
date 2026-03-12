@@ -45,7 +45,7 @@ import {
   Mic,
   MicOff,
   Share2,
-  Folder,
+  List,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -358,7 +358,7 @@ export function Lab() {
                     console.log('Material library button clicked');
                   }}
                 >
-                  <Layout className="h-4 w-4 mr-2" />
+                  <List className="h-4 w-4 mr-2" />
                   Materials
                 </Button>
                 {configId && <PresenceAvatars />}
