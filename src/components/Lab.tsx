@@ -45,6 +45,7 @@ import {
   Mic,
   MicOff,
   Share2,
+  Folder,
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
