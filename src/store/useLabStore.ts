@@ -30,9 +30,9 @@ export interface LabState {
   }) => void;
   setQuantity: (qty: number) => void;
   setSpecimenId: (id: string) => void;
-  setMaterialId: (id: string) => void;
-  setFinishId: (id: string) => void;
-  setProfileId: (id: string) => void;
+  setMaterialId: (id: number | undefined) => void;
+  setFinishId: (id: number | undefined) => void;
+  setProfileId: (id: number | undefined) => void;
   setProcessedEdge: (edge: keyof ProcessedEdges, value: boolean) => void;
   setOkapnikEdge: (edge: keyof ProcessedEdges, value: boolean) => void;
   setBunjaEdgeStyle: (style: 'oštre' | 'lomljene') => void;

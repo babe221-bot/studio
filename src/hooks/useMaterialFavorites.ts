@@ -1,14 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useUser } from '@/hooks/useUser';
 
 export function useMaterialFavorites() {
-  const { user } = useUser();
+  const [user, setUser] = useState<{ id: string } | null>(null);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // Load favorites on mount
+  // Get current user on mount
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
+
+  // Load favorites when user changes
   useEffect(() => {
     if (!user) return;
 

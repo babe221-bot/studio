@@ -51,19 +51,19 @@ export function useElementConfiguration(
   // Initialize defaults when data becomes available
   useEffect(() => {
     if (materials.length > 0 && !selectedMaterialId) {
-      setMaterialId(materials[0].id.toString());
+      setMaterialId(materials[0].id);
     }
   }, [materials, selectedMaterialId, setMaterialId]);
 
   useEffect(() => {
     if (finishes.length > 0 && !selectedFinishId) {
-      setFinishId(finishes[0].id.toString());
+      setFinishId(finishes[0].id);
     }
   }, [finishes, selectedFinishId, setFinishId]);
 
   useEffect(() => {
     if (profiles.length > 0 && !selectedProfileId) {
-      setProfileId(profiles[0].id.toString());
+      setProfileId(profiles[0].id);
     }
   }, [profiles, selectedProfileId, setProfileId]);
 

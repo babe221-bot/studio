@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -31,9 +31,15 @@ export function MaterialFilters({
   onClear,
 }: MaterialFiltersProps) {
   const [category, setCategory] = useState(filters.category ?? '');
-  const [minPrice, setMinPrice] = useState(filters.minPrice ?? '');
-  const [maxPrice, setMaxPrice] = useState(filters.maxPrice ?? '');
+  const [minPrice, setMinPrice] = useState<string>('');
+  const [maxPrice, setMaxPrice] = useState<string>('');
   const [availability, setAvailability] = useState(filters.availability ?? '');
+
+  // Initialize price values from props
+  useEffect(() => {
+    setMinPrice(filters.minPrice?.toString() ?? '');
+    setMaxPrice(filters.maxPrice?.toString() ?? '');
+  }, [filters.minPrice, filters.maxPrice]);
 
   const handleApply = () => {
     onFilterChange({
@@ -57,11 +63,7 @@ export function MaterialFilters({
         {/* Category Filter */}
         <div className="space-y-1">
           <span className="text-xs font-medium">Category</span>
-          <Select
-            value={category}
-            onValueChange={setCategory}
-            placeholder="All categories"
-          >
+          <Select value={category} onValueChange={setCategory}>
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="All categories" />
             </SelectTrigger>
@@ -104,11 +106,7 @@ export function MaterialFilters({
         {/* Availability */}
         <div className="space-y-1">
           <span className="text-xs font-medium">Availability</span>
-          <Select
-            value={availability}
-            onValueChange={setAvailability}
-            placeholder="Any"
-          >
+          <Select value={availability} onValueChange={setAvailability}>
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Any" />
             </SelectTrigger>
