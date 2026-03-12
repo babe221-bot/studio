@@ -27,6 +27,8 @@ import {
   useGeometryWorkerPool,
   type GeometryJobOutput,
 } from '@/lib/WorkerPool';
+import { PhysicsEngine } from '@/lib/physics/PhysicsEngine';
+import { MaterialProperties } from '@/lib/physics/MaterialProperties';
 
 // Temporary mock functions for missing dependencies
 function getFinishPreset(name: string) {
@@ -466,73 +468,11 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
       }
     }
 
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32ArrayAttribute(positions, 3));
-    if (geometryData.uvs) {
-      geo.setAttribute('uv', new THREE.BufferAttribute(geometryData.uvs, 2));
-    }
-    geo.setIndex(new THREE.BufferAttribute(geometryData.indices, 1));
-
-    geometryData.groups.forEach((g) => {
-      geo.addGroup(g.start, g.count, g.materialIndex);
-    });
-
-    geo.computeVertexNormals();
-
-    return geo;
-  }, [geometryData, deformation]);
-
-  // Handle geometry disposal safely in an effect
-  useEffect(() => {
-    if (geometry) {
-      // Clean up old geometry if replacing
-      if (
-        resourcesRef.current.geometry &&
-        resourcesRef.current.geometry !== geometry
-      ) {
-        resourcesRef.current.geometry.dispose();
-      }
-      resourcesRef.current.geometry = geometry;
-    }
-  }, [geometry]);
-
-  // ============================================================================
-  // Cleanup on Unmount
-  // ============================================================================
-
-  useEffect(() => {
-    return () => {
-      // Release materials using tracked keys
-      resourcesRef.current.materialKeys.forEach((matKey) => {
-        resourceManager.releaseMaterial(matKey);
-      });
-      resourcesRef.current.materialKeys = [];
-
-      // Release normal map
-      if (resourcesRef.current.normalMapKey) {
-        resourceManager.releaseTexture(resourcesRef.current.normalMapKey);
-      }
-
-      // Release texture
-      if (resourcesRef.current.textureKey) {
-        resourceManager.releaseTexture(resourcesRef.current.textureKey);
-      }
-
-      // Dispose geometry
-      if (resourcesRef.current.geometry) {
-        resourcesRef.current.geometry.dispose();
-      }
-    };
-  }, []); // Only on final unmount
-
-  // DEBUG: Log why mesh might not render
-  useEffect(() => {
-    if (!geometry) {
-      console.log(
-        '[StoneSlabMesh] Not rendering: geometry is null (geometryData:',
-        geometryData,
-        ')'
-      );
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute(positions, 3)
+  );
     }
     if (materials.length === 0) {
       console.log(
