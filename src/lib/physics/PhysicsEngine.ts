@@ -7,8 +7,8 @@ import { MaterialProperties } from './MaterialProperties';
  */
 export class PhysicsEngine {
   private static readonly GRAVITY = 9.81; // m/s²
-  private static readonly MM_TO_M = 0.001; // mm to m conversion
-  private static readonly CM_TO_M = 0.01; // cm to m conversion
+  public static readonly MM_TO_M = 0.001; // mm to m conversion
+  public static readonly CM_TO_M = 0.01; // cm to m conversion
 
   /**
    * Calculate deflection of a simply supported beam with uniform load
