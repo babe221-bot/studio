@@ -339,43 +339,46 @@ export function Lab() {
                 <CardTitle>3D Vizualizacija</CardTitle>
                 {configId && <ConnectionStatus />}
               </div>
-               <div className="flex items-center gap-1">
-                 <Button
-                   variant="outline"
-                   size="sm"
-                   onClick={() => setIsExportModalOpen(true)}
-                 >
-                   <FileDown className="h-4 w-4 mr-2" />
-                   Export CAD
-                 </Button>
-                 {/* Material Library Button */}
-                 <Button
-                   variant="outline"
-                   size="sm"
-                   onClick={() => {/* TODO: Implement material library modal */}
-                 >
-                   <Folder className="h-4 w-4 mr-2" />
-                   Materials
-                 </Button>
-                 {configId && <PresenceAvatars />}
-                 {configId && (
-                   <Button
-                     variant="outline"
-                     size="sm"
-                     onClick={() => setIsInviteModalOpen(true)}
-                   >
-                     <Share2 className="h-4 w-4 mr-2" />
-                     Share
-                   </Button>
-                 )}
-                 <Button
-                   variant="ghost"
-                   size="icon"
-                   onClick={() => setRefreshKey((k) => k + 1)}
-                 >
-                   <RefreshCw className="h-4 w-4" />
-                 </Button>
-               </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsExportModalOpen(true)}
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Export CAD
+                </Button>
+                {/* Material Library Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // TODO: Implement material library modal
+                    console.log('Material library button clicked');
+                  }}
+                >
+                  <Folder className="h-4 w-4 mr-2" />
+                  Materials
+                </Button>
+                {configId && <PresenceAvatars />}
+                {configId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsInviteModalOpen(true)}
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setRefreshKey((k) => k + 1)}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="h-[600px]">
               <ErrorBoundary>
