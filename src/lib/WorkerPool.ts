@@ -674,9 +674,15 @@ export function getGeometryWorkerPool(): WorkerPool<
       poolSize: 2, // Maintain 2 workers for geometry generation
       workerUrl: new URL(
         '../workers/geometryWorker.ts',
-        typeof window !== 'undefined' ? window.location.origin : import.meta.url
+        // In Jest, we use a mock URL
+        typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
+          ? 'file:///'
+          : typeof window !== 'undefined'
+            ? window.location.origin
+            : 'file://'
       ),
       maxQueueSize: 10,
+
       debug: process.env.NODE_ENV === 'development',
       idleTimeout: 30000,
     });
