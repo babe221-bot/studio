@@ -218,7 +218,12 @@ export default function AdminAnalyticsPage() {
 
   return (
     <div className="grid gap-6">
-      <h2 className="text-3xl font-bold tracking-tight">Analytics Overview</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold tracking-tight">
+          Analytics Overview
+        </h2>
+        <AnalyticsExportBtn days={30} />
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
