@@ -200,6 +200,14 @@ export function Lab() {
     handleElementTypeChange,
   } = config;
 
+  const { deformation, naturalFrequency, maxDeflection } = usePhysics({
+    material: materials.find((m) => m.id === selectedMaterialId) || null,
+    length: length * 10, // cm to mm
+    width: width * 10,
+    height: height * 10,
+    supportPoints: { left: leftSupport, right: rightSupport },
+  });
+
   // Focus handlers for collaboration
   const handleFocus = (fieldName: string) => {
     if (configId) updatePresence({ selectedField: fieldName });
@@ -360,8 +368,7 @@ export function Lab() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    // TODO: Implement material library modal
-                    console.log('Material library button clicked');
+                    setIsMaterialLibraryOpen(true);
                   }}
                 >
                   <List className="h-4 w-4 mr-2" />
