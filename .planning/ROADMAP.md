@@ -78,3 +78,15 @@
 - [ ] 07-05-PLAN.md - Cross-section View and Measurement Tools
 - [ ] 07-06-PLAN.md - Project Templates and Version History
 - [ ] 07-07-PLAN.md - Design Comparison and Batch Processing
+
+### Phase 8: Analytics & Reporting Enhancements
+
+**Goal:** Add PDF/CSV export capabilities for analytics dashboard data, allow administrators to create custom analytics views, add forecasting for material usage and order trends based on historical data, and implement detailed audit trails for administrative oversight.
+**Status:** Planned
+**Requirements:** [ANALYTICS-01, ANALYTICS-02, ANALYTICS-03, ANALYTICS-04]
+**Plans:** 4 plans
+
+- [ ] 08-01-PLAN.md - Analytics Data Export
+- [ ] 08-02-PLAN.md - Custom Analytics Widgets
+- [ ] 08-03-PLAN.md - Predictive Analytics & Forecasting
+- [ ] 08-04-PLAN.md - Admin Audit Trails
