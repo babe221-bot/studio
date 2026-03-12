@@ -330,6 +330,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
             mirrorGrain={mirrorGrain}
             showBookmatchPreview={showBookmatchPreview}
             showDimensions={showDimensions}
+            crossSection={crossSection}
             onSceneReady={handleSceneReady}
             onInteractionStart={() => setIsInteracting(true)}
             onInteractionEnd={() => setIsInteracting(false)}
