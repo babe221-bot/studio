@@ -168,7 +168,7 @@ export class AreaTool extends MeasurementTool {
     points: THREE.Vector3[],
     axis: 'x' | 'y' | 'z'
   ): number {
-    const getCoord = (p: THREE.Vector3, a: string) => {
+    const getCoord = (p: THREE.Vector3, a: string): number => {
       switch (a) {
         case 'x':
           return p.x;
@@ -176,12 +176,14 @@ export class AreaTool extends MeasurementTool {
           return p.y;
         case 'z':
           return p.z;
+        default:
+          return p.z;
       }
     };
 
-    const projected = points.map((p) => ({
-      u: getCoord(p, axis === 'z' ? 'x' : 'x'),
-      v: getCoord(p, axis === 'z' ? 'y' : axis === 'x' ? 'z' : 'z'),
+    const projected: Array<{ u: number; v: number }> = points.map((p) => ({
+      u: getCoord(p, axis === 'z' ? 'x' : 'x') ?? 0,
+      v: getCoord(p, axis === 'z' ? 'y' : axis === 'x' ? 'z' : 'z') ?? 0,
     }));
 
     let area = 0;
@@ -189,12 +191,10 @@ export class AreaTool extends MeasurementTool {
 
     for (let i = 0; i < n; i++) {
       const j = (i + 1) % n;
-      const current = projected[i];
-      const next = projected[j];
-      if (current && next) {
-        area += current.u * next.v;
-        area -= next.u * current.v;
-      }
+      const current = projected[i]!;
+      const next = projected[j]!;
+      area += current.u * next.v;
+      area -= next.u * current.v;
     }
 
     return (Math.abs(area) / 2) * 10000; // Convert to cm²
