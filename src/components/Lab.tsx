@@ -258,6 +258,19 @@ export function Lab() {
 
   return (
     <main className="container mx-auto p-4 md:p-6 lg:p-8">
+      {loading && (
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="text-center">Loading configuration data...</p>
+          </div>
+        </div>
+      )}
+      {error && !loading && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+          <p className="text-red-700">{error}</p>
+        </div>
+      )}
       <InviteCollaboratorModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
@@ -361,6 +374,8 @@ export function Lab() {
                   ref={canvasRef}
                   key={refreshKey}
                   dims={{ length, width, height }}
+                  processedEdges={processedEdges}
+                  okapnikEdges={okapnikEdges}
                   showDimensions={showDimensions}
                   // ... other props
                 />
