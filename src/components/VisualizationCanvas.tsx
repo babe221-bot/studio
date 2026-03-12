@@ -54,6 +54,12 @@ export interface VisualizationProps {
   showBookmatchPreview?: boolean;
   showDimensions?: boolean;
   onCapture?: (dataUrl: string) => void;
+  // Cross-section props
+  crossSection?: {
+    enabled: boolean;
+    position: number; // 0-100
+    orientation: 'x' | 'y' | 'z';
+  };
 }
 
 export type CanvasHandle = {
