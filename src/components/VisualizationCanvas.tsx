@@ -264,6 +264,7 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
       showBookmatchPreview,
       showDimensions = false,
       onCapture,
+      crossSection,
     },
     ref
   ) => {
