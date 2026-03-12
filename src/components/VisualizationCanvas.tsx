@@ -138,6 +138,7 @@ const Scene: React.FC<SceneProps> = ({
   mirrorGrain,
   showBookmatchPreview,
   showDimensions,
+  crossSection,
   onSceneReady,
   onInteractionStart,
   onInteractionEnd,
@@ -170,6 +171,19 @@ const Scene: React.FC<SceneProps> = ({
     grainRotation,
   ]);
 
+  // Set up clipping planes for cross-section view
+  useEffect(() => {
+    const glRenderer = gl;
+    if (!glRenderer) return;
+
+    if (crossSection?.enabled) {
+      // Enable clipping
+      glRenderer.localClippingEnabled = true;
+    } else {
+      glRenderer.localClippingEnabled = false;
+    }
+  }, [gl, crossSection]);
+
   useEffect(() => {
     onSceneReady(scene, camera, gl);
   }, [scene, camera, gl, onSceneReady]);
@@ -192,6 +206,7 @@ const Scene: React.FC<SceneProps> = ({
             grainOffset={grainOffset}
             grainRotation={grainRotation}
             mirrorGrain={mirrorGrain}
+            crossSection={crossSection}
             position={
               showBookmatchPreview
                 ? [-((dims.length || 0) / 1000) / 2 - 0.02, 0, 0]
@@ -209,6 +224,7 @@ const Scene: React.FC<SceneProps> = ({
               grainOffset={grainOffset}
               grainRotation={grainRotation}
               mirrorGrain={!mirrorGrain}
+              crossSection={crossSection}
               position={[(dims.length || 0) / 1000 / 2 + 0.02, 0, 0]}
             />
           )}

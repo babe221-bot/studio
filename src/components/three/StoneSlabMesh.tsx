@@ -75,6 +75,12 @@ interface StoneSlabMeshProps {
   mirrorGrain?: boolean;
   position?: [number, number, number];
   onGeometryGenerated?: () => void;
+  // Cross-section props
+  crossSection?: {
+    enabled: boolean;
+    position: number;
+    orientation: 'x' | 'y' | 'z';
+  };
 }
 
 export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
@@ -89,6 +95,7 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
   mirrorGrain = false,
   position = [0, 0, 0] as [number, number, number],
   onGeometryGenerated,
+  crossSection,
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const { camera, controls } = useThree();
@@ -427,6 +434,54 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
     };
   }, []);
 
+  // Set up clipping planes for cross-section view
+  const clippingPlane = React.useMemo(() => {
+    if (!crossSection?.enabled) return undefined;
+
+    const plane = new THREE.Plane();
+    const normalizedPosition = crossSection.position / 100;
+
+    // Calculate dimension based on orientation
+    let dimension: number;
+    switch (crossSection.orientation) {
+      case 'x':
+        dimension = dims.length / 1000;
+        plane.setFromNormalAndCoplanarPoint(
+          new THREE.Vector3(-1, 0, 0),
+          new THREE.Vector3(
+            normalizedPosition * dimension - dimension / 2,
+            0,
+            0
+          )
+        );
+        break;
+      case 'y':
+        dimension = dims.height / 1000;
+        plane.setFromNormalAndCoplanarPoint(
+          new THREE.Vector3(0, -1, 0),
+          new THREE.Vector3(
+            0,
+            normalizedPosition * dimension - dimension / 2,
+            0
+          )
+        );
+        break;
+      case 'z':
+        dimension = dims.width / 1000;
+        plane.setFromNormalAndCoplanarPoint(
+          new THREE.Vector3(0, 0, -1),
+          new THREE.Vector3(
+            0,
+            0,
+            normalizedPosition * dimension - dimension / 2
+          )
+        );
+        break;
+    }
+
+    return plane;
+  }, [crossSection, dims]);
+
   if (!geometry || materials.length === 0) {
     return null;
   }
@@ -439,6 +494,10 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
       castShadow
       receiveShadow
       position={position}
+      {...(clippingPlane && {
+        clippingPlanes: [clippingPlane],
+        clipShadows: true,
+      })}
     />
   );
 };
