@@ -100,6 +100,9 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
   );
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Physics deformation state
+  const [deformation, setDeformation] = useState<number[]>([]);
+
   // DEBUG: Log component state
   useEffect(() => {
     console.log('[StoneSlabMesh] Props received:', {
@@ -190,11 +193,6 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
     };
 
     generateGeometry();
-
-    // Cleanup on dependency change
-    return () => {
-      // Old geometry will be replaced, disposal handled by R3F
-    };
   }, [
     vizDims.L,
     vizDims.W,
@@ -207,50 +205,10 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
   ]);
 
   // ============================================================================
-  // Camera Positioning
-  // ============================================================================
-
-  useEffect(() => {
-    if (!camera || !controls) return;
-
-    const { L, W, H } = vizDims;
-
-    // Centre of the stone
-    const target = new THREE.Vector3(0, H / 2, 0);
-    (controls as any).target.copy(target);
-
-    // Drive distance from the DIAGONAL of the stone's top face + height contribution
-    const diagonal = Math.sqrt(L * L + W * W);
-    const fitDist = Math.max(diagonal, H * 10) * 1.0 + 0.8;
-
-    // 38° elevation, 40° azimuth gives a classic 3/4 product-shot perspective
-    const elev = THREE.MathUtils.degToRad(38);
-    const azim = THREE.MathUtils.degToRad(40);
-
-    camera.position.set(
-      fitDist * Math.cos(elev) * Math.sin(azim),
-      H / 2 + fitDist * Math.sin(elev),
-      fitDist * Math.cos(elev) * Math.cos(azim)
-    );
-    camera.lookAt(target);
-
-    (controls as any).minDistance = fitDist * 0.08;
-    (controls as any).maxDistance = fitDist * 6;
-    (controls as any).update();
-  }, [vizDims, camera, controls]);
-
-  // ============================================================================
   // Material Setup with ResourceManager
   // ============================================================================
 
   const [materials, setMaterials] = useState<THREE.Material[]>([]);
-
-  // Physics deformation state
-  const [deformation, setDeformation] = useState<number[]>([]);
-
-  // ============================================================================
-  // Material Setup with ResourceManager
-  // ============================================================================
 
   useEffect(() => {
     if (!material || !finish) {
@@ -285,7 +243,7 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
     const oldTextureKey = resourcesRef.current.textureKey;
 
     // Main face material (index 0)
-    const mainMatKey = `slab-${material.id}-${finish.id}-0-${Date.now()}`; // Unique key to force update
+    const mainMatKey = `slab-${material.id}-${finish.id}-0-${Date.now()}`;
     let normalMap: THREE.Texture | null = null;
 
     if (preset.normalStrength > 0.05) {
@@ -338,55 +296,6 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
     const mats = [mainMat, sideMat, profileMat];
     resourcesRef.current.materialKeys = [mainMatKey, sideMatKey, profileMatKey];
 
-    // Load advanced PBR maps if available
-    const pbrMaps = (material as any).pbr_maps;
-    if (pbrMaps) {
-      const mapEntries = [
-        {
-          type: 'roughnessMap',
-          url: pbrMaps.roughness,
-          colorSpace: THREE.NoColorSpace,
-        },
-        {
-          type: 'normalMap',
-          url: pbrMaps.normal,
-          colorSpace: THREE.NoColorSpace,
-        },
-        {
-          type: 'metalnessMap',
-          url: pbrMaps.metallic,
-          colorSpace: THREE.NoColorSpace,
-        },
-        { type: 'aoMap', url: pbrMaps.ao, colorSpace: THREE.NoColorSpace },
-      ];
-
-      mapEntries.forEach((entry) => {
-        if (entry.url) {
-          resourceManager
-            .loadTexture(entry.url, {
-              colorSpace: entry.colorSpace,
-              wrapS: THREE.RepeatWrapping,
-              wrapT: THREE.RepeatWrapping,
-            })
-            .then((tex) => {
-              const tileSizeM = 0.3;
-              tex.repeat.set(
-                (vizDims.L / tileSizeM) * (mirrorGrain ? -1 : 1),
-                vizDims.W / tileSizeM
-              );
-              tex.offset.set(grainOffset.x, grainOffset.y);
-              tex.rotation = (grainRotation * Math.PI) / 180;
-              tex.needsUpdate = true;
-
-              mats.forEach((m) => {
-                (m as any)[entry.type] = tex;
-                m.needsUpdate = true;
-              });
-            });
-        }
-      });
-    }
-
     // Load base texture if available
     if (material.texture) {
       const texKey = material.texture;
@@ -419,12 +328,9 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
 
     setMaterials(mats);
 
-    // Cleanup function for this specific material set
     return () => {
       oldKeys.forEach((key) => resourceManager.releaseMaterial(key));
       if (oldNormalKey) resourceManager.releaseTexture(oldNormalKey);
-      // textureKey usually points to a shared URL, but we should release if needed
-      // if (oldTextureKey) resourceManager.releaseTexture(oldTextureKey);
     };
   }, [
     material,
@@ -447,7 +353,7 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
     if (!geometryData) return null;
 
     // Create a copy of positions to apply deformation
-    const positions = [...geometryData.positions];
+    const positions = Array.from(geometryData.positions);
 
     // Apply physics deformation if we have deflection data
     if (
@@ -459,38 +365,67 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
 
       // Apply vertical deformation (Y-axis) based on position along the beam
       for (let i = 0; i < positions.length; i += 3) {
-        const vertexIndex = i / 3; // Which vertex we're processing
+        const vertexIndex = i / 3;
         if (vertexIndex < deformation.length) {
           // Apply deformation to Y coordinate (vertical)
-          positions[i + 1] +=
+          positions[i + 1] -=
             deformation[vertexIndex] * deformationScale * PhysicsEngine.MM_TO_M;
         }
       }
     }
 
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute(
-    'position',
-    new THREE.Float32BufferAttribute(positions, 3)
-  );
-    }
-    if (materials.length === 0) {
-      console.log(
-        '[StoneSlabMesh] Not rendering: materials array is empty (material:',
-        material,
-        ', finish:',
-        finish,
-        ')'
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute(
+      'position',
+      new THREE.Float32BufferAttribute(positions, 3)
+    );
+    if (geometryData.uvs) {
+      geo.setAttribute(
+        'uv',
+        new THREE.Float32BufferAttribute(geometryData.uvs, 2)
       );
     }
-    if (geometry && materials.length > 0) {
-      console.log(
-        '[StoneSlabMesh] Rendering mesh with geometry and',
-        materials.length,
-        'materials'
-      );
+    geo.setIndex(new THREE.Uint32BufferAttribute(geometryData.indices, 1));
+
+    geometryData.groups.forEach((g) => {
+      geo.addGroup(g.start, g.count, g.materialIndex);
+    });
+
+    geo.computeVertexNormals();
+
+    return geo;
+  }, [geometryData, deformation]);
+
+  // Handle geometry disposal safely in an effect
+  useEffect(() => {
+    if (geometry) {
+      if (
+        resourcesRef.current.geometry &&
+        resourcesRef.current.geometry !== geometry
+      ) {
+        resourcesRef.current.geometry.dispose();
+      }
+      resourcesRef.current.geometry = geometry;
     }
-  }, [geometry, materials, geometryData, material, finish]);
+  }, [geometry]);
+
+  // Cleanup on Unmount
+  useEffect(() => {
+    return () => {
+      resourcesRef.current.materialKeys.forEach((matKey) => {
+        resourceManager.releaseMaterial(matKey);
+      });
+      if (resourcesRef.current.normalMapKey) {
+        resourceManager.releaseTexture(resourcesRef.current.normalMapKey);
+      }
+      if (resourcesRef.current.textureKey) {
+        resourceManager.releaseTexture(resourcesRef.current.textureKey);
+      }
+      if (resourcesRef.current.geometry) {
+        resourcesRef.current.geometry.dispose();
+      }
+    };
+  }, []);
 
   if (!geometry || materials.length === 0) {
     return null;
