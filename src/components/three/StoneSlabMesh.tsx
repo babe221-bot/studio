@@ -81,6 +81,7 @@ interface StoneSlabMeshProps {
     position: number;
     orientation: 'x' | 'y' | 'z';
   };
+  supportPoints?: { left: number; right: number };
 }
 
 export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
@@ -96,6 +97,7 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
   position = [0, 0, 0] as [number, number, number],
   onGeometryGenerated,
   crossSection,
+  supportPoints = { left: 0, right: 100 },
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const { camera, controls } = useThree();
@@ -230,7 +232,7 @@ export const StoneSlabMesh: React.FC<StoneSlabMeshProps> = ({
         dims.length,
         dims.width,
         dims.height,
-        { left: 0, right: 100 } // Simple support at ends for now
+        supportPoints
       );
       setDeformation(deflections);
     } else {

@@ -229,6 +229,7 @@ const Scene: React.FC<SceneProps> = ({
               grainRotation={grainRotation}
               mirrorGrain={!mirrorGrain}
               crossSection={crossSection}
+              supportPoints={supportPoints}
               position={[(dims.length || 0) / 1000 / 2 + 0.02, 0, 0]}
             />
           )}

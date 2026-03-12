@@ -457,6 +457,7 @@ export function Lab() {
                   okapnikEdges={okapnikEdges}
                   showDimensions={showDimensions}
                   crossSection={crossSection.enabled ? crossSection : undefined}
+                  supportPoints={{ left: leftSupport, right: rightSupport }}
                 />
               </ErrorBoundary>
             </CardContent>
