@@ -1,8 +1,17 @@
-/// <reference path="../../types/model-viewer.d.ts" />
 'use client';
 
 import React, { useState, useEffect } from 'react';
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'model-viewer': any;
+    }
+  }
+}
+
 import { Button } from '@/components/ui/button';
+
 import { Loader2, Box, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import dynamic from 'next/dynamic';
@@ -119,7 +128,7 @@ export function ARPreview({ config }: ARPreviewProps) {
         <div className="flex flex-col gap-2">
           <div className="relative aspect-square w-full bg-muted rounded-lg overflow-hidden border">
             <model-viewer
-              src={glbUrl}
+              {...(glbUrl ? { src: glbUrl } : {})}
               ar
               ar-modes="webxr scene-viewer quick-look"
               camera-controls
