@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UserResponse } from '@/backend/app/api/admin/users';
+import { UserResponse } from '@/types/admin';
 
 interface UserDialogProps {
   isOpen: boolean;

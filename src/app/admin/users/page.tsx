@@ -6,7 +6,7 @@ import { UserTable } from '@/components/admin/users/UserTable';
 import { UserDialog } from '@/components/admin/users/UserDialog';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { UserResponse } from '@/backend/app/api/admin/users';
+import { UserResponse } from '@/types/admin';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserResponse[]>([]);

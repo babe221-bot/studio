@@ -12,7 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
-import { OrderResponse } from '@/backend/app/api/admin/orders';
+import { OrderResponse } from '@/types/admin';
 
 interface OrderTableProps {
   orders: OrderResponse[];

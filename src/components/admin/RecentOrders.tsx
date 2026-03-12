@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { OrderResponse } from '@/backend/app/api/admin/orders'; // Adjust path as needed
+import { OrderResponse } from '@/types/admin'; // Adjust path as needed
 
 interface RecentOrdersProps {
   orders: OrderResponse[];

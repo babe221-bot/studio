@@ -12,7 +12,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
-import { MaterialResponse } from '@/backend/app/api/admin/materials';
+import { MaterialResponse } from '@/types/admin';
 
 interface MaterialTableProps {
   materials: MaterialResponse[];

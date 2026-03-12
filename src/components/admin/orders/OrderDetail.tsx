@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { OrderResponse, OrderUpdate } from '@/backend/app/api/admin/orders';
+import { OrderResponse, OrderUpdate } from '@/types/admin';
 import { OrderDB } from '@/backend/app/models/domain'; // Assuming you need full OrderDB for items/notes
 
 interface OrderDetailProps {

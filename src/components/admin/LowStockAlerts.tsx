@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MaterialResponse } from '@/backend/app/api/admin/materials'; // Adjust path
+import { MaterialResponse } from '@/types/admin'; // Adjust path
 import { AlertCircle } from 'lucide-react';
 
 interface LowStockAlertsProps {

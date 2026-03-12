@@ -6,7 +6,7 @@ import { MaterialTable } from '@/components/admin/materials/MaterialTable';
 import { MaterialDialog } from '@/components/admin/materials/MaterialDialog';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
-import { MaterialResponse } from '@/backend/app/api/admin/materials';
+import { MaterialResponse } from '@/types/admin';
 
 export default function AdminMaterialsPage() {
   const [materials, setMaterials] = useState<MaterialResponse[]>([]);

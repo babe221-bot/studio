@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OrderTable } from '@/components/admin/orders/OrderTable';
 import { OrderDetail } from '@/components/admin/orders/OrderDetail';
-import { OrderResponse, OrderUpdate } from '@/backend/app/api/admin/orders';
-import { OrderDB } from '@/backend/app/models/domain';
+import { OrderResponse, OrderUpdate } from '@/types/admin';
+import { OrderDB } from '@/types/admin';
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderResponse[]>([]);
