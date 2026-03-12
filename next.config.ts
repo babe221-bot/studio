@@ -2,9 +2,8 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  typescript: {
-    ignoreBuildErrors: false,
-  },
+  // TypeScript and ESLint build error suppression has been addressed and removed.
+  // Code must pass typechecking and linting before build.
   turbopack: {},
   // Performance optimizations
   compress: true,
