@@ -61,7 +61,7 @@ export async function Header(props: HeaderProps) {
         </div>
         <div className="flex items-center gap-4">
           {displayUser ? (
-            <div className="flex items-center gap-3 bg-muted/30 px-3 py-1.5 rounded-full border border-border/50">
+            <div className="flex items-center gap-3 bg-muted/30 px-3 py-1.5 rounded-full border border-gray-300/50">
               <div className="flex items-center gap-2">
                 {isGuest ? (
                   <div className="flex items-center gap-2">
