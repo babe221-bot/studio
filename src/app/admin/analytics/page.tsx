@@ -21,7 +21,14 @@ import { Button } from '@/components/ui/button';
 import { FileDown } from 'lucide-react';
 import { ExportModal } from '@/components/modals/ExportModal';
 import { ExportFormat } from '@/lib/export/exportService';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 const COLORS = [
   '#0088FE',
@@ -70,7 +77,7 @@ const OrdersByStatusChart: React.FC<OrdersByStatusChartProps> = ({
                 fill="#8884d8"
                 dataKey="value"
                 label={({ name, percent }) =>
-                  `${name} ${(percent * 100).toFixed(0)}%`
+                  `${name} ${((percent || 0) * 100).toFixed(0)}%`
                 }
               >
                 {data.map((entry, index) => (

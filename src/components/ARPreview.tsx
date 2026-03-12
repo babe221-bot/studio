@@ -2,10 +2,26 @@
 
 import React, { useState, useEffect } from 'react';
 
+declare module 'react' {
+  interface HTMLAttributes<T>
+    extends React.AriaAttributes, React.DOMAttributes<T> {
+    // Custom attributes for model-viewer
+    src?: string;
+    ar?: boolean;
+    'ar-modes'?: string;
+    'camera-controls'?: boolean;
+    'shadow-intensity'?: string;
+    'auto-rotate'?: boolean;
+  }
+}
+
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      'model-viewer': any;
+      'model-viewer': React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement> & any,
+        HTMLElement
+      >;
     }
   }
 }
@@ -127,6 +143,7 @@ export function ARPreview({ config }: ARPreviewProps) {
       ) : (
         <div className="flex flex-col gap-2">
           <div className="relative aspect-square w-full bg-muted rounded-lg overflow-hidden border">
+            {/* @ts-ignore */}
             <model-viewer
               {...(glbUrl ? { src: glbUrl } : {})}
               ar
