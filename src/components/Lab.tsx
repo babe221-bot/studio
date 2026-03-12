@@ -347,6 +347,15 @@ export function Lab() {
               </ActiveSelectionIndicator>
             </CardContent>
           </Card>
+
+          <PhysicsControls
+            leftSupport={leftSupport}
+            rightSupport={rightSupport}
+            onLeftSupportChange={setLeftSupport}
+            onRightSupportChange={setRightSupport}
+            maxDeflection={maxDeflection}
+            naturalFrequency={naturalFrequency}
+          />
         </div>
 
         <div className="lg:col-span-2 xl:col-span-3">
