@@ -26,6 +26,11 @@ export interface CADContextData {
     maxDeflection: number;
     supportPoints: { left: number; right: number };
   } | null;
+  crossSectionState?: {
+    enabled: boolean;
+    position: number;
+    orientation: 'x' | 'y' | 'z';
+  } | null;
 }
 
 /**
