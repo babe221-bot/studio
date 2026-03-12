@@ -135,6 +135,17 @@ export function Lab() {
     position: 50,
     orientation: 'y' as 'x' | 'y' | 'z',
   });
+  const [activeMeasurementTool, setActiveMeasurementTool] =
+    useState<MeasurementToolType>(null);
+  const [measurements, setMeasurements] = useState<
+    Array<{
+      id: string;
+      type: string;
+      value: number;
+      unit: string;
+      createdAt: number;
+    }>
+  >([]);
   const canvasRef = useRef<CanvasHandle>(null);
 
   // Fetch data on component mount
@@ -365,6 +376,13 @@ export function Lab() {
           <CrossSectionControls
             crossSection={crossSection}
             onCrossSectionChange={setCrossSection}
+          />
+
+          <MeasurementTools
+            activeTool={activeMeasurementTool}
+            onToolChange={setActiveMeasurementTool}
+            measurements={measurements}
+            onClearMeasurements={() => setMeasurements([])}
           />
         </div>
 
