@@ -1,12 +1,18 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { EmailPreferences } from '@/backend/app/api/preferences';
+import { EmailPreferences } from '@/types';
 
 export default function SettingsPage() {
   const [preferences, setPreferences] = useState<EmailPreferences | null>(null);
@@ -44,7 +50,9 @@ export default function SettingsPage() {
     key: keyof EmailPreferences,
     value: boolean
   ) => {
-    setPreferences((prev) => (prev ? { ...prev, [key]: value } : null));
+    setPreferences((prev: EmailPreferences | null) =>
+      prev ? { ...prev, [key]: value } : null
+    );
   };
 
   const handleSavePreferences = async () => {

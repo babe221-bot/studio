@@ -176,3 +176,12 @@ export interface ConfigLock {
   client_id: string;
   acquired_at: string;
 }
+
+// ── User Settings Types ───────────────────────────────────────────────────────
+
+export interface EmailPreferences {
+  welcome: boolean;
+  order_confirmation: boolean;
+  receipt: boolean;
+  [key: string]: boolean;
+}

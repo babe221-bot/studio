@@ -19,25 +19,44 @@ export interface OrderResponse {
   id: string;
   customerName: string;
   totalAmount: number;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'pending_deposit';
+  total_amount?: number;
+  status:
+    | 'pending'
+    | 'processing'
+    | 'completed'
+    | 'cancelled'
+    | 'pending_deposit'
+    | 'paid';
+  fulfillment_status?: 'pending' | 'processing' | 'shipped' | 'delivered';
+  user_id?: string;
   createdAt: string;
 }
 
 export interface OrderUpdate {
-  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'pending_deposit';
+  status: string;
+  fulfillment_status?: string;
 }
 
 export interface OrderDB {
   id: string;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'pending_deposit';
   user_id: string;
-  total_price: number;
-  configuration: any;
+  guest_session_id?: string;
+  status: string;
+  total_amount: number;
+  deposit_amount?: number;
+  currency?: string;
+  items: string; // JSON string
+  shipping_method?: string;
+  notes?: string;
   created_at: string;
+  updated_at?: string;
+  fulfillment_status?: string;
+  assigned_staff_id?: string;
+  tracking_number?: string;
 }
 
 export interface MaterialResponse {
-  id: string;
+  id: number;
   name: string;
   inventory_count: number;
   status: 'in_stock' | 'low_stock' | 'out_of_stock';
@@ -60,6 +79,7 @@ export interface UserResponse {
   created_at: string;
   is_active: boolean;
   name?: string;
+  full_name?: string;
 }
 
 export interface UserUpdate {
