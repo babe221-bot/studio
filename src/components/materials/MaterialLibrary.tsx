@@ -14,6 +14,13 @@ import { useMaterialFilters } from '@/hooks/useMaterialFilters';
 import { Loader2, X } from 'lucide-react';
 import type { Material } from '@/types';
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Filter } from 'lucide-react';
+
 export function MaterialLibrary({
   onSelect,
   onClose,
@@ -42,8 +49,26 @@ export function MaterialLibrary({
       }
     }
 
-    // Apply category filter (if we had category_id, but we'll adjust based on actual data)
-    // For now, we'll skip category filter until we have the data structure
+    // Apply category filter
+    if (filters.category && material.category_id !== filters.category) {
+      return false;
+    }
+
+    // Apply price range
+    if (filters.minPrice && material.cost_sqm < filters.minPrice) {
+      return false;
+    }
+    if (filters.maxPrice && material.cost_sqm > filters.maxPrice) {
+      return false;
+    }
+
+    // Apply availability
+    if (
+      filters.availability &&
+      material.availability !== filters.availability
+    ) {
+      return false;
+    }
 
     return true;
   });
@@ -85,8 +110,29 @@ export function MaterialLibrary({
             placeholder="Search materials..."
           />
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => clearFilters()}>
-              Reset Filters
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filters
+                  {(filters.category ||
+                    filters.minPrice ||
+                    filters.maxPrice ||
+                    filters.availability) && (
+                    <span className="ml-2 w-2 h-2 bg-primary rounded-full" />
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <MaterialFilters
+                  filters={filters}
+                  onFilterChange={setFilter}
+                  onClear={clearFilters}
+                />
+              </PopoverContent>
+            </Popover>
+            <Button variant="ghost" size="sm" onClick={() => clearFilters()}>
+              Reset
             </Button>
           </div>
         </div>

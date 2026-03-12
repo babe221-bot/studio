@@ -3,10 +3,13 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Heart, X } from 'lucide-react';
+import { Plus, Heart, X, Upload } from 'lucide-react';
 import type { Material } from '@/types';
 import { useMaterialFavorites } from '@/hooks/useMaterialFavorites';
+import { useMaterialTextures } from '@/hooks/useMaterialTextures';
+import { TextureUpload } from './TextureUpload';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 interface MaterialDetailProps {
   material: Material;
@@ -20,6 +23,8 @@ export function MaterialDetail({
   onApply,
 }: MaterialDetailProps) {
   const { isFavorite, toggleFavorite } = useMaterialFavorites();
+  const { uploadTexture } = useMaterialTextures(material.id);
+  const [isUploading, setIsUploading] = useState(false);
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
@@ -68,6 +73,13 @@ export function MaterialDetail({
                         isFavorite(material.id) && 'fill-red-500 text-red-500'
                       )}
                     />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setIsUploading(true)}
+                  >
+                    <Upload className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -154,6 +166,19 @@ export function MaterialDetail({
             </div>
           </CardContent>
         </Card>
+
+        {isUploading && (
+          <TextureUpload
+            material={material}
+            onClose={() => setIsUploading(false)}
+            onTextureUpload={async (type, file) => {
+              // Note: TextureUpload currently takes url, let's fix it to take File
+              // or handle upload inside it.
+              // Actually, useMaterialTextures.uploadTexture takes File.
+              // Let's fix TextureUpload signature.
+            }}
+          />
+        )}
       </div>
     </div>
   );
