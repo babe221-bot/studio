@@ -2,7 +2,10 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  typescript: {},
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  turbopack: {},
   // Performance optimizations
   compress: true,
   poweredByHeader: false,

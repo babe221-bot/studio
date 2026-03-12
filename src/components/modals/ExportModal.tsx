@@ -12,7 +12,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ExportOptions, ExportFormat } from '@/lib/export/exportService';
+import { ExportFormat } from '@/lib/export/exportService';
+import { ExportOptions } from './ExportOptions';
 import { FileDown } from 'lucide-react';
 
 interface ExportModalProps {
