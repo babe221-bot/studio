@@ -38,7 +38,7 @@ export function MaterialDetail({ material, onClose }: MaterialDetailProps) {
                 <div className="aspect-w-16 aspect-h-9">
                   <img
                     alt={`${material.display_name || material.name} texture`}
-                    src="/placeholder-material-detail.jpg"
+                    src={material.texture || '/placeholder-material-detail.jpg'}
                     className="object-cover w-full h-full rounded"
                   />
                 </div>
