@@ -97,6 +97,7 @@ import { MaterialLibrary } from './materials/MaterialLibrary';
 import { PhysicsControls } from './PhysicsControls';
 import { CrossSectionControls } from './CrossSectionControls';
 import { MeasurementTools, type MeasurementToolType } from './MeasurementTools';
+import type { Measurement } from '@/lib/measurement/MeasurementTool';
 import { usePhysics } from '@/hooks/usePhysics';
 
 // ... (Keep all the memoized sub-components like OrderEntryForm, etc. as they are) ...
@@ -137,15 +138,7 @@ export function Lab() {
   });
   const [activeMeasurementTool, setActiveMeasurementTool] =
     useState<MeasurementToolType>(null);
-  const [measurements, setMeasurements] = useState<
-    Array<{
-      id: string;
-      type: string;
-      value: number;
-      unit: string;
-      createdAt: number;
-    }>
-  >([]);
+  const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const canvasRef = useRef<CanvasHandle>(null);
 
   // Fetch data on component mount
