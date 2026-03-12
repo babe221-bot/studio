@@ -10,6 +10,7 @@ import { MaterialSearch } from './MaterialSearch';
 import { MaterialFilters } from './MaterialFilters';
 import { useMaterials } from '@/hooks/useMaterials';
 import { useMaterialFilters } from '@/hooks/useMaterialFilters';
+import { Loader2 } from 'lucide-react';
 
 export function MaterialLibrary() {
   const { materials, isLoading, error } = useMaterials();
