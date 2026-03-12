@@ -7,8 +7,22 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   // Only run tests in src/tests (not in node_modules or .next)
-  testMatch: ['<rootDir>/src/tests/**/*.test.ts', '<rootDir>/src/tests/**/*.test.tsx'],
+  testMatch: [
+    '<rootDir>/src/tests/**/*.test.ts',
+    '<rootDir>/src/tests/**/*.test.tsx',
+  ],
   // Don't transform node_modules
-  transformIgnorePatterns: ['/node_modules/'],
+  transformIgnorePatterns: [
+    '/node_modules/(?!three|@react-three|three/examples/jsm)',
+  ],
   setupFilesAfterEnv: ['<rootDir>/src/tests/setupTests.ts'],
+  transform: {
+    '^.+\\.(ts|tsx)$': [
+      'ts-jest',
+      {
+        useESM: true,
+      },
+    ],
+  },
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
 };
