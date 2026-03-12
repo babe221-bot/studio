@@ -19,15 +19,9 @@ export interface OrderResponse {
   id: string;
   customerName: string;
   totalAmount: number;
-  total_amount?: number;
-  status:
-    | 'pending'
-    | 'processing'
-    | 'completed'
-    | 'cancelled'
-    | 'pending_deposit'
-    | 'paid';
-  fulfillment_status?: 'pending' | 'processing' | 'shipped' | 'delivered';
+  total_amount: number;
+  status: string;
+  fulfillment_status?: string;
   user_id?: string;
   createdAt: string;
 }
