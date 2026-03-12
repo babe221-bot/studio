@@ -95,6 +95,7 @@ import { exportConfig, ExportFormat } from '@/lib/export/exportService';
 import * as THREE from 'three';
 import { MaterialLibrary } from './materials/MaterialLibrary';
 import { PhysicsControls } from './PhysicsControls';
+import { CrossSectionControls } from './CrossSectionControls';
 import { usePhysics } from '@/hooks/usePhysics';
 
 // ... (Keep all the memoized sub-components like OrderEntryForm, etc. as they are) ...
@@ -128,6 +129,11 @@ export function Lab() {
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [announcement, setAnnouncement] = useState<string>('');
   const [showDimensions, setShowDimensions] = useState(false);
+  const [crossSection, setCrossSection] = useState({
+    enabled: false,
+    position: 50,
+    orientation: 'y' as 'x' | 'y' | 'z',
+  });
   const canvasRef = useRef<CanvasHandle>(null);
 
   // Fetch data on component mount
@@ -354,6 +360,11 @@ export function Lab() {
             maxDeflection={maxDeflection}
             naturalFrequency={naturalFrequency}
           />
+
+          <CrossSectionControls
+            crossSection={crossSection}
+            onCrossSectionChange={setCrossSection}
+          />
         </div>
 
         <div className="lg:col-span-2 xl:col-span-3">
@@ -412,7 +423,7 @@ export function Lab() {
                   processedEdges={processedEdges}
                   okapnikEdges={okapnikEdges}
                   showDimensions={showDimensions}
-                  // ... other props
+                  crossSection={crossSection.enabled ? crossSection : undefined}
                 />
               </ErrorBoundary>
             </CardContent>
