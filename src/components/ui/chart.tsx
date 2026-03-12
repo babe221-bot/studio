@@ -122,7 +122,7 @@ const ChartTooltipContent = React.forwardRef<
       indicator = 'dot',
       hideLabel = false,
       hideIndicator = false,
-      label,
+      label: _label,
       labelFormatter,
       labelClassName,
       formatter,
@@ -143,8 +143,8 @@ const ChartTooltipContent = React.forwardRef<
       const key = `${labelKey || item.dataKey || item.name || 'value'}`;
       const itemConfig = getPayloadConfigFromPayload(config, item, key);
       const value =
-        !labelKey && typeof label === 'string'
-          ? config[label as keyof typeof config]?.label || label
+        !labelKey && typeof _label === 'string'
+          ? config[_label as keyof typeof config]?.label || _label
           : itemConfig?.label;
 
       if (labelFormatter) {
@@ -161,7 +161,7 @@ const ChartTooltipContent = React.forwardRef<
 
       return <div className={cn('font-medium', labelClassName)}>{value}</div>;
     }, [
-      label,
+      _      _label,
       labelFormatter,
       payload,
       hideLabel,
