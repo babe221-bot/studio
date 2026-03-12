@@ -1,10 +1,10 @@
 import * as THREE from 'three';
-import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 
-export function exportGLTF(
+export async function exportGLTF(
   mesh: THREE.Mesh,
   filename: string = 'model.gltf'
-): Blob {
+): Promise<Blob> {
   const exporter = new GLTFExporter();
 
   const exportOptions = {
@@ -14,10 +14,17 @@ export function exportGLTF(
   return new Promise<Blob>((resolve, reject) => {
     exporter.parse(
       mesh,
-      (blob) => {
-        resolve(blob as Blob);
+      (gltf: any) => {
+        if (gltf instanceof Blob) {
+          resolve(gltf);
+        } else {
+          // If GLTFExporter returns a JSON object (for .gltf), convert to Blob
+          const json = JSON.stringify(gltf);
+          const blob = new Blob([json], { type: 'application/json' });
+          resolve(blob);
+        }
       },
-      (error) => {
+      (error: any) => {
         console.error('Error exporting GLTF:', error);
         reject(error);
       },
