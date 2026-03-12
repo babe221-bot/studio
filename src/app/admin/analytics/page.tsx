@@ -19,6 +19,7 @@ import {
 } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { FileDown } from 'lucide-react';
+import { AnalyticsExportBtn } from '@/components/admin/AnalyticsExportBtn';
 import { ExportModal } from '@/components/modals/ExportModal';
 import { ExportFormat } from '@/lib/export/exportService';
 import {
