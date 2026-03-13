@@ -29,6 +29,11 @@ import type {
   EdgeProfile,
   ProcessedEdges,
 } from '@/types';
+import type { Measurement } from '@/lib/measurement/MeasurementTool';
+import type { MeasurementToolType } from '@/components/MeasurementTools';
+import { DistanceTool } from '@/lib/measurement/DistanceTool';
+import { AngleTool } from '@/lib/measurement/AngleTool';
+import { AreaTool } from '@/lib/measurement/AreaTool';
 import {
   StoneSlabMesh,
   StudioLighting,
@@ -283,6 +288,12 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
     const sceneRef = useRef<THREE.Scene | null>(null);
     const cameraRef = useRef<THREE.Camera | null>(null);
     const [isInteracting, setIsInteracting] = useState(false);
+    const [measurementTool, setMeasurementTool] =
+      useState<MeasurementTool | null>(null);
+    const [measurementPreview, setMeasurementPreview] = useState<{
+      value: number;
+      unit: string;
+    } | null>(null);
 
     // Expose capture method
     useImperativeHandle(ref, () => ({
