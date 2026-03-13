@@ -17,6 +17,7 @@ export interface Material {
   normalStrength?: number;
   displacementScale?: number;
   clearcoat?: number;
+  clearcoatRoughness?: number;
   ambientOcclusion?: number;
   // Additional properties
   category_id?: string;
