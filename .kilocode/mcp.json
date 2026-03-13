@@ -41,13 +41,6 @@
         "--access-token",
         "sb_publishable_jmV2-xlo7wrgfIBNC5dr9A_gESbd52l"
       ]
-    },
-    "fetch": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-fetch"
-      ]
     }
   }
 }
