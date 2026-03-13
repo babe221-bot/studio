@@ -1,0 +1,15 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": [
+    "./.opencode/plugins/01-env-protection.js",
+    "./.opencode/plugins/02-test-runner.js",
+    "./.opencode/plugins/03-lint-check.js",
+    "./.opencode/plugins/04-git-notifications.js",
+    "./.opencode/plugins/05-backend-watcher.js",
+    "./.opencode/plugins/06-build-watcher.js",
+    "./.opencode/plugins/07-migration-helper.js",
+    "./.opencode/plugins/08-component-generator.js",
+    "./.opencode/plugins/09-api-route-helper.js",
+    "./.opencode/plugins/10-playwright-runner.js"
+  ]
+}
