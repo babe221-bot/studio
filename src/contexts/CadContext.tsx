@@ -17,6 +17,8 @@ export function CadProvider({ children }: { children: ReactNode }) {
       position: 50,
       orientation: 'x',
     },
+    activeMeasurementTool: null,
+    measurements: [],
   });
 
   return (
