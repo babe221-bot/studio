@@ -11,7 +11,13 @@ interface CadContextType {
 const CadContext = createContext<CadContextType | undefined>(undefined);
 
 export function CadProvider({ children }: { children: ReactNode }) {
-  const [cadData, setCadData] = useState<CADContextData>({});
+  const [cadData, setCadData] = useState<CADContextData>({
+    crossSectionState: {
+      enabled: false,
+      position: 50,
+      orientation: 'x',
+    },
+  });
 
   return (
     <CadContext.Provider value={{ cadData, setCadData }}>
