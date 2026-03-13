@@ -1,0 +1,92 @@
+
+> nextn@0.1.0 typecheck
+> tsc --noEmit
+
+.next/dev/types/app/api/finishes/route.ts(2,24): error TS2307: Cannot find module '../../../../../../src/app/api/finishes/route.js' or its corresponding type declarations.
+.next/dev/types/app/api/finishes/route.ts(7,29): error TS2307: Cannot find module '../../../../../../src/app/api/finishes/route.js' or its corresponding type declarations.
+.next/dev/types/app/api/materials/route.ts(2,24): error TS2307: Cannot find module '../../../../../../src/app/api/materials/route.js' or its corresponding type declarations.
+.next/dev/types/app/api/materials/route.ts(7,29): error TS2307: Cannot find module '../../../../../../src/app/api/materials/route.js' or its corresponding type declarations.
+.next/dev/types/app/api/profiles/route.ts(2,24): error TS2307: Cannot find module '../../../../../../src/app/api/profiles/route.js' or its corresponding type declarations.
+.next/dev/types/app/api/profiles/route.ts(7,29): error TS2307: Cannot find module '../../../../../../src/app/api/profiles/route.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(206,39): error TS2307: Cannot find module '../../../src/app/api/finishes/route.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(224,39): error TS2307: Cannot find module '../../../src/app/api/materials/route.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(233,39): error TS2307: Cannot find module '../../../src/app/api/profiles/route.js' or its corresponding type declarations.
+src/components/Lab.tsx(29,10): error TS2614: Module '"./VisualizationCanvas"' has no exported member 'VisualizationCanvas'. Did you mean to use 'import VisualizationCanvas from "./VisualizationCanvas"' instead?
+src/components/Lab.tsx(32,10): error TS2614: Module '"./modals/MaterialModal"' has no exported member 'MaterialModal'. Did you mean to use 'import MaterialModal from "./modals/MaterialModal"' instead?
+src/components/Lab.tsx(33,10): error TS2614: Module '"./modals/FinishModal"' has no exported member 'FinishModal'. Did you mean to use 'import FinishModal from "./modals/FinishModal"' instead?
+src/components/Lab.tsx(34,10): error TS2614: Module '"./modals/ProfileModal"' has no exported member 'ProfileModal'. Did you mean to use 'import ProfileModal from "./modals/ProfileModal"' instead?
+src/components/Lab.tsx(35,33): error TS2307: Cannot find module './TemplateManager' or its corresponding type declarations.
+src/components/Lab.tsx(36,38): error TS2307: Cannot find module './VersionHistoryDialog' or its corresponding type declarations.
+src/components/Lab.tsx(39,28): error TS2307: Cannot find module '@/hooks/useLabData' or its corresponding type declarations.
+src/components/Lab.tsx(43,28): error TS2307: Cannot find module '@/hooks/useHistory' or its corresponding type declarations.
+src/components/Lab.tsx(46,31): error TS2307: Cannot find module '@/context/CADContext' or its corresponding type declarations.
+src/components/Lab.tsx(47,42): error TS2307: Cannot find module '@/lib/ai-service' or its corresponding type declarations.
+src/components/Lab.tsx(137,38): error TS7006: Parameter 'v' implicitly has an 'any' type.
+src/components/Lab.tsx(146,40): error TS7006: Parameter 't' implicitly has an 'any' type.
+src/components/Lab.tsx(175,27): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/components/Lab.tsx(179,26): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/components/Lab.tsx(183,26): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/components/Lab.tsx(411,23): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/components/Lab.tsx(412,22): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/components/Lab.tsx(413,25): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/components/Lab.tsx(417,22): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/components/Lab.tsx(418,22): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/components/Lab.tsx(419,25): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/components/Lab.tsx(423,22): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+src/components/Lab.tsx(424,22): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/components/Lab.tsx(425,25): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/components/Lab.tsx(704,18): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/components/Lab.tsx(710,18): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/components/Lab.tsx(716,18): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/components/Lab_full.tsx(317,18): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: VisualizationProps & RefAttributes<CanvasHandle>, context?: any): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<...>> | ... 4 more ... | undefined', gave the following error.
+    Type '{ ref: RefObject<CanvasHandle | null>; key: number; dims: { length: number; width: number; height: number; }; showDimensions: boolean; }' is missing the following properties from type 'VisualizationProps': processedEdges, okapnikEdges
+  Overload 2 of 2, '(props: VisualizationProps & RefAttributes<CanvasHandle>): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | ... 4 more ... | undefined', gave the following error.
+    Type '{ ref: RefObject<CanvasHandle | null>; key: number; dims: { length: number; width: number; height: number; }; showDimensions: boolean; }' is missing the following properties from type 'VisualizationProps': processedEdges, okapnikEdges
+src/components/Lab_recovered.tsx(915,33): error TS2367: This comparison appears to be unintentional because the types 'string' and 'number | undefined' have no overlap.
+src/components/Lab_recovered.tsx(919,32): error TS2367: This comparison appears to be unintentional because the types 'string' and 'number | undefined' have no overlap.
+src/components/Lab_recovered.tsx(923,32): error TS2367: This comparison appears to be unintentional because the types 'string' and 'number | undefined' have no overlap.
+src/components/Lab_recovered.tsx(1359,13): error TS2322: Type 'number | undefined' is not assignable to type 'string | undefined'.
+  Type 'number' is not assignable to type 'string'.
+src/components/Lab_recovered.tsx(1360,13): error TS2322: Type '(id: number | undefined) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'id' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'number'.
+src/components/Lab_recovered.tsx(1366,13): error TS2322: Type 'number | undefined' is not assignable to type 'string | undefined'.
+  Type 'number' is not assignable to type 'string'.
+src/components/Lab_recovered.tsx(1367,13): error TS2322: Type '(id: number | undefined) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'id' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'number'.
+src/components/Lab_recovered.tsx(1380,13): error TS2322: Type 'string | number' is not assignable to type 'string'.
+  Type 'number' is not assignable to type 'string'.
+src/components/Lab_recovered.tsx(1381,13): error TS2322: Type '(id: number | undefined) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'id' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'number'.
+src/components/Lab_recovered.tsx(1386,13): error TS2322: Type 'string | number' is not assignable to type 'string'.
+  Type 'number' is not assignable to type 'string'.
+src/components/Lab_recovered.tsx(1387,13): error TS2322: Type '(id: number | undefined) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'id' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'number'.
+src/components/Lab_recovered.tsx(1393,13): error TS2322: Type 'string | number' is not assignable to type 'string'.
+  Type 'number' is not assignable to type 'string'.
+src/components/Lab_recovered.tsx(1394,13): error TS2322: Type '(id: number | undefined) => void' is not assignable to type '(id: string) => void'.
+  Types of parameters 'id' and 'id' are incompatible.
+    Type 'string' is not assignable to type 'number'.
+src/components/ui/chart.tsx(270,7): error TS2344: Type '"payload" | "verticalAlign" | "wrapperStyle"' does not satisfy the constraint '"string" | "path" | "href" | "origin" | "onError" | "name" | "width" | "transform" | "format" | "method" | "type" | "id" | "filter" | "fill" | "values" | "mode" | "layout" | "key" | ... 432 more ... | "onBBoxUpdate"'.
+  Type '"payload"' is not assignable to type '"string" | "path" | "href" | "origin" | "onError" | "name" | "width" | "transform" | "format" | "method" | "type" | "id" | "filter" | "fill" | "values" | "mode" | "layout" | "key" | ... 432 more ... | "onBBoxUpdate"'.
+src/components/ui/chart.tsx(282,19): error TS2339: Property 'length' does not exist on type '{}'.
+src/components/ui/chart.tsx(295,18): error TS2339: Property 'map' does not exist on type '{}'.
+src/components/ui/chart.tsx(295,23): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/contexts/CadContext.tsx(20,5): error TS2353: Object literal may only specify known properties, and 'activeMeasurementTool' does not exist in type 'CADContextData | (() => CADContextData)'.
+src/hooks/useMeasurementManager.ts(5,55): error TS2307: Cannot find module './VisualizationCanvas' or its corresponding type declarations.
+src/hooks/useMeasurementManager.ts(6,42): error TS2307: Cannot find module '../MeasurementTools' or its corresponding type declarations.
+src/hooks/useMeasurementManager.ts(30,35): error TS2304: Cannot find name 'useCadContext'.
+src/hooks/useMeasurementManager.ts(58,17): error TS7006: Parameter 'prevData' implicitly has an 'any' type.
+src/hooks/useMeasurementManager.ts(70,38): error TS2304: Cannot find name 'containerRef'.
+src/hooks/useMeasurementManager.ts(74,26): error TS2304: Cannot find name 'containerRef'.
+src/hooks/useMeasurementManager.ts(89,38): error TS2304: Cannot find name 'containerRef'.
+src/hooks/useMeasurementManager.ts(93,26): error TS2304: Cannot find name 'containerRef'.
+src/hooks/useMeasurementManager.ts(130,27): error TS2304: Cannot find name 'containerRef'.
+src/hooks/useMeasurementManager.ts(268,5): error TS18004: No value exists in scope for the shorthand property 'measurementPreview'. Either declare one or provide an initializer.
+src/hooks/useMeasurementManager.ts(269,5): error TS18004: No value exists in scope for the shorthand property 'setMeasurementPreview'. Either declare one or provide an initializer.
+src/hooks/useMeasurementManager.ts(270,5): error TS18004: No value exists in scope for the shorthand property 'containerRef'. Either declare one or provide an initializer.
+src/hooks/useMeasurementManager.ts(271,5): error TS2552: Cannot find name 'setMeasurementTool'. Did you mean 'setMeasurementState'?
