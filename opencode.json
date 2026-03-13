@@ -11,5 +11,34 @@
     "./.opencode/plugins/08-component-generator.js",
     "./.opencode/plugins/09-api-route-helper.js",
     "./.opencode/plugins/10-playwright-runner.js"
-  ]
+  ],
+  "mcp": {
+    "sentry": {
+      "type": "remote",
+      "url": "https://mcp.sentry.dev/mcp",
+      "oauth": {}
+    },
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "github": {
+      "type": "remote",
+      "url": "https://mcp.github.com/mcp",
+      "headers": {
+        "Authorization": "Bearer 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"
+      }
+    },
+    "postgres": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-postgres"],
+      "environment": {
+        "DATABASE_URL": "postgresql://postgres:[YOUR-PASSWORD]@db.dgpcqnckygrvrynslqkv.supabase.co:5432/postgres"
+      }
+    },
+    "filesystem": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "."]
+    }
+  }
 }
