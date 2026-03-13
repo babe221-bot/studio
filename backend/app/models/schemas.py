@@ -1,8 +1,8 @@
-from pydantic import BaseModel
-from typing import Dict, Any, Optional
-
-
 import datetime
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class Dimensions(BaseModel):
     length: float
@@ -35,20 +35,27 @@ class EdgeFlags(BaseModel):
 
 class ProcessingRequest(BaseModel):
     """Full CAD config — matches params_example.json shape."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
     dims: Dimensions
     material: Material
     finish: Finish
     profile: Profile
-    processedEdges: EdgeFlags = EdgeFlags()
-    okapnikEdges: EdgeFlags = EdgeFlags()
-    grainOffset: Dict[str, float] = {"x": 0.0, "y": 0.0}
-    grainRotation: float = 0.0
-    mirrorGrain: bool = False
+    processed_edges: EdgeFlags = Field(
+        default_factory=EdgeFlags, alias="processedEdges"
+    )
+    okapnik_edges: EdgeFlags = Field(default_factory=EdgeFlags, alias="okapnikEdges")
+    grain_offset: Dict[str, float] = Field(
+        default={"x": 0.0, "y": 0.0}, alias="grainOffset"
+    )
+    grain_rotation: float = Field(default=0.0, alias="grainRotation")
+    mirror_grain: bool = Field(default=False, alias="mirrorGrain")
 
 
 class CADResponse(BaseModel):
     success: bool
-    svg: Optional[str] = None       # base64-encoded SVG preview
+    svg: Optional[str] = None  # base64-encoded SVG preview
     dxf_filename: Optional[str] = None
     data: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
@@ -88,3 +95,9 @@ class AdminWidgetResponse(AdminWidgetCreate):
 
     class Config:
         from_attributes = True
+
+
+class EmailPreferences(BaseModel):
+    marketing: bool = True
+    product_updates: bool = True
+    security_alerts: bool = True

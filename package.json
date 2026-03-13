@@ -24,8 +24,8 @@
       "prettier --write"
     ],
     "*.py": [
-      "ruff check --fix",
-      "ruff format"
+      ".\\.venv\\Scripts\\ruff.exe check --fix",
+      ".\\.venv\\Scripts\\ruff.exe format"
     ]
   },
   "dependencies": {
