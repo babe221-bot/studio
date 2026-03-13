@@ -62,6 +62,11 @@ export interface VisualizationProps {
   };
   // Physics props
   supportPoints?: { left: number; right: number };
+  // Measurement props
+  activeMeasurementTool?: MeasurementToolType | null;
+  measurements?: Measurement[];
+  onMeasurementComplete?: (measurement: Measurement) => void;
+  onMeasurementPreview?: (previewValue: number, unit: string) => void;
 }
 
 export type CanvasHandle = {
