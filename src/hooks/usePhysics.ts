@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import type { Material } from '@/types';
 import { PhysicsEngine } from '@/lib/physics/PhysicsEngine';
 
@@ -17,16 +17,13 @@ export function usePhysics({
   height,
   supportPoints = { left: 0, right: 100 },
 }: UsePhysicsOptions) {
-  const [deformation, setDeformation] = useState<number[]>([]);
-  const [naturalFrequency, setNaturalFrequency] = useState<number>(0);
-  const [maxDeflection, setMaxDeflection] = useState<number>(0);
-
-  useEffect(() => {
+  return useMemo(() => {
     if (!material) {
-      setDeformation([]);
-      setNaturalFrequency(0);
-      setMaxDeflection(0);
-      return;
+      return {
+        deformation: [],
+        naturalFrequency: 0,
+        maxDeflection: 0,
+      };
     }
 
     // Calculate deflection profile (for visualization)
@@ -37,7 +34,6 @@ export function usePhysics({
       height,
       supportPoints
     );
-    setDeformation(profile);
 
     // Calculate maximum deflection
     const max = PhysicsEngine.calculateDeflection(
@@ -47,7 +43,6 @@ export function usePhysics({
       height,
       supportPoints
     );
-    setMaxDeflection(max);
 
     // Calculate natural frequency
     const freq = PhysicsEngine.calculateNaturalFrequency(
@@ -57,12 +52,18 @@ export function usePhysics({
       height,
       supportPoints
     );
-    setNaturalFrequency(freq);
-  }, [material, length, width, height, supportPoints]);
 
-  return {
-    deformation,
-    naturalFrequency,
-    maxDeflection,
-  };
+    return {
+      deformation: profile,
+      naturalFrequency: freq,
+      maxDeflection: max,
+    };
+  }, [
+    material,
+    length,
+    width,
+    height,
+    supportPoints.left,
+    supportPoints.right,
+  ]);
 }
