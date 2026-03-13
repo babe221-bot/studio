@@ -42,29 +42,6 @@
         "sb_publishable_jmV2-xlo7wrgfIBNC5dr9A_gESbd52l"
       ]
     },
-    "filesystem": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "."
-      ]
-    },
-    "git": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-git",
-        "."
-      ]
-    },
-    "memory": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-memory"
-      ]
-    },
     "fetch": {
       "command": "npx",
       "args": [
