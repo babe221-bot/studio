@@ -288,8 +288,9 @@ const VisualizationCanvas = forwardRef<CanvasHandle, VisualizationProps>(
     const sceneRef = useRef<THREE.Scene | null>(null);
     const cameraRef = useRef<THREE.Camera | null>(null);
     const [isInteracting, setIsInteracting] = useState(false);
-    const [measurementTool, setMeasurementTool] =
-      useState<MeasurementTool | null>(null);
+    const [measurementTool, setMeasurementTool] = useState<
+      DistanceTool | AngleTool | AreaTool | null
+    >(null);
     const [measurementPreview, setMeasurementPreview] = useState<{
       value: number;
       unit: string;
