@@ -1,14 +1,16 @@
-from resend import Resend
 import os
 
+import resend
+
 # Initialize Resend client
-resend = Resend(os.getenv("RESEND_API_KEY"))
+resend.api_key = os.getenv("RESEND_API_KEY")
+
 
 def send_email(to: str, subject: str, html: str):
     try:
         resend.emails.send(
             {
-                "from": "onboarding@resend.dev", # TODO: Configure sender email
+                "from": "onboarding@resend.dev",  # TODO: Configure sender email
                 "to": [to],
                 "subject": subject,
                 "html": html,
