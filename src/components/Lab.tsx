@@ -26,14 +26,14 @@ import { MaterialSelection } from './lab/MaterialSelection';
 import { ProcessingConfig } from './lab/ProcessingConfig';
 import { OrderSummary } from './lab/OrderSummary';
 import { GrainAlignmentTool } from './GrainAlignmentTool';
-import { VisualizationCanvas, type CanvasHandle } from './VisualizationCanvas';
+import VisualizationCanvas, { type CanvasHandle } from './VisualizationCanvas';
 import { ARPreview } from './ARPreview';
 import { ErrorBoundary } from './ErrorBoundary';
-import { MaterialModal } from './modals/MaterialModal';
-import { FinishModal } from './modals/FinishModal';
-import { ProfileModal } from './modals/ProfileModal';
-import { TemplateManager } from './TemplateManager';
-import { VersionHistoryDialog } from './VersionHistoryDialog';
+import MaterialModal from './modals/MaterialModal';
+import FinishModal from './modals/FinishModal';
+import ProfileModal from './modals/ProfileModal';
+import { TemplateManager } from './history/TemplateManager';
+import { VersionHistoryDialog } from './history/VersionHistoryDialog';
 
 // Hooks & Libs
 import { useLabData } from '@/hooks/useLabData';
@@ -43,8 +43,8 @@ import { useDesignAnalysis } from '@/hooks/useDesignAnalysis';
 import { useHistory } from '@/hooks/useHistory';
 import { useVoiceCommands } from '@/hooks/useVoiceCommands';
 import { useCollaboration } from '@/hooks/useCollaboration';
-import { useCadContext } from '@/context/CADContext';
-import { generateTechnicalDrawing } from '@/lib/ai-service';
+import { useCadContext } from '@/contexts/CadContext';
+import { generateTechnicalDrawing } from '@/ai/flows/imageGenerationFlow';
 import type {
   OrderItem,
   Material,
@@ -52,7 +52,8 @@ import type {
   EdgeProfile,
   ModalType,
   EditableItem,
-  ProcessedEdges,
+  ProjectVersion,
+  ProjectTemplate,
 } from '@/types';
 
 export function Lab() {
@@ -81,7 +82,7 @@ export function Lab() {
   const [showDimensions, setShowDimensions] = useState(false);
   const [modalOpen, setModalOpen] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
-  const [announcement, setAnnouncement] = useState('');
+  const [announcement] = useState('');
 
   const canvasRef = useRef<CanvasHandle>(null);
 
@@ -128,6 +129,28 @@ export function Lab() {
     fetchSharedProject,
   } = useHistory();
 
+  const openVersion = useCallback(
+    (v: ProjectVersion) => {
+      setOrderItems(v.items);
+      toast({
+        title: 'Verzija učitana',
+        description: `Učitana je verzija: ${v.name}`,
+      });
+    },
+    [toast]
+  );
+
+  const openTemplate = useCallback(
+    (t: ProjectTemplate) => {
+      setOrderItems(t.items);
+      toast({
+        title: 'Predložak učitan',
+        description: `Učitan je predložak: ${t.name}`,
+      });
+    },
+    [toast]
+  );
+
   useEffect(() => {
     const versionId = searchParams.get('version');
     const templateId = searchParams.get('template');
@@ -136,20 +159,12 @@ export function Lab() {
     if (versionId) {
       const version = versions.find((v) => v.id === versionId);
       if (version) {
-        setOrderItems(version.items);
-        toast({
-          title: 'Verzija učitana',
-          description: `Učitana je verzija: ${version.name}`,
-        });
+        openVersion(version);
       }
     } else if (templateId) {
       const template = templates.find((t) => t.id === templateId);
       if (template) {
-        setOrderItems(template.items);
-        toast({
-          title: 'Predložak učitan',
-          description: `Učitan je predložak: ${template.name}`,
-        });
+        openTemplate(template);
       }
     } else if (sharedToken) {
       (async () => {
@@ -168,7 +183,15 @@ export function Lab() {
         }
       })();
     }
-  }, [searchParams, versions, templates, fetchSharedProject, toast]);
+  }, [
+    searchParams,
+    versions,
+    templates,
+    fetchSharedProject,
+    toast,
+    openVersion,
+    openTemplate,
+  ]);
 
   // 4. Calculations & Analysis
   const selectedMaterial = useMemo(
@@ -182,6 +205,27 @@ export function Lab() {
   const selectedProfile = useMemo(
     () => profiles.find((p) => p.id === selectedProfileId),
     [profiles, selectedProfileId]
+  );
+
+  const setMaterial = useCallback(
+    (m: Material) => {
+      setSelectedMaterialId(m.id);
+    },
+    [setSelectedMaterialId]
+  );
+
+  const setFinish = useCallback(
+    (f: SurfaceFinish) => {
+      setSelectedFinishId(f.id);
+    },
+    [setSelectedFinishId]
+  );
+
+  const setProfile = useCallback(
+    (p: EdgeProfile) => {
+      setSelectedProfileId(p.id);
+    },
+    [setSelectedProfileId]
   );
 
   const calculations = useOrderCalculations({
@@ -382,7 +426,7 @@ export function Lab() {
         }
       );
       toast({ title: 'PDF generiran' });
-    } catch (err) {
+    } catch {
       toast({ title: 'Greška', variant: 'destructive' });
     }
   }, [orderItems, projectNotes, toast]);
@@ -637,6 +681,19 @@ export function Lab() {
                   onSave={saveTemplate}
                   onLoad={setOrderItems}
                   onDelete={deleteTemplate}
+                  onMaterialSelect={(m: Material) => {
+                    setMaterial(m);
+                    setModalOpen(null);
+                  }}
+                  onFinishSelect={(f: SurfaceFinish) => {
+                    setFinish(f);
+                    setModalOpen(null);
+                  }}
+                  onProfileSelect={(p: EdgeProfile) => {
+                    setProfile(p);
+                    setModalOpen(null);
+                  }}
+                  onShare={shareProject}
                 />
                 <VersionHistoryDialog
                   versions={versions}
