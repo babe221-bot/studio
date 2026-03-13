@@ -33,7 +33,7 @@
       "type": "local",
       "command": ["npx", "-y", "@modelcontextprotocol/server-postgres"],
       "environment": {
-        "DATABASE_URL": "postgresql://postgres:[YOUR-PASSWORD]@db.dgpcqnckygrvrynslqkv.supabase.co:5432/postgres"
+        "DATABASE_URL": "postgresql://postgres:[YOUR-PASSWORD]@db.dgpcqnckygrvrynslqkv.supabase.co:6543/postgres?sslmode=require"
       }
     },
     "filesystem": {
@@ -64,11 +64,10 @@
       "command": ["npx", "-y", "@modelcontextprotocol/server-puppeteer"]
     },
     "supabase": {
-      "type": "local",
-      "command": ["npx", "-y", "@supabase/mcp-server-supabase"],
-      "environment": {
-        "SUPABASE_URL": "https://dgpcqnckygrvrynslqkv.supabase.co",
-        "SUPABASE_ACCESS_TOKEN": "{env:SUPABASE_ACCESS_TOKEN}"
+      "type": "remote",
+      "url": "https://mcp.supabase.com/mcp?project_ref=dgpcqnckygrvrynslqkv",
+      "headers": {
+        "Authorization": "Bearer ZwdjIsmz2KbmRF3z"
       }
     }
   }
