@@ -16,9 +16,9 @@ class MaterialResponse(BaseModel):
     is_active: bool
 
 class MaterialUpdate(BaseModel):
-    name: str | None
-    inventory_count: int | None
-    is_active: bool | None
+    name: str | None = None
+    inventory_count: int | None = None
+    is_active: bool | None = None
 
 def is_admin(user_id: str = "admin_user"): # Placeholder
     if user_id != "admin_user":

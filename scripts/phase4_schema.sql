@@ -86,3 +86,60 @@ CREATE POLICY "Users can view own invoices" ON public.invoices
       AND (public.orders.user_id = auth.uid())
     )
   );
+
+
+-- 5. Admin Audit Logs
+CREATE TABLE IF NOT EXISTS public.admin_audit_logs (
+  id SERIAL PRIMARY KEY,
+  admin_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  resource_type TEXT NOT NULL,
+  resource_id TEXT,
+  old_value TEXT,
+  new_value TEXT,
+  ip_address TEXT,
+  user_agent TEXT,
+  request_id TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS on admin_audit_logs
+ALTER TABLE public.admin_audit_logs ENABLE ROW LEVEL SECURITY;
+
+-- 6. Surface Finishes
+CREATE TABLE IF NOT EXISTS public.surface_finishes (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  cost_sqm NUMERIC(10, 2) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS on surface_finishes
+ALTER TABLE public.surface_finishes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public read on surface_finishes" ON public.surface_finishes FOR SELECT USING (true);
+
+-- 7. Edge Profiles
+CREATE TABLE IF NOT EXISTS public.edge_profiles (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  cost_m NUMERIC(10, 2) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS on edge_profiles
+ALTER TABLE public.edge_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public read on edge_profiles" ON public.edge_profiles FOR SELECT USING (true);
+
+-- 8. Admin Widgets
+CREATE TABLE IF NOT EXISTS public.admin_widgets (
+  id SERIAL PRIMARY KEY,
+  admin_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  metric_type TEXT NOT NULL,
+  chart_type TEXT NOT NULL,
+  config TEXT DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS on admin_widgets
+ALTER TABLE public.admin_widgets ENABLE ROW LEVEL SECURITY;
