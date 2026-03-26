@@ -1,0 +1,4004 @@
+
+> nextn@0.1.0 test
+> jest src/tests/integration/worker-integration.test.ts
+
+  console.log
+    [WorkerPool] Initializing WorkerPool with 4 workers
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Worker 0 created
+
+      at WorkerPool.createWorker (src/lib/WorkerPool.ts:141:15)
+
+  console.debug
+    [WorkerPool] Worker 1 created
+
+      at WorkerPool.createWorker (src/lib/WorkerPool.ts:141:15)
+
+  console.debug
+    [WorkerPool] Worker 2 created
+
+      at WorkerPool.createWorker (src/lib/WorkerPool.ts:141:15)
+
+  console.debug
+    [WorkerPool] Worker 3 created
+
+      at WorkerPool.createWorker (src/lib/WorkerPool.ts:141:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357514-j97qjmo53 submitted, queue length: 1
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357514-j97qjmo53 queued, queue length: 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357514-j97qjmo53 started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] Executing job 1773427357514-j97qjmo53 on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357522-oc295vq5q submitted, queue length: 1
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357522-oc295vq5q queued, queue length: 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357522-oc295vq5q started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] Executing job 1773427357522-oc295vq5q on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357529-k7io61ed0 submitted, queue length: 1
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357529-k7io61ed0 queued, queue length: 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357529-k7io61ed0 started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] Executing job 1773427357529-k7io61ed0 on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357536-ewvf7vy9a submitted, queue length: 1
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357536-ewvf7vy9a queued, queue length: 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357536-ewvf7vy9a started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] Executing job 1773427357536-ewvf7vy9a on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357542-9pecngcrf submitted, queue length: 1
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357542-9pecngcrf queued, queue length: 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357544-mbowpurol submitted, queue length: 2
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357544-mbowpurol queued, queue length: 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357548-bv70yeegw submitted, queue length: 3
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357548-bv70yeegw queued, queue length: 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357551-dz8nqerei submitted, queue length: 4
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357551-dz8nqerei queued, queue length: 4
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357554-cpetp3ntr submitted, queue length: 5
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357554-cpetp3ntr queued, queue length: 5
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357557-jhkx27h5u submitted, queue length: 6
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357557-jhkx27h5u queued, queue length: 6
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357559-71mtbjtmq submitted, queue length: 7
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357559-71mtbjtmq queued, queue length: 7
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357562-hew93r07f submitted, queue length: 8
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357562-hew93r07f queued, queue length: 8
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357564-6fmb1jxoo submitted, queue length: 9
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357564-6fmb1jxoo queued, queue length: 9
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357567-b3lkiwcxs submitted, queue length: 10
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357567-b3lkiwcxs queued, queue length: 10
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357569-7th7idqd0 submitted, queue length: 11
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357569-7th7idqd0 queued, queue length: 11
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357572-fowpk6u83 submitted, queue length: 12
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357572-fowpk6u83 queued, queue length: 12
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357574-1abul0xat submitted, queue length: 13
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357574-1abul0xat queued, queue length: 13
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357577-fc2ds2v9n submitted, queue length: 14
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357577-fc2ds2v9n queued, queue length: 14
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357579-x6j8zx1m7 submitted, queue length: 15
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357579-x6j8zx1m7 queued, queue length: 15
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357581-m1e8jrsju submitted, queue length: 16
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357581-m1e8jrsju queued, queue length: 16
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357584-3vt71tq48 submitted, queue length: 17
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357584-3vt71tq48 queued, queue length: 17
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357587-7eqw92qz7 submitted, queue length: 18
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357587-7eqw92qz7 queued, queue length: 18
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357589-uq86716q7 submitted, queue length: 19
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357589-uq86716q7 queued, queue length: 19
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357591-i4d4o016b submitted, queue length: 20
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357591-i4d4o016b queued, queue length: 20
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357594-bztof6lun submitted, queue length: 21
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357594-bztof6lun queued, queue length: 21
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357597-wmvezqoks submitted, queue length: 22
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357597-wmvezqoks queued, queue length: 22
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357599-eo12ehh2h submitted, queue length: 23
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357599-eo12ehh2h queued, queue length: 23
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357602-xdiusbefh submitted, queue length: 24
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357602-xdiusbefh queued, queue length: 24
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357604-1rcubfwbj submitted, queue length: 25
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357604-1rcubfwbj queued, queue length: 25
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357607-j3it1tukd submitted, queue length: 26
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357607-j3it1tukd queued, queue length: 26
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357609-854ieqavw submitted, queue length: 27
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357609-854ieqavw queued, queue length: 27
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357612-d4gpzq9zj submitted, queue length: 28
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357612-d4gpzq9zj queued, queue length: 28
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357615-e7sw48gw9 submitted, queue length: 29
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357615-e7sw48gw9 queued, queue length: 29
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357617-mj2b2omsf submitted, queue length: 30
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357617-mj2b2omsf queued, queue length: 30
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357620-98yllowfx submitted, queue length: 31
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357620-98yllowfx queued, queue length: 31
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357622-v4zg80gnq submitted, queue length: 32
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357622-v4zg80gnq queued, queue length: 32
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357625-z3r353ozx submitted, queue length: 33
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357625-z3r353ozx queued, queue length: 33
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357627-e9idv4bqd submitted, queue length: 34
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357627-e9idv4bqd queued, queue length: 34
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357630-7f6098n2s submitted, queue length: 35
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357630-7f6098n2s queued, queue length: 35
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357632-3wfujk6q4 submitted, queue length: 36
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357632-3wfujk6q4 queued, queue length: 36
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357635-riscg3doy submitted, queue length: 37
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357635-riscg3doy queued, queue length: 37
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357637-yb938kj15 submitted, queue length: 38
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357637-yb938kj15 queued, queue length: 38
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357640-osmnori65 submitted, queue length: 39
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357640-osmnori65 queued, queue length: 39
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357642-rxm0flax4 submitted, queue length: 40
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357642-rxm0flax4 queued, queue length: 40
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357645-pu8ahtn2b submitted, queue length: 41
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357645-pu8ahtn2b queued, queue length: 41
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357649-12zyp5frz submitted, queue length: 42
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357649-12zyp5frz queued, queue length: 42
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357652-y9duiy0qi submitted, queue length: 43
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357652-y9duiy0qi queued, queue length: 43
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357655-08qvdked1 submitted, queue length: 44
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357655-08qvdked1 queued, queue length: 44
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357657-9p3wg03x1 submitted, queue length: 45
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357657-9p3wg03x1 queued, queue length: 45
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357660-v5mwg2zb3 submitted, queue length: 46
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357660-v5mwg2zb3 queued, queue length: 46
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357662-p5dq1zzr1 submitted, queue length: 47
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357662-p5dq1zzr1 queued, queue length: 47
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357665-nqjyoklek submitted, queue length: 48
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357665-nqjyoklek queued, queue length: 48
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357668-0bbqrw18g submitted, queue length: 49
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357668-0bbqrw18g queued, queue length: 49
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357670-3qn9jy3bx submitted, queue length: 50
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357670-3qn9jy3bx queued, queue length: 50
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357673-uh7idcxoj submitted, queue length: 51
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357673-uh7idcxoj queued, queue length: 51
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357675-reor2iheo submitted, queue length: 52
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357675-reor2iheo queued, queue length: 52
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357678-ixfyenyll submitted, queue length: 53
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357678-ixfyenyll queued, queue length: 53
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357680-heuv57vfs submitted, queue length: 54
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357680-heuv57vfs queued, queue length: 54
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357683-5iu70o40t submitted, queue length: 55
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357683-5iu70o40t queued, queue length: 55
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357685-qcho0lzni submitted, queue length: 56
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357685-qcho0lzni queued, queue length: 56
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357687-8fe6i1v7q submitted, queue length: 57
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357687-8fe6i1v7q queued, queue length: 57
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357690-agjl9mxkq submitted, queue length: 58
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357690-agjl9mxkq queued, queue length: 58
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357692-nzrnrkjr9 submitted, queue length: 59
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357692-nzrnrkjr9 queued, queue length: 59
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357695-3q9q28i5s submitted, queue length: 60
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357695-3q9q28i5s queued, queue length: 60
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357697-3132kywhx submitted, queue length: 61
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357697-3132kywhx queued, queue length: 61
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357700-wvql31jdi submitted, queue length: 62
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357700-wvql31jdi queued, queue length: 62
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357702-lpyfhk1cn submitted, queue length: 63
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357702-lpyfhk1cn queued, queue length: 63
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357705-ks5fkh3t8 submitted, queue length: 64
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357705-ks5fkh3t8 queued, queue length: 64
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357708-6brdr480q submitted, queue length: 65
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357708-6brdr480q queued, queue length: 65
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357710-jkvnze8ch submitted, queue length: 66
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357710-jkvnze8ch queued, queue length: 66
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357713-614moyk6b submitted, queue length: 67
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357713-614moyk6b queued, queue length: 67
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357716-3i3n9qm17 submitted, queue length: 68
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357716-3i3n9qm17 queued, queue length: 68
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357718-6fjgvhegb submitted, queue length: 69
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357718-6fjgvhegb queued, queue length: 69
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357721-35pl1hvv5 submitted, queue length: 70
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357721-35pl1hvv5 queued, queue length: 70
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357724-g3diqwjn3 submitted, queue length: 71
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357724-g3diqwjn3 queued, queue length: 71
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357726-y9a7fzelm submitted, queue length: 72
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357726-y9a7fzelm queued, queue length: 72
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357729-haqta2nfc submitted, queue length: 73
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357729-haqta2nfc queued, queue length: 73
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357732-9yd7e9f84 submitted, queue length: 74
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357732-9yd7e9f84 queued, queue length: 74
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357734-o11drowz0 submitted, queue length: 75
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357734-o11drowz0 queued, queue length: 75
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357737-aksljqxul submitted, queue length: 76
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357737-aksljqxul queued, queue length: 76
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357739-vhuvn25mt submitted, queue length: 77
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357739-vhuvn25mt queued, queue length: 77
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357742-320ib88mj submitted, queue length: 78
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357742-320ib88mj queued, queue length: 78
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357745-377tzlurt submitted, queue length: 79
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357745-377tzlurt queued, queue length: 79
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357747-w88bbly40 submitted, queue length: 80
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357747-w88bbly40 queued, queue length: 80
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357750-zhvp4jqpr submitted, queue length: 81
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357750-zhvp4jqpr queued, queue length: 81
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357752-05xywnh2t submitted, queue length: 82
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357752-05xywnh2t queued, queue length: 82
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357755-paz8ny4uw submitted, queue length: 83
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357755-paz8ny4uw queued, queue length: 83
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357758-lrb0t8xhu submitted, queue length: 84
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357758-lrb0t8xhu queued, queue length: 84
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357760-cogmpos5y submitted, queue length: 85
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357760-cogmpos5y queued, queue length: 85
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357763-031lstbsj submitted, queue length: 86
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357763-031lstbsj queued, queue length: 86
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357766-3srdk34lb submitted, queue length: 87
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357766-3srdk34lb queued, queue length: 87
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357768-k5xw8uiyw submitted, queue length: 88
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357768-k5xw8uiyw queued, queue length: 88
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357771-ua5pyvi5e submitted, queue length: 89
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357771-ua5pyvi5e queued, queue length: 89
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357774-bedhgokls submitted, queue length: 90
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357774-bedhgokls queued, queue length: 90
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357777-0ob5fpep4 submitted, queue length: 91
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357777-0ob5fpep4 queued, queue length: 91
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357781-e7axmitt9 submitted, queue length: 92
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357781-e7axmitt9 queued, queue length: 92
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357785-aaixfuegr submitted, queue length: 93
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357785-aaixfuegr queued, queue length: 93
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357788-t247bdums submitted, queue length: 94
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357788-t247bdums queued, queue length: 94
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357791-npb353593 submitted, queue length: 95
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357791-npb353593 queued, queue length: 95
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.debug
+    [WorkerPool] Job 1773427357794-y1kkkgl0x submitted, queue length: 96
+
+      at src/lib/WorkerPool.ts:239:15
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427357794-y1kkkgl0x queued, queue length: 96
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+          at Array.map (<anonymous>)
+
+  console.log
+    [WorkerPool] Job 1773427357514-j97qjmo53 completed in 280ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357514-j97qjmo53 completed in 280ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 1
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357542-9pecngcrf started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357542-9pecngcrf on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357522-oc295vq5q completed in 278ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357522-oc295vq5q completed in 278ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 2
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357544-mbowpurol started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357544-mbowpurol on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357529-k7io61ed0 completed in 275ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357529-k7io61ed0 completed in 275ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 3
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357548-bv70yeegw started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357548-bv70yeegw on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357536-ewvf7vy9a completed in 273ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357536-ewvf7vy9a completed in 273ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 4
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357551-dz8nqerei started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357551-dz8nqerei on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357542-9pecngcrf completed in 32ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357542-9pecngcrf completed in 32ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 5
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357554-cpetp3ntr started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357554-cpetp3ntr on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357544-mbowpurol completed in 32ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357544-mbowpurol completed in 32ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 6
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357557-jhkx27h5u started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357557-jhkx27h5u on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357548-bv70yeegw completed in 31ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357548-bv70yeegw completed in 31ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 7
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357559-71mtbjtmq started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357559-71mtbjtmq on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357551-dz8nqerei completed in 31ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357551-dz8nqerei completed in 31ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 8
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357562-hew93r07f started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357562-hew93r07f on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357554-cpetp3ntr completed in 20ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357554-cpetp3ntr completed in 20ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 9
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357564-6fmb1jxoo started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357564-6fmb1jxoo on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357557-jhkx27h5u completed in 22ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357557-jhkx27h5u completed in 22ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 10
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357567-b3lkiwcxs started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357567-b3lkiwcxs on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357559-71mtbjtmq completed in 22ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357559-71mtbjtmq completed in 22ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 11
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357569-7th7idqd0 started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357569-7th7idqd0 on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357562-hew93r07f completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357562-hew93r07f completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 12
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357572-fowpk6u83 started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357572-fowpk6u83 on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357564-6fmb1jxoo completed in 17ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357564-6fmb1jxoo completed in 17ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 13
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357574-1abul0xat started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357574-1abul0xat on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357567-b3lkiwcxs completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357567-b3lkiwcxs completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 14
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357577-fc2ds2v9n started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357577-fc2ds2v9n on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357569-7th7idqd0 completed in 24ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357569-7th7idqd0 completed in 24ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 15
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357579-x6j8zx1m7 started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357579-x6j8zx1m7 on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357572-fowpk6u83 completed in 20ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357572-fowpk6u83 completed in 20ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 16
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357581-m1e8jrsju started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357581-m1e8jrsju on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357574-1abul0xat completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357574-1abul0xat completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 17
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357584-3vt71tq48 started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357584-3vt71tq48 on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357577-fc2ds2v9n completed in 17ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357577-fc2ds2v9n completed in 17ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 18
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357587-7eqw92qz7 started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357587-7eqw92qz7 on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357579-x6j8zx1m7 completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357579-x6j8zx1m7 completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 19
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357589-uq86716q7 started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357589-uq86716q7 on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357581-m1e8jrsju completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357581-m1e8jrsju completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 20
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357591-i4d4o016b started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357591-i4d4o016b on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357584-3vt71tq48 completed in 19ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357584-3vt71tq48 completed in 19ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 21
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357594-bztof6lun started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357594-bztof6lun on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357587-7eqw92qz7 completed in 24ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357587-7eqw92qz7 completed in 24ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 22
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357597-wmvezqoks started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357597-wmvezqoks on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357589-uq86716q7 completed in 17ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357589-uq86716q7 completed in 17ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 23
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357599-eo12ehh2h started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357599-eo12ehh2h on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357591-i4d4o016b completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357591-i4d4o016b completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 24
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357602-xdiusbefh started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357602-xdiusbefh on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357594-bztof6lun completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357594-bztof6lun completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 25
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357604-1rcubfwbj started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357604-1rcubfwbj on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357597-wmvezqoks completed in 21ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357597-wmvezqoks completed in 21ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 26
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357607-j3it1tukd started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357607-j3it1tukd on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357599-eo12ehh2h completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357599-eo12ehh2h completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 27
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357609-854ieqavw started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357609-854ieqavw on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357602-xdiusbefh completed in 17ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357602-xdiusbefh completed in 17ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 28
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357612-d4gpzq9zj started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357612-d4gpzq9zj on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357604-1rcubfwbj completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357604-1rcubfwbj completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 29
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357615-e7sw48gw9 started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357615-e7sw48gw9 on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357607-j3it1tukd completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357607-j3it1tukd completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 30
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357617-mj2b2omsf started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357617-mj2b2omsf on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357609-854ieqavw completed in 24ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357609-854ieqavw completed in 24ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 31
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357620-98yllowfx started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357620-98yllowfx on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357612-d4gpzq9zj completed in 40ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357612-d4gpzq9zj completed in 40ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 32
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357622-v4zg80gnq started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357622-v4zg80gnq on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357615-e7sw48gw9 completed in 32ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357615-e7sw48gw9 completed in 32ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 33
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357625-z3r353ozx started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357625-z3r353ozx on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357617-mj2b2omsf completed in 31ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357617-mj2b2omsf completed in 31ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 34
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357627-e9idv4bqd started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357627-e9idv4bqd on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357620-98yllowfx completed in 31ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357620-98yllowfx completed in 31ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 35
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357630-7f6098n2s started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357630-7f6098n2s on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357622-v4zg80gnq completed in 28ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357622-v4zg80gnq completed in 28ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 36
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357632-3wfujk6q4 started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357632-3wfujk6q4 on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357625-z3r353ozx completed in 29ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357625-z3r353ozx completed in 29ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 37
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357635-riscg3doy started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357635-riscg3doy on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357627-e9idv4bqd completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357627-e9idv4bqd completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 38
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357637-yb938kj15 started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357637-yb938kj15 on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357630-7f6098n2s completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357630-7f6098n2s completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 39
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357640-osmnori65 started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357640-osmnori65 on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357632-3wfujk6q4 completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357632-3wfujk6q4 completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 40
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357642-rxm0flax4 started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357642-rxm0flax4 on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357635-riscg3doy completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357635-riscg3doy completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 41
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357645-pu8ahtn2b started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357645-pu8ahtn2b on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357637-yb938kj15 completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357637-yb938kj15 completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 42
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357649-12zyp5frz started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357649-12zyp5frz on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357640-osmnori65 completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357640-osmnori65 completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 43
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357652-y9duiy0qi started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357652-y9duiy0qi on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357642-rxm0flax4 completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357642-rxm0flax4 completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 44
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357655-08qvdked1 started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357655-08qvdked1 on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357645-pu8ahtn2b completed in 28ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357645-pu8ahtn2b completed in 28ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 45
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357657-9p3wg03x1 started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357657-9p3wg03x1 on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357649-12zyp5frz completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357649-12zyp5frz completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 46
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357660-v5mwg2zb3 started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357660-v5mwg2zb3 on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357652-y9duiy0qi completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357652-y9duiy0qi completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 47
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357662-p5dq1zzr1 started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357662-p5dq1zzr1 on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357655-08qvdked1 completed in 13ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357655-08qvdked1 completed in 13ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 48
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357665-nqjyoklek started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357665-nqjyoklek on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357657-9p3wg03x1 completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357657-9p3wg03x1 completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 49
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357668-0bbqrw18g started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357668-0bbqrw18g on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357660-v5mwg2zb3 completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357660-v5mwg2zb3 completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 50
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357670-3qn9jy3bx started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357670-3qn9jy3bx on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357662-p5dq1zzr1 completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357662-p5dq1zzr1 completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 51
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357673-uh7idcxoj started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357673-uh7idcxoj on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357665-nqjyoklek completed in 24ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357665-nqjyoklek completed in 24ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 52
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357675-reor2iheo started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357675-reor2iheo on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357668-0bbqrw18g completed in 28ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357668-0bbqrw18g completed in 28ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 53
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357678-ixfyenyll started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357678-ixfyenyll on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357670-3qn9jy3bx completed in 29ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357670-3qn9jy3bx completed in 29ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 54
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357680-heuv57vfs started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357680-heuv57vfs on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357673-uh7idcxoj completed in 28ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357673-uh7idcxoj completed in 28ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 55
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357683-5iu70o40t started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357683-5iu70o40t on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357675-reor2iheo completed in 29ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357675-reor2iheo completed in 29ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 56
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357685-qcho0lzni started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357685-qcho0lzni on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357678-ixfyenyll completed in 12ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357678-ixfyenyll completed in 12ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 57
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357687-8fe6i1v7q started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357687-8fe6i1v7q on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357680-heuv57vfs completed in 24ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357680-heuv57vfs completed in 24ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 58
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357690-agjl9mxkq started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357690-agjl9mxkq on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357683-5iu70o40t completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357683-5iu70o40t completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 59
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357692-nzrnrkjr9 started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357692-nzrnrkjr9 on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357685-qcho0lzni completed in 24ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357685-qcho0lzni completed in 24ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 60
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357695-3q9q28i5s started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357695-3q9q28i5s on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357687-8fe6i1v7q completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357687-8fe6i1v7q completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 61
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357697-3132kywhx started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357697-3132kywhx on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357690-agjl9mxkq completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357690-agjl9mxkq completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 62
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357700-wvql31jdi started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357700-wvql31jdi on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357692-nzrnrkjr9 completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357692-nzrnrkjr9 completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 63
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357702-lpyfhk1cn started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357702-lpyfhk1cn on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357695-3q9q28i5s completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357695-3q9q28i5s completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 64
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357705-ks5fkh3t8 started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357705-ks5fkh3t8 on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357697-3132kywhx completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357697-3132kywhx completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 65
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357708-6brdr480q started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357708-6brdr480q on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357700-wvql31jdi completed in 28ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357700-wvql31jdi completed in 28ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 66
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357710-jkvnze8ch started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357710-jkvnze8ch on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357702-lpyfhk1cn completed in 28ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357702-lpyfhk1cn completed in 28ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 67
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357713-614moyk6b started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357713-614moyk6b on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357705-ks5fkh3t8 completed in 28ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357705-ks5fkh3t8 completed in 28ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 68
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357716-3i3n9qm17 started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357716-3i3n9qm17 on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357708-6brdr480q completed in 28ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357708-6brdr480q completed in 28ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 69
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357718-6fjgvhegb started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357718-6fjgvhegb on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357710-jkvnze8ch completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357710-jkvnze8ch completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 70
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357721-35pl1hvv5 started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357721-35pl1hvv5 on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357713-614moyk6b completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357713-614moyk6b completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 71
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357724-g3diqwjn3 started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357724-g3diqwjn3 on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357716-3i3n9qm17 completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357716-3i3n9qm17 completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 72
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357726-y9a7fzelm started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357726-y9a7fzelm on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357718-6fjgvhegb completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357718-6fjgvhegb completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 73
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357729-haqta2nfc started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357729-haqta2nfc on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357721-35pl1hvv5 completed in 13ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357721-35pl1hvv5 completed in 13ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 74
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357732-9yd7e9f84 started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357732-9yd7e9f84 on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357724-g3diqwjn3 completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357724-g3diqwjn3 completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 75
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357734-o11drowz0 started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357734-o11drowz0 on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357726-y9a7fzelm completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357726-y9a7fzelm completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 76
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357737-aksljqxul started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357737-aksljqxul on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357729-haqta2nfc completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357729-haqta2nfc completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 77
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357739-vhuvn25mt started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357739-vhuvn25mt on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357732-9yd7e9f84 completed in 23ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357732-9yd7e9f84 completed in 23ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 78
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357742-320ib88mj started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357742-320ib88mj on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357734-o11drowz0 completed in 13ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357734-o11drowz0 completed in 13ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 79
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357745-377tzlurt started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357745-377tzlurt on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357737-aksljqxul completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357737-aksljqxul completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 80
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357747-w88bbly40 started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357747-w88bbly40 on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357739-vhuvn25mt completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357739-vhuvn25mt completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 81
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357750-zhvp4jqpr started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357750-zhvp4jqpr on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357742-320ib88mj completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357742-320ib88mj completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 82
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357752-05xywnh2t started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357752-05xywnh2t on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357745-377tzlurt completed in 22ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357745-377tzlurt completed in 22ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 83
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357755-paz8ny4uw started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357755-paz8ny4uw on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357747-w88bbly40 completed in 13ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357747-w88bbly40 completed in 13ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 84
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357758-lrb0t8xhu started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357758-lrb0t8xhu on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357750-zhvp4jqpr completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357750-zhvp4jqpr completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 85
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357760-cogmpos5y started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357760-cogmpos5y on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357752-05xywnh2t completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357752-05xywnh2t completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 86
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357763-031lstbsj started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357763-031lstbsj on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357755-paz8ny4uw completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357755-paz8ny4uw completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 87
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357766-3srdk34lb started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357766-3srdk34lb on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357758-lrb0t8xhu completed in 23ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357758-lrb0t8xhu completed in 23ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 88
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357768-k5xw8uiyw started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357768-k5xw8uiyw on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357760-cogmpos5y completed in 13ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357760-cogmpos5y completed in 13ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 89
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357771-ua5pyvi5e started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357771-ua5pyvi5e on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357763-031lstbsj completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357763-031lstbsj completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 90
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357774-bedhgokls started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357774-bedhgokls on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357766-3srdk34lb completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357766-3srdk34lb completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 91
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357777-0ob5fpep4 started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357777-0ob5fpep4 on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357768-k5xw8uiyw completed in 26ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357768-k5xw8uiyw completed in 26ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 92
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357781-e7axmitt9 started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357781-e7axmitt9 on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357771-ua5pyvi5e completed in 25ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357771-ua5pyvi5e completed in 25ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 93
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357785-aaixfuegr started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357785-aaixfuegr on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357774-bedhgokls completed in 28ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357774-bedhgokls completed in 28ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 94
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357788-t247bdums started on worker 1
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357788-t247bdums on worker 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357777-0ob5fpep4 completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357777-0ob5fpep4 completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 95
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357791-npb353593 started on worker 2
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357791-npb353593 on worker 2
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357781-e7axmitt9 completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357781-e7axmitt9 completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 96
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357794-y1kkkgl0x started on worker 3
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427357794-y1kkkgl0x on worker 3
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Job 1773427357785-aaixfuegr completed in 27ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357785-aaixfuegr completed in 27ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 97
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.log
+    [WorkerPool] Job 1773427357788-t247bdums completed in 12ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357788-t247bdums completed in 12ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 98
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.log
+    [WorkerPool] Job 1773427357791-npb353593 completed in 11ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357791-npb353593 completed in 11ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 99
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.log
+    [WorkerPool] Job 1773427357794-y1kkkgl0x completed in 22ms
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427357794-y1kkkgl0x completed in 22ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 100
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Stats: {
+      totalWorkers: 4,
+      busyWorkers: 0,
+      idleWorkers: 4,
+      queueLength: 0,
+      totalProcessed: 100,
+      totalFailed: 0,
+      averageExecutionTime: 34.79
+    }
+
+      at WorkerPool.getStats (src/lib/WorkerPool.ts:291:15)
+
+  console.log
+    [WorkerPool] [STATS] {"totalWorkers":4,"busyWorkers":0,"idleWorkers":4,"queueLength":0,"totalProcessed":100,"totalFailed":0,"averageExecutionTime":34.79}
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Initializing WorkerPool with 1 workers
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Worker 0 created
+
+      at WorkerPool.createWorker (src/lib/WorkerPool.ts:141:15)
+
+  console.debug
+    [WorkerPool] Job 1773427358495-kwpwx5d64 submitted, queue length: 1
+
+      at src/lib/WorkerPool.ts:239:15
+
+  console.log
+    [WorkerPool] [JOB QUEUED] Job 1773427358495-kwpwx5d64 queued, queue length: 1
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Job 1773427358495-kwpwx5d64 started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.log
+    [WorkerPool] Executing job 1773427358495-kwpwx5d64 on worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Worker 0 error: Worker crashed intentionally
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.error
+    [WorkerPool] Worker 0 crashed: ErrorEvent { isTrusted: [Getter] }
+
+    [0m [90m 538 |[39m     error[33m:[39m [33mErrorEvent[39m [33m|[39m [33mError[39m
+     [90m 539 |[39m   )[33m:[39m [36mvoid[39m {
+    [31m[1m>[22m[39m[90m 540 |[39m     console[33m.[39merror([32m`[WorkerPool] Worker ${state.id} crashed:`[39m[33m,[39m error)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 541 |[39m     [36mthis[39m[33m.[39mlog([32m`[WORKER ERROR] Worker ${state.id} error:`[39m[33m,[39m error)[33m;[39m
+     [90m 542 |[39m
+     [90m 543 |[39m     [90m// Calculate failure rate[39m[0m
+
+      at WorkerPool.handleWorkerError (src/lib/WorkerPool.ts:540:13)
+      at MockWorker.state.errorHandler [as onerror] (src/lib/WorkerPool.ts:157:14)
+      at src/tests/integration/worker-integration.test.ts:18:16
+      at Timeout.task [as _onTimeout] (node_modules/jsdom/lib/jsdom/browser/Window.js:579:19)
+
+  console.log
+    [WorkerPool] [WORKER ERROR] Worker 0 error: ErrorEvent { isTrusted: [Getter] }
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.log
+    [WorkerPool] Recreating worker 0
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Worker 0 terminated
+
+      at WorkerPool.terminateWorker (src/lib/WorkerPool.ts:591:15)
+
+  console.log
+    [WorkerPool] Worker 0 terminated
+
+      at WorkerPool.log (src/lib/WorkerPool.ts:627:15)
+
+  console.debug
+    [WorkerPool] Worker 0 created
+
+      at WorkerPool.createWorker (src/lib/WorkerPool.ts:141:15)
+
+  console.debug
+    [WorkerPool] Worker 0 created
+
+      at WorkerPool.createWorker (src/lib/WorkerPool.ts:141:15)
+
+  console.debug
+    [WorkerPool] Job 1773427363524-6kvwqmksl submitted, queue length: 1
+
+      at src/lib/WorkerPool.ts:239:15
+
+  console.debug
+    [WorkerPool] Job 1773427363524-6kvwqmksl started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.debug
+    [WorkerPool] Job 1773427363527-9zee07gg1 submitted, queue length: 1
+
+      at src/lib/WorkerPool.ts:239:15
+
+  console.debug
+    [WorkerPool] Job 1773427363529-uy8mgffef submitted, queue length: 2
+
+      at src/lib/WorkerPool.ts:239:15
+
+  console.debug
+    [WorkerPool] Job 1773427363530-a0lanronb submitted, queue length: 3
+
+      at src/lib/WorkerPool.ts:239:15
+
+  console.debug
+    [WorkerPool] Job 1773427363532-z9qwavd78 submitted, queue length: 4
+
+      at src/lib/WorkerPool.ts:239:15
+
+  console.debug
+    [WorkerPool] Job 1773427363533-hyrgqrgwg submitted, queue length: 5
+
+      at src/lib/WorkerPool.ts:239:15
+
+  console.debug
+    [WorkerPool] Job 1773427363524-6kvwqmksl completed in 102ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 1
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427363527-9zee07gg1 started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.debug
+    [WorkerPool] Job 1773427363527-9zee07gg1 completed in 108ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 1
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427363529-uy8mgffef started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.debug
+    [WorkerPool] Job 1773427363529-uy8mgffef completed in 106ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 1
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427363530-a0lanronb started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.debug
+    [WorkerPool] Job 1773427363530-a0lanronb completed in 105ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 1
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427363532-z9qwavd78 started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.debug
+    [WorkerPool] Job 1773427363532-z9qwavd78 completed in 107ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 1
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Job 1773427363533-hyrgqrgwg started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+  console.debug
+    [WorkerPool] Job 1773427363533-hyrgqrgwg completed in 106ms
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:461:15)
+
+  console.debug
+    [WorkerPool] Cached result, cache size: 1
+
+      at MockWorker.state.messageHandler [as onmessage] (src/lib/WorkerPool.ts:476:15)
+
+  console.debug
+    [WorkerPool] Worker 0 created
+
+      at WorkerPool.createWorker (src/lib/WorkerPool.ts:141:15)
+
+  console.debug
+    [WorkerPool] Worker 1 created
+
+      at WorkerPool.createWorker (src/lib/WorkerPool.ts:141:15)
+
+  console.debug
+    [WorkerPool] Job 1773427364186-fwhmb3isd submitted, queue length: 1
+
+      at src/lib/WorkerPool.ts:239:15
+
+  console.debug
+    [WorkerPool] Job 1773427364186-fwhmb3isd started on worker 0
+
+      at WorkerPool.executeJob (src/lib/WorkerPool.ts:430:13)
+
+FAIL src/tests/integration/worker-integration.test.ts (7.385 s)
+  WorkerPool Integration
+    ΓêÜ should handle 100 concurrent jobs (1050 ms)
+    ├ù should handle worker crash recovery (5014 ms)
+    ΓêÜ should reject jobs when queue is full (660 ms)
+    ΓêÜ should cancel in-flight jobs (22 ms)
+
+  ΓùÅ WorkerPool Integration ΓÇ║ should handle worker crash recovery
+
+    thrown: "Exceeded timeout of 5000 ms for a test.
+    Add a timeout value to this test to increase the timeout, if this is a long-running test. See https://jestjs.io/docs/api#testname-fn-timeout."
+
+       96 |   }, 10000); // Increase timeout
+       97 |
+    >  98 |   it('should handle worker crash recovery', async () => {
+          |   ^
+       99 |     pool = new WorkerPool({
+      100 |       poolSize: 1, // Single worker to force crash impact
+      101 |       workerUrl: 'mock-worker.js',
+
+      at src/tests/integration/worker-integration.test.ts:98:3
+      at Object.<anonymous> (src/tests/integration/worker-integration.test.ts:68:1)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 3 passed, 4 total
+Snapshots:   0 total
+Time:        8.864 s
+Ran all test suites matching src/tests/integration/worker-integration.test.ts.

@@ -44,4 +44,5 @@ resend>=0.6.0
 watchfiles>=0.20
 passlib[bcrypt]>=1.7.4
 python-jose[cryptography]>=3.3.0
+py_jwk_client>=0.1.3
 
